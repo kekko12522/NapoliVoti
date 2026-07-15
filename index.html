@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0A0F1C">
+<!-- PWA iOS: consente il salvataggio in Home e l'avvio "standalone" senza barra Safari -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Napoli Tracker">
+<link rel="apple-touch-icon" href="icon.png">
+<title>Diario Azzurro — Le Stagioni del Napoli</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-950:#080d18;
+    --bg-900:#0d1526;
+    --bg-850:#111c33;
+    --bg-800:#152541;
+    --bg-750:#1a2c4a;
+    --line: rgba(150,180,220,0.10);
+    --line-soft: rgba(150,180,220,0.06);
+    --azzurro:#26a0e0;
+    --azzurro-deep:#0c5f9e;
+    --azzurro-glow: rgba(38,160,224,0.35);
+    --gold:#e0b04f;
+    --win:#32c777;
+    --win-bg: rgba(50,199,119,0.14);
+    --draw:#dba53f;
+    --draw-bg: rgba(219,165,63,0.14);
+    --loss:#e6555f;
+    --loss-bg: rgba(230,85,95,0.14);
+    --text:#eef3fa;
+    --text-dim:#93a5c4;
+    --text-mute:#5a6a8a;
+  }
+  *{ -webkit-tap-highlight-color: transparent; }
+  html,body{ height:100%; }
+  body{
+    background: var(--bg-950);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    overscroll-behavior-y: none;
+  }
+  .font-display{ font-family:'Bebas Neue', 'Inter', sans-serif; letter-spacing:0.02em; }
+  .scrollbar-hide::-webkit-scrollbar{ display:none; }
+  .scrollbar-hide{ -ms-overflow-style:none; scrollbar-width:none; }
+
+  /* Bay-of-Naples horizon texture, faint & fixed */
+  .bg-horizon{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 120% 60% at 50% -10%, var(--azzurro-glow) 0%, transparent 55%),
+      radial-gradient(ellipse 80% 40% at 100% 110%, rgba(224,176,79,0.10) 0%, transparent 60%);
+    opacity:0.55;
+  }
+  .bg-horizon svg{ position:absolute; bottom:0; left:0; width:100%; height:auto; opacity:0.10; }
+
+  .glass{
+    background: linear-gradient(180deg, var(--bg-850) 0%, var(--bg-900) 100%);
+    border:1px solid var(--line);
+  }
+  .glass-elevated{
+    background: linear-gradient(160deg, var(--bg-800) 0%, var(--bg-850) 100%);
+    border:1px solid var(--line);
+    box-shadow: 0 8px 30px -12px rgba(0,0,0,0.55);
+  }
+
+  /* Bottom app nav, native-app style with safe area */
+  .app-nav{
+    background: linear-gradient(0deg, var(--bg-950) 60%, rgba(8,13,24,0.85) 100%);
+    backdrop-filter: blur(14px);
+    border-top:1px solid var(--line);
+    padding-bottom: max(env(safe-area-inset-bottom), 10px);
+  }
+
+  .season-pill{
+    font-family:'Bebas Neue', sans-serif;
+    letter-spacing:0.03em;
+    font-size:15px;
+    padding:9px 16px;
+    border-radius:999px;
+    border:1px solid var(--line);
+    color:var(--text-dim);
+    background: var(--bg-900);
+    white-space:nowrap;
+    transition: all .18s ease;
+  }
+
+  /* Top tab switcher: Stagioni / Palmarès / Impostazioni */
+  .tab-switcher{
+    display:flex; gap:6px; background:var(--bg-900); border:1px solid var(--line);
+    border-radius:14px; padding:4px;
+  }
+  .tab-btn{
+    flex:1; text-align:center; padding:9px 0; border-radius:10px;
+    font-size:13px; font-weight:700; color:var(--text-mute);
+    transition: all .18s ease;
+  }
+  .tab-btn.active{
+    color:#04141f;
+    background: linear-gradient(135deg,#4bc4f2,var(--azzurro-deep));
+  }
+
+  .trophy-card{
+    background: var(--bg-900); border:1px solid var(--line); border-radius:16px;
+    padding:16px 14px; text-align:center;
+  }
+  .trophy-icon{ font-size:26px; line-height:1; margin-bottom:6px; }
+  .trophy-count{ font-family:'Bebas Neue', sans-serif; font-size:32px; color:var(--gold); line-height:1; }
+  .trophy-name{ font-size:11.5px; font-weight:700; color:var(--text-dim); margin-top:2px; }
+  .trophy-controls{ display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px; }
+  .trophy-step{
+    width:32px; height:32px; border-radius:9px; background:var(--bg-750); border:1px solid var(--line);
+    color:var(--text); font-size:17px; display:flex; align-items:center; justify-content:center;
+  }
+  .trophy-step:active{ background:var(--bg-800); }
+
+  .settings-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:14px 16px; background:var(--bg-900); border:1px solid var(--line); border-radius:14px;
+  }
+  .settings-btn{
+    padding:10px 18px; border-radius:10px; font-weight:700; font-size:13.5px; white-space:nowrap;
+  }
+  .season-pill.active{
+    color:#04141f;
+    background: linear-gradient(135deg, #4bc4f2, var(--azzurro-deep));
+    border-color: transparent;
+    box-shadow: 0 4px 16px -4px var(--azzurro-glow);
+  }
+
+  .comp-chip{
+    font-size:13px; font-weight:600;
+    padding:8px 14px; border-radius:999px;
+    border:1px solid var(--line);
+    color:var(--text-mute);
+    background:var(--bg-900);
+    white-space:nowrap;
+    transition: all .15s ease;
+  }
+  .comp-chip.active{
+    color:#eef8ff;
+    background: rgba(38,160,224,0.16);
+    border-color: rgba(38,160,224,0.55);
+  }
+
+  .badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:26px; height:26px; border-radius:8px;
+    font-family:'Bebas Neue', sans-serif; font-size:15px; letter-spacing:0.03em;
+    flex-shrink:0;
+  }
+  .badge-V{ background:var(--win-bg); color:var(--win); }
+  .badge-P{ background:var(--draw-bg); color:var(--draw); }
+  .badge-S{ background:var(--loss-bg); color:var(--loss); }
+
+  .voto-tag{
+    font-family:'Bebas Neue', sans-serif; font-size:14px; letter-spacing:0.02em;
+    padding:2px 8px; border-radius:6px;
+    background:var(--bg-750); color:var(--gold);
+    border:1px solid rgba(224,176,79,0.25);
+  }
+
+  /* ticket-stub match card: perforated left edge */
+  .ticket{
+    position:relative;
+    background: var(--bg-900);
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+  }
+  .ticket::before{
+    content:""; position:absolute; left:-9px; top:50%; transform:translateY(-50%);
+    width:18px; height:18px; border-radius:50%;
+    background: var(--bg-950);
+    border:1px solid var(--line);
+  }
+  .ticket::after{
+    content:""; position:absolute; left:38px; top:0; bottom:0;
+    width:0; border-left:1.5px dashed var(--line);
+  }
+
+  .accordion-content{
+    display:grid; grid-template-rows: 0fr; transition: grid-template-rows .32s cubic-bezier(.4,0,.2,1);
+  }
+  .accordion-content.open{ grid-template-rows: 1fr; }
+  .accordion-content > div{ overflow:hidden; min-height:0; }
+  .chevron{ transition: transform .28s ease; }
+  .chevron.open{ transform: rotate(180deg); }
+
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button{ -webkit-appearance:none; margin:0; }
+  input[type=number]{ -moz-appearance:textfield; }
+
+  .field-input{
+    width:100%; background:var(--bg-900); border:1px solid var(--line);
+    color:var(--text); border-radius:12px; padding:12px 14px; font-size:15px;
+    outline:none; transition: border-color .15s ease;
+  }
+  .field-input:focus{ border-color: var(--azzurro); }
+
+  .seg-btn{
+    flex:1; text-align:center; padding:10px 0; border-radius:10px; font-weight:600; font-size:14px;
+    color:var(--text-mute); background:var(--bg-900); border:1px solid var(--line);
+    transition: all .15s ease;
+  }
+  .seg-btn.active{ background:rgba(38,160,224,0.16); color:#eef8ff; border-color:rgba(38,160,224,0.55); }
+
+  .stepper-btn{
+    width:42px; height:42px; border-radius:12px; background:var(--bg-900); border:1px solid var(--line);
+    color:var(--text); font-size:20px; display:flex; align-items:center; justify-content:center;
+    user-select:none;
+  }
+  .stepper-btn:active{ background: var(--bg-750); }
+
+  .voto-chip{
+    padding:8px 4px; border-radius:10px; text-align:center; font-family:'Bebas Neue',sans-serif;
+    font-size:16px; background:var(--bg-900); border:1px solid var(--line); color:var(--text-dim);
+  }
+  .voto-chip.active{ background: linear-gradient(135deg,#e8c473,var(--gold)); color:#241a05; border-color:transparent; }
+
+  /* modal */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(4,8,16,0.65); backdrop-filter: blur(3px);
+    opacity:0; pointer-events:none; transition: opacity .22s ease; z-index:40;
+  }
+  .modal-backdrop.show{ opacity:1; pointer-events:auto; }
+  .sheet{
+    position:fixed; left:0; right:0; bottom:0; z-index:41;
+    background: linear-gradient(180deg, var(--bg-850), var(--bg-900));
+    border-top:1px solid var(--line);
+    border-radius:22px 22px 0 0;
+    box-shadow: 0 -10px 40px -8px rgba(0,0,0,0.6);
+    transform: translateY(100%); transition: transform .32s cubic-bezier(.32,.72,0,1);
+    max-height:88vh; overflow-y:auto;
+    padding-bottom: max(env(safe-area-inset-bottom), 20px);
+  }
+  .sheet.show{ transform: translateY(0); }
+
+  .toast{
+    position:fixed; left:50%; bottom:96px; transform:translate(-50%,20px);
+    background: var(--bg-800); border:1px solid var(--line); color:var(--text);
+    padding:10px 18px; border-radius:999px; font-size:13.5px; font-weight:600;
+    box-shadow:0 8px 24px -6px rgba(0,0,0,0.5);
+    opacity:0; pointer-events:none; transition: all .25s ease; z-index:50;
+    display:flex; align-items:center; gap:8px;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%,0); }
+
+  .progress-track{ height:8px; border-radius:999px; background:var(--bg-750); overflow:hidden; }
+  .progress-fill{ height:100%; border-radius:999px; background:linear-gradient(90deg,var(--azzurro-deep),var(--azzurro)); transition: width .4s ease; }
+
+  :focus-visible{ outline:2px solid var(--azzurro); outline-offset:2px; }
+
+  @media (min-width:768px){
+    .app-nav{ position:sticky; }
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<div class="bg-horizon">
+  <svg viewBox="0 0 1440 200" preserveAspectRatio="none"><path fill="#26a0e0" d="M0,120 C240,180 480,60 720,110 C960,160 1200,60 1440,100 L1440,200 L0,200 Z"></path></svg>
+</div>
+
+<!-- HEADER -->
+<header class="relative z-10 px-5 pt-6 pb-3 flex items-center justify-between">
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-xl flex items-center justify-center font-display text-lg" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">N</div>
+    <div>
+      <h1 class="font-display text-2xl leading-none tracking-wide">DIARIO AZZURRO</h1>
+      <p class="text-[11px] text-[var(--text-mute)] font-medium tracking-wide">Le stagioni del Napoli</p>
+    </div>
+  </div>
+  <button id="btn-season-settings" class="w-10 h-10 rounded-xl glass flex items-center justify-center text-[var(--text-dim)]" aria-label="Impostazioni stagione">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+  </button>
+</header>
+
+<!-- TAB SWITCHER -->
+<div class="relative z-10 px-5 mb-4 max-w-2xl mx-auto">
+  <div class="tab-switcher">
+    <button type="button" class="tab-btn" data-tab="stagioni">Stagioni</button>
+    <button type="button" class="tab-btn" data-tab="palmares">Palmarès</button>
+    <button type="button" class="tab-btn" data-tab="impostazioni">Impostazioni</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main id="main" class="relative z-10 px-5 pb-40 max-w-2xl mx-auto md:pb-16">
+
+<div id="tab-content-stagioni">
+  <div id="empty-state" class="hidden mt-20 text-center">
+    <p class="font-display text-3xl text-[var(--text-dim)]">NESSUNA STAGIONE</p>
+    <p class="text-sm text-[var(--text-mute)] mt-1">Aggiungine una dalla barra in basso per iniziare a tracciare.</p>
+  </div>
+
+  <div id="season-content" class="hidden">
+
+    <!-- SEASON SUMMARY -->
+    <section class="glass-elevated rounded-2xl p-5 mt-2">
+      <div class="flex items-baseline justify-between">
+        <h2 id="season-title" class="font-display text-4xl tracking-wide">2025/2026</h2>
+        <span id="season-competitions-count" class="text-[11px] text-[var(--text-mute)] font-medium"></span>
+      </div>
+
+      <div class="grid grid-cols-4 gap-2 mt-4">
+        <div class="glass rounded-xl p-2.5 text-center">
+          <p id="stat-pg" class="font-display text-2xl">0</p>
+          <p class="text-[10px] text-[var(--text-mute)] font-semibold tracking-wide">GIOCATE</p>
+        </div>
+        <div class="glass rounded-xl p-2.5 text-center">
+          <p id="stat-gf" class="font-display text-2xl" style="color:var(--win)">0</p>
+          <p class="text-[10px] text-[var(--text-mute)] font-semibold tracking-wide">FATTI</p>
+        </div>
+        <div class="glass rounded-xl p-2.5 text-center">
+          <p id="stat-gs" class="font-display text-2xl" style="color:var(--loss)">0</p>
+          <p class="text-[10px] text-[var(--text-mute)] font-semibold tracking-wide">SUBITI</p>
+        </div>
+        <div class="glass rounded-xl p-2.5 text-center">
+          <p id="stat-media" class="font-display text-2xl" style="color:var(--gold)">—</p>
+          <p class="text-[10px] text-[var(--text-mute)] font-semibold tracking-wide">MEDIA GOL</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 mt-3">
+        <div id="stat-record" class="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-dim)]"></div>
+      </div>
+
+      <div class="mt-5 pt-4" style="border-top:1px solid var(--line)">
+        <div class="flex items-center justify-between text-xs font-semibold text-[var(--text-mute)] mb-2">
+          <span>VOTO STAGIONE</span>
+          <button id="btn-edit-obiettivo" class="flex items-center gap-1 text-[var(--text-dim)]">
+            OBIETTIVO <span id="stat-obiettivo" class="voto-tag ml-1">7.0</span>
+          </button>
+        </div>
+        <div class="flex items-center gap-3">
+          <span id="stat-voto-stagione" class="font-display text-3xl" style="color:var(--azzurro)">—</span>
+          <div class="flex-1 progress-track"><div id="progress-obiettivo" class="progress-fill" style="width:0%"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPETITIONS TOGGLE -->
+    <section class="mt-6">
+      <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">COMPETIZIONI ATTIVE</p>
+      <div id="comp-chip-row" class="flex gap-2 overflow-x-auto scrollbar-hide pb-1"></div>
+    </section>
+
+    <!-- COMPETITIONS LIST -->
+    <section id="competitions-list" class="mt-5 space-y-3"></section>
+
+    <div id="no-comp-active" class="hidden mt-10 text-center text-sm text-[var(--text-mute)]">
+      Nessuna competizione attiva. Selezionane una qui sopra per iniziare ad aggiungere partite.
+    </div>
+
+  </div>
+</div><!-- /tab-content-stagioni -->
+
+<!-- TAB: PALMARÈS -->
+<div id="tab-content-palmares" class="hidden">
+  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">TROFEI UFFICIALI</p>
+  <div id="palmares-grid" class="grid grid-cols-2 gap-3"></div>
+
+  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">TROFEO PERSONALIZZATO</p>
+  <div class="glass rounded-2xl p-4">
+    <div class="flex gap-2 mb-2.5">
+      <input id="input-custom-trophy-name" type="text" placeholder="Nome trofeo" class="field-input flex-1">
+      <input id="input-custom-trophy-year" type="number" placeholder="Anno" class="field-input" style="width:96px;">
+    </div>
+    <button id="btn-add-custom-trophy" class="w-full py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg> Aggiungi trofeo
+    </button>
+  </div>
+
+  <div id="custom-trophies-list" class="mt-3 space-y-2"></div>
+  <div id="custom-trophies-empty" class="hidden mt-6 text-center text-sm text-[var(--text-mute)]">
+    Nessun trofeo personalizzato aggiunto.
+  </div>
+</div>
+
+<!-- TAB: IMPOSTAZIONI -->
+<div id="tab-content-impostazioni" class="hidden">
+  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">BACKUP DATI</p>
+  <div class="space-y-2.5">
+    <div class="settings-row">
+      <div>
+        <p class="font-semibold text-[14px]">Esporta backup</p>
+        <p class="text-[11.5px] text-[var(--text-mute)]">Scarica un file .json con stagioni, partite e palmarès.</p>
+      </div>
+      <button id="btn-export-backup" class="settings-btn" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Esporta</button>
+    </div>
+    <div class="settings-row">
+      <div>
+        <p class="font-semibold text-[14px]">Importa backup</p>
+        <p class="text-[11.5px] text-[var(--text-mute)]">Ripristina i dati da un file .json esportato in precedenza.</p>
+      </div>
+      <button id="btn-import-backup" class="settings-btn" style="background:var(--bg-750); color:var(--text);">Importa</button>
+      <input id="input-import-file" type="file" accept="application/json,.json" class="hidden">
+    </div>
+  </div>
+
+  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
+  <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v1.1.0</span></p>
+    <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
+  </div>
+</div>
+
+</main>
+
+<!-- BOTTOM APP NAV -->
+<nav id="bottom-nav" class="app-nav fixed bottom-0 left-0 right-0 z-20 px-4 pt-3">
+  <div class="flex items-center gap-2">
+    <div id="season-nav-scroll" class="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1"></div>
+    <button id="btn-add-season" class="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;" aria-label="Nuova stagione">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+    </button>
+  </div>
+</nav>
+
+<!-- TOAST -->
+<div id="toast" class="toast"><span id="toast-text"></span></div>
+
+<!-- MODAL: SEASON (add/edit) -->
+<div id="backdrop-season" class="modal-backdrop"></div>
+<div id="sheet-season" class="sheet px-5 pt-3">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <h3 id="season-modal-title" class="font-display text-2xl mb-4">NUOVA STAGIONE</h3>
+
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">NOME STAGIONE</label>
+  <input id="input-season-name" type="text" placeholder="es. 2026/2027" class="field-input mt-1.5 mb-4">
+
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">VOTO OBIETTIVO (1–10)</label>
+  <input id="input-season-obiettivo" type="number" step="0.5" min="1" max="10" placeholder="7.0" class="field-input mt-1.5 mb-5">
+
+  <button id="btn-save-season" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
+  <button id="btn-delete-season" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Elimina stagione</button>
+  <button id="btn-cancel-season" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
+</div>
+
+<!-- MODAL: MATCH (add/edit) -->
+<div id="backdrop-match" class="modal-backdrop"></div>
+<div id="sheet-match" class="sheet px-5 pt-3">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <div class="flex items-center justify-between mb-4">
+    <h3 id="match-modal-title" class="font-display text-2xl">NUOVA PARTITA</h3>
+    <span id="match-comp-label" class="text-[11px] font-bold text-[var(--azzurro)] uppercase"></span>
+  </div>
+
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">AVVERSARIO</label>
+  <input id="input-opponent" type="text" placeholder="es. Sassuolo" class="field-input mt-1.5 mb-4" autocomplete="off">
+
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">SEDE</label>
+  <div class="flex gap-2 mb-4">
+    <button type="button" data-home="1" class="seg-btn home-toggle active">🏠 Casa</button>
+    <button type="button" data-home="0" class="seg-btn home-toggle">✈️ Trasferta</button>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+      <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">GOL NAPOLI</label>
+      <div class="flex items-center gap-2">
+        <button type="button" class="stepper-btn" data-step="golNap" data-dir="-1">−</button>
+        <input id="input-golnap" type="number" min="0" value="0" class="field-input text-center px-1">
+        <button type="button" class="stepper-btn" data-step="golNap" data-dir="1">+</button>
+      </div>
+    </div>
+    <div>
+      <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">GOL AVVERSARIO</label>
+      <div class="flex items-center gap-2">
+        <button type="button" class="stepper-btn" data-step="golOpp" data-dir="-1">−</button>
+        <input id="input-golopp" type="number" min="0" value="0" class="field-input text-center px-1">
+        <button type="button" class="stepper-btn" data-step="golOpp" data-dir="1">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-center gap-2 mb-5">
+    <span class="text-xs font-bold text-[var(--text-mute)]">RISULTATO</span>
+    <span id="live-result-badge" class="badge badge-P">P</span>
+  </div>
+
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">VOTO PRESTAZIONE (1–10)</label>
+  <div id="voto-chip-row" class="grid grid-cols-5 gap-1.5 mb-2.5"></div>
+  <input id="input-voto" type="number" step="0.5" min="1" max="10" placeholder="Voto personalizzato" class="field-input mb-5">
+
+  <button id="btn-save-match" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva partita</button>
+  <button id="btn-delete-match" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Elimina partita</button>
+  <button id="btn-cancel-match" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
+</div>
+
+<!-- MODAL: ADD CUSTOM COMPETITION -->
+<div id="backdrop-comp" class="modal-backdrop"></div>
+<div id="sheet-comp" class="sheet px-5 pt-3">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <h3 class="font-display text-2xl mb-4">NUOVA COMPETIZIONE</h3>
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">NOME COMPETIZIONE</label>
+  <input id="input-comp-name" type="text" placeholder="es. Amichevole estiva" class="field-input mt-1.5 mb-5">
+  <button id="btn-save-comp" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Aggiungi</button>
+  <button id="btn-cancel-comp" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var STORAGE_KEY = "diarioAzzurroData_v1";
+
+  var CATALOG = [
+    {id:"serie-a", name:"Serie A"},
+    {id:"coppa-italia", name:"Coppa Italia"},
+    {id:"champions", name:"Champions League"},
+    {id:"europa", name:"Europa League"},
+    {id:"conference", name:"Conference League"},
+    {id:"supercoppa-it", name:"Supercoppa Italiana"},
+    {id:"supercoppa-eu", name:"Supercoppa Europea"}
+  ];
+
+  var PALMARES_CATALOG = [
+    {id:"scudetto", name:"Scudetto", icon:"⭐"},
+    {id:"coppa-italia-p", name:"Coppa Italia", icon:"🏆"},
+    {id:"supercoppa-it-p", name:"Supercoppa Italiana", icon:"🎖️"},
+    {id:"coppa-uefa", name:"Coppa UEFA / Europa League", icon:"🌍"}
+  ];
+
+  var state = { seasons: [], activeSeasonId: null, palmares: { counts:{}, custom:[] } };
+
+  function uid(){
+    return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,9);
+  }
+
+  function freshCompetitions(){
+    return CATALOG.map(function(c){
+      return { id: uid(), catalogId: c.id, name: c.name, active: c.id === "serie-a", custom:false, matches: [] };
+    });
+  }
+
+  function defaultSeason(name){
+    return { id: uid(), name: name, obiettivo: 7.0, competitions: freshCompetitions() };
+  }
+
+  function defaultPalmares(){
+    var counts = {};
+    PALMARES_CATALOG.forEach(function(t){ counts[t.id] = 0; });
+    return { counts: counts, custom: [] };
+  }
+
+  // Assicura che uno stato caricato (da localStorage o da un backup importato)
+  // abbia sempre tutti i campi attesi, anche se proviene da una versione precedente dell'app.
+  function normalizeState(s){
+    if(!s || typeof s !== "object") return null;
+    if(!Array.isArray(s.seasons)) return null;
+    if(!s.palmares || typeof s.palmares !== "object"){
+      s.palmares = defaultPalmares();
+    } else {
+      if(!s.palmares.counts || typeof s.palmares.counts !== "object") s.palmares.counts = {};
+      if(!Array.isArray(s.palmares.custom)) s.palmares.custom = [];
+      PALMARES_CATALOG.forEach(function(t){
+        if(typeof s.palmares.counts[t.id] !== "number") s.palmares.counts[t.id] = 0;
+      });
+    }
+    if(s.seasons.length && !s.seasons.some(function(se){ return se.id === s.activeSeasonId; })){
+      s.activeSeasonId = s.seasons[s.seasons.length - 1].id;
+    }
+    return s;
+  }
+
+  function load(){
+    try{
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        var parsed = normalizeState(JSON.parse(raw));
+        if(parsed){
+          state = parsed;
+          return;
+        }
+      }
+    }catch(e){ console.warn("Impossibile leggere i dati salvati, avvio con stagione predefinita.", e); }
+    var s = defaultSeason(guessSeasonLabel());
+    state = { seasons:[s], activeSeasonId: s.id, palmares: defaultPalmares() };
+    save();
+  }
+
+  function save(){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+    catch(e){ console.error("Salvataggio non riuscito", e); showToast("⚠️ Salvataggio non riuscito"); }
+  }
+
+  function guessSeasonLabel(){
+    var now = new Date();
+    var y = now.getFullYear();
+    var startYear = now.getMonth() >= 6 ? y : y - 1; // stagione calcistica: da luglio
+    return startYear + "/" + (startYear + 1);
+  }
+
+  function nextSeasonLabel(){
+    if(state.seasons.length === 0) return guessSeasonLabel();
+    var last = state.seasons[state.seasons.length - 1];
+    var m = /^(\d{4})\/(\d{4})$/.exec(last.name);
+    if(m){
+      var a = parseInt(m[1],10) + 1;
+      return a + "/" + (a+1);
+    }
+    return guessSeasonLabel();
+  }
+
+  function getActiveSeason(){
+    return state.seasons.find(function(s){ return s.id === state.activeSeasonId; }) || null;
+  }
+
+  // ---------- STATS ----------
+  function computeMatchesStats(matches){
+    var pg = matches.length, gf=0, gs=0, v=0,p=0,s=0, votoSum=0, votoCount=0;
+    matches.forEach(function(m){
+      gf += m.golNap; gs += m.golOpp;
+      var r = resultOf(m);
+      if(r==="V") v++; else if(r==="P") p++; else s++;
+      if(typeof m.voto === "number"){ votoSum += m.voto; votoCount++; }
+    });
+    return {
+      pg:pg, gf:gf, gs:gs, v:v, p:p, s:s,
+      gfAvg: pg ? gf/pg : 0,
+      gsAvg: pg ? gs/pg : 0,
+      mediaVoti: votoCount ? votoSum/votoCount : null
+    };
+  }
+
+  function resultOf(m){
+    if(m.golNap > m.golOpp) return "V";
+    if(m.golNap < m.golOpp) return "S";
+    return "P";
+  }
+
+  function fmt1(n){ return (Math.round(n*10)/10).toFixed(1); }
+
+  // ---------- RENDER ----------
+  function render(){
+    renderSeasonNav();
+    var season = getActiveSeason();
+    var emptyEl = document.getElementById("empty-state");
+    var contentEl = document.getElementById("season-content");
+    if(!season){
+      emptyEl.classList.remove("hidden");
+      contentEl.classList.add("hidden");
+      return;
+    }
+    emptyEl.classList.add("hidden");
+    contentEl.classList.remove("hidden");
+
+    document.getElementById("season-title").textContent = season.name;
+    var activeCompetitions = season.competitions.filter(function(c){ return c.active; });
+    document.getElementById("season-competitions-count").textContent =
+      activeCompetitions.length + (activeCompetitions.length === 1 ? " competizione" : " competizioni");
+
+    // aggregate across ALL competitions (history persists even if later deactivated)
+    var allMatches = [];
+    season.competitions.forEach(function(c){ allMatches = allMatches.concat(c.matches); });
+    var st = computeMatchesStats(allMatches);
+
+    document.getElementById("stat-pg").textContent = st.pg;
+    document.getElementById("stat-gf").textContent = st.gf + " " + (st.pg ? "("+fmt1(st.gfAvg)+")" : "");
+    document.getElementById("stat-gs").textContent = st.gs + " " + (st.pg ? "("+fmt1(st.gsAvg)+")" : "");
+    document.getElementById("stat-media").textContent = st.mediaVoti !== null ? fmt1(st.mediaVoti) : "—";
+
+    document.getElementById("stat-record").innerHTML =
+      '<span class="badge badge-V" style="width:auto;padding:0 8px;">' + st.v + 'V</span>' +
+      '<span class="badge badge-P" style="width:auto;padding:0 8px;">' + st.p + 'P</span>' +
+      '<span class="badge badge-S" style="width:auto;padding:0 8px;">' + st.s + 'S</span>';
+
+    document.getElementById("stat-obiettivo").textContent = fmt1(season.obiettivo);
+    document.getElementById("stat-voto-stagione").textContent = st.mediaVoti !== null ? fmt1(st.mediaVoti) : "—";
+    var pct = st.mediaVoti !== null ? Math.max(0, Math.min(100, (st.mediaVoti / season.obiettivo) * 100)) : 0;
+    document.getElementById("progress-obiettivo").style.width = pct + "%";
+
+    renderCompChips(season);
+    renderCompetitionsList(season);
+  }
+
+  function renderSeasonNav(){
+    var wrap = document.getElementById("season-nav-scroll");
+    wrap.innerHTML = "";
+    state.seasons.forEach(function(s){
+      var btn = document.createElement("button");
+      btn.className = "season-pill" + (s.id === state.activeSeasonId ? " active" : "");
+      btn.textContent = s.name;
+      btn.addEventListener("click", function(){
+        state.activeSeasonId = s.id;
+        save(); render();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function renderCompChips(season){
+    var row = document.getElementById("comp-chip-row");
+    row.innerHTML = "";
+    season.competitions.forEach(function(c){
+      var chip = document.createElement("button");
+      chip.className = "comp-chip" + (c.active ? " active" : "");
+      chip.textContent = c.name;
+      chip.addEventListener("click", function(){
+        c.active = !c.active;
+        save(); render();
+      });
+      row.appendChild(chip);
+    });
+    var addChip = document.createElement("button");
+    addChip.className = "comp-chip";
+    addChip.style.color = "var(--gold)";
+    addChip.innerHTML = "+ Aggiungi";
+    addChip.addEventListener("click", function(){ openCompModal(); });
+    row.appendChild(addChip);
+  }
+
+  var openAccordions = {}; // competitionId -> bool, persists during session
+
+  function renderCompetitionsList(season){
+    var list = document.getElementById("competitions-list");
+    var noCompEl = document.getElementById("no-comp-active");
+    list.innerHTML = "";
+    var active = season.competitions.filter(function(c){ return c.active; });
+
+    if(active.length === 0){
+      noCompEl.classList.remove("hidden");
+      return;
+    }
+    noCompEl.classList.add("hidden");
+
+    active.forEach(function(comp, idx){
+      var st = computeMatchesStats(comp.matches);
+      var isOpen = openAccordions.hasOwnProperty(comp.id) ? openAccordions[comp.id] : (idx === 0);
+
+      var card = document.createElement("div");
+      card.className = "glass rounded-2xl overflow-hidden";
+
+      var header = document.createElement("button");
+      header.className = "w-full flex items-center justify-between px-4 py-3.5";
+      header.innerHTML =
+        '<div class="flex items-center gap-3 text-left">' +
+          '<div>' +
+            '<p class="font-bold text-[15px]">' + escapeHtml(comp.name) + '</p>' +
+            '<p class="text-[11px] text-[var(--text-mute)] font-medium">' +
+              st.pg + ' PG · ' + st.v + 'V ' + st.p + 'P ' + st.s + 'S' +
+              (st.mediaVoti !== null ? ' · voto ' + fmt1(st.mediaVoti) : '') +
+            '</p>' +
+          '</div>' +
+        '</div>' +
+        '<svg class="chevron' + (isOpen?' open':'') + '" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>';
+
+      header.addEventListener("click", function(){
+        openAccordions[comp.id] = !isOpen;
+        render();
+      });
+
+      var contentOuter = document.createElement("div");
+      contentOuter.className = "accordion-content" + (isOpen ? " open" : "");
+      var contentInner = document.createElement("div");
+      var contentBody = document.createElement("div");
+      contentBody.className = "px-4 pb-4";
+
+      // mini stat strip
+      var stripHtml = '<div class="grid grid-cols-3 gap-2 mb-3">' +
+        statPill("Gol fatti", st.pg ? st.gf + " (" + fmt1(st.gfAvg) + ")" : "—") +
+        statPill("Gol subiti", st.pg ? st.gs + " (" + fmt1(st.gsAvg) + ")" : "—") +
+        statPill("Media voti", st.mediaVoti !== null ? fmt1(st.mediaVoti) : "—") +
+        '</div>';
+
+      var matchesHtml = "";
+      if(comp.matches.length === 0){
+        matchesHtml = '<p class="text-xs text-[var(--text-mute)] text-center py-3">Nessuna partita registrata.</p>';
+      } else {
+        comp.matches.slice().reverse().forEach(function(m){
+          matchesHtml += matchTicketHtml(m, comp.id);
+        });
+      }
+
+      var addBtnHtml = '<button data-add-match="' + comp.id + '" class="w-full mt-3 py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg> Aggiungi partita</button>';
+
+      contentBody.innerHTML = stripHtml + '<div class="space-y-2">' + matchesHtml + '</div>' + addBtnHtml;
+      contentInner.appendChild(contentBody);
+      contentOuter.appendChild(contentInner);
+
+      card.appendChild(header);
+      card.appendChild(contentOuter);
+      list.appendChild(card);
+    });
+
+    // wire up match edit / add buttons
+    list.querySelectorAll("[data-add-match]").forEach(function(btn){
+      btn.addEventListener("click", function(){ openMatchModal(btn.getAttribute("data-add-match"), null); });
+    });
+    list.querySelectorAll("[data-edit-match]").forEach(function(btn){
+      var parts = btn.getAttribute("data-edit-match").split("|");
+      btn.addEventListener("click", function(){ openMatchModal(parts[0], parts[1]); });
+    });
+  }
+
+  function statPill(label, value){
+    return '<div class="glass rounded-lg py-2 text-center">' +
+      '<p class="text-[13px] font-bold">' + value + '</p>' +
+      '<p class="text-[9.5px] text-[var(--text-mute)] font-semibold tracking-wide">' + label.toUpperCase() + '</p>' +
+    '</div>';
+  }
+
+  function matchTicketHtml(m, compId){
+    var r = resultOf(m);
+    var initials = m.opponent.trim().slice(0,3).toUpperCase() || "AVV";
+    return '<button data-edit-match="' + compId + '|' + m.id + '" class="ticket w-full flex items-center gap-3 pl-8 pr-3 py-3 text-left">' +
+      '<div class="w-9 h-9 rounded-full flex items-center justify-center font-display text-[13px] flex-shrink-0" style="background:var(--bg-750); color:var(--text-dim);">' + initials + '</div>' +
+      '<div class="flex-1 min-w-0">' +
+        '<p class="font-semibold text-[14px] truncate">' + escapeHtml(m.opponent) + '</p>' +
+        '<p class="text-[11px] text-[var(--text-mute)] font-medium">' + (m.home ? "Casa" : "Trasferta") + '</p>' +
+      '</div>' +
+      '<span class="font-display text-xl tracking-wider">' + m.golNap + '&nbsp;–&nbsp;' + m.golOpp + '</span>' +
+      '<span class="badge badge-' + r + '">' + r + '</span>' +
+      (typeof m.voto === "number" ? '<span class="voto-tag">' + fmt1(m.voto) + '</span>' : '') +
+    '</button>';
+  }
+
+  function escapeHtml(str){
+    var d = document.createElement("div");
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  // ---------- PALMARÈS ----------
+  function renderPalmares(){
+    var grid = document.getElementById("palmares-grid");
+    grid.innerHTML = "";
+    PALMARES_CATALOG.forEach(function(t){
+      var count = state.palmares.counts[t.id] || 0;
+      var card = document.createElement("div");
+      card.className = "trophy-card";
+      card.innerHTML =
+        '<div class="trophy-icon">' + t.icon + '</div>' +
+        '<div class="trophy-count">' + count + '</div>' +
+        '<div class="trophy-name">' + escapeHtml(t.name) + '</div>' +
+        '<div class="trophy-controls">' +
+          '<button type="button" class="trophy-step" data-trophy-dir="-1" data-trophy-id="' + t.id + '" aria-label="Rimuovi">−</button>' +
+          '<button type="button" class="trophy-step" data-trophy-dir="1" data-trophy-id="' + t.id + '" aria-label="Aggiungi">+</button>' +
+        '</div>';
+      grid.appendChild(card);
+    });
+    grid.querySelectorAll("[data-trophy-dir]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var id = btn.getAttribute("data-trophy-id");
+        var dir = parseInt(btn.getAttribute("data-trophy-dir"), 10);
+        var next = (state.palmares.counts[id] || 0) + dir;
+        if(next < 0) next = 0;
+        state.palmares.counts[id] = next;
+        save(); renderPalmares();
+      });
+    });
+
+    var list = document.getElementById("custom-trophies-list");
+    var emptyEl = document.getElementById("custom-trophies-empty");
+    list.innerHTML = "";
+    if(state.palmares.custom.length === 0){
+      emptyEl.classList.remove("hidden");
+    } else {
+      emptyEl.classList.add("hidden");
+      state.palmares.custom.slice().reverse().forEach(function(tr){
+        var row = document.createElement("div");
+        row.className = "settings-row";
+        row.innerHTML =
+          '<div>' +
+            '<p class="font-semibold text-[14px]">' + escapeHtml(tr.name) + '</p>' +
+            (tr.anno ? '<p class="text-[11.5px] text-[var(--text-mute)]">' + tr.anno + '</p>' : '') +
+          '</div>' +
+          '<button type="button" data-del-trophy="' + tr.id + '" class="trophy-step" style="color:var(--loss);" aria-label="Elimina">' +
+            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>' +
+          '</button>';
+        list.appendChild(row);
+      });
+      list.querySelectorAll("[data-del-trophy]").forEach(function(btn){
+        btn.addEventListener("click", function(){
+          var id = btn.getAttribute("data-del-trophy");
+          state.palmares.custom = state.palmares.custom.filter(function(tr){ return tr.id !== id; });
+          save(); renderPalmares();
+          showToast("🗑️ Trofeo eliminato");
+        });
+      });
+    }
+  }
+
+  function addCustomTrophy(){
+    var nameInput = document.getElementById("input-custom-trophy-name");
+    var yearInput = document.getElementById("input-custom-trophy-year");
+    var name = nameInput.value.trim();
+    var anno = yearInput.value.trim();
+    if(!name){ showToast("⚠️ Inserisci il nome del trofeo"); return; }
+    state.palmares.custom.push({ id: uid(), name: name, anno: anno ? anno : null });
+    nameInput.value = ""; yearInput.value = "";
+    save(); renderPalmares();
+    showToast("✓ Trofeo aggiunto");
+  }
+
+  // ---------- TOAST ----------
+  var toastTimer = null;
+  function showToast(msg){
+    var t = document.getElementById("toast");
+    document.getElementById("toast-text").textContent = msg;
+    t.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 1800);
+  }
+
+  // ---------- MODAL: SEASON ----------
+  var seasonModalMode = "add"; // add | edit
+  function openSeasonModal(mode){
+    seasonModalMode = mode || "add";
+    var season = getActiveSeason();
+    var title = document.getElementById("season-modal-title");
+    var delBtn = document.getElementById("btn-delete-season");
+    if(seasonModalMode === "edit" && season){
+      title.textContent = "MODIFICA STAGIONE";
+      document.getElementById("input-season-name").value = season.name;
+      document.getElementById("input-season-obiettivo").value = season.obiettivo;
+      delBtn.classList.remove("hidden");
+    } else {
+      title.textContent = "NUOVA STAGIONE";
+      document.getElementById("input-season-name").value = nextSeasonLabel();
+      document.getElementById("input-season-obiettivo").value = 7.0;
+      delBtn.classList.add("hidden");
+    }
+    toggleSheet("season", true);
+  }
+
+  function closeSeasonModal(){ toggleSheet("season", false); }
+
+  function saveSeasonModal(){
+    var name = document.getElementById("input-season-name").value.trim();
+    var obiettivo = parseFloat(document.getElementById("input-season-obiettivo").value);
+    if(!name){ showToast("⚠️ Inserisci un nome stagione"); return; }
+    if(isNaN(obiettivo) || obiettivo < 1 || obiettivo > 10) obiettivo = 7.0;
+
+    if(seasonModalMode === "edit"){
+      var season = getActiveSeason();
+      if(season){ season.name = name; season.obiettivo = obiettivo; }
+      showToast("✓ Stagione aggiornata");
+    } else {
+      var s = defaultSeason(name);
+      s.obiettivo = obiettivo;
+      state.seasons.push(s);
+      state.activeSeasonId = s.id;
+      showToast("✓ Stagione creata");
+    }
+    save(); render(); closeSeasonModal();
+  }
+
+  function deleteSeasonModal(){
+    var season = getActiveSeason();
+    if(!season) return;
+    if(!confirm('Eliminare definitivamente la stagione "' + season.name + '" e tutti i suoi dati?')) return;
+    state.seasons = state.seasons.filter(function(s){ return s.id !== season.id; });
+    state.activeSeasonId = state.seasons.length ? state.seasons[state.seasons.length-1].id : null;
+    save(); render(); closeSeasonModal();
+    showToast("🗑️ Stagione eliminata");
+  }
+
+  // ---------- MODAL: COMPETITION ----------
+  function openCompModal(){
+    document.getElementById("input-comp-name").value = "";
+    toggleSheet("comp", true);
+  }
+  function closeCompModal(){ toggleSheet("comp", false); }
+  function saveCompModal(){
+    var name = document.getElementById("input-comp-name").value.trim();
+    if(!name){ showToast("⚠️ Inserisci un nome"); return; }
+    var season = getActiveSeason();
+    if(!season) return;
+    season.competitions.push({ id: uid(), catalogId: null, name: name, active: true, custom:true, matches: [] });
+    save(); render(); closeCompModal();
+    showToast("✓ Competizione aggiunta");
+  }
+
+  // ---------- MODAL: MATCH ----------
+  var matchCtx = { compId: null, matchId: null, home: true };
+  var VOTO_PRESETS = [5,5.5,6,6.5,7,7.5,8,8.5,9];
+
+  function buildVotoChips(selected){
+    var row = document.getElementById("voto-chip-row");
+    row.innerHTML = "";
+    VOTO_PRESETS.forEach(function(v){
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "voto-chip" + (selected === v ? " active" : "");
+      chip.textContent = fmt1(v);
+      chip.addEventListener("click", function(){
+        document.getElementById("input-voto").value = v;
+        Array.from(row.children).forEach(function(c){ c.classList.remove("active"); });
+        chip.classList.add("active");
+      });
+      row.appendChild(chip);
+    });
+  }
+
+  function updateLiveResultBadge(){
+    var golNap = parseInt(document.getElementById("input-golnap").value, 10) || 0;
+    var golOpp = parseInt(document.getElementById("input-golopp").value, 10) || 0;
+    var r = resultOf({golNap:golNap, golOpp:golOpp});
+    var b = document.getElementById("live-result-badge");
+    b.textContent = r;
+    b.className = "badge badge-" + r;
+  }
+
+  function setHomeToggle(isHome){
+    matchCtx.home = isHome;
+    document.querySelectorAll(".home-toggle").forEach(function(btn){
+      var v = btn.getAttribute("data-home") === "1";
+      btn.classList.toggle("active", v === isHome);
+    });
+  }
+
+  function openMatchModal(compId, matchId){
+    var season = getActiveSeason();
+    if(!season) return;
+    var comp = season.competitions.find(function(c){ return c.id === compId; });
+    if(!comp) return;
+    matchCtx.compId = compId;
+    matchCtx.matchId = matchId;
+
+    document.getElementById("match-comp-label").textContent = comp.name;
+    var delBtn = document.getElementById("btn-delete-match");
+
+    if(matchId){
+      var m = comp.matches.find(function(x){ return x.id === matchId; });
+      document.getElementById("match-modal-title").textContent = "MODIFICA PARTITA";
+      document.getElementById("input-opponent").value = m.opponent;
+      document.getElementById("input-golnap").value = m.golNap;
+      document.getElementById("input-golopp").value = m.golOpp;
+      document.getElementById("input-voto").value = (typeof m.voto === "number") ? m.voto : "";
+      setHomeToggle(!!m.home);
+      buildVotoChips(m.voto);
+      delBtn.classList.remove("hidden");
+    } else {
+      document.getElementById("match-modal-title").textContent = "NUOVA PARTITA";
+      document.getElementById("input-opponent").value = "";
+      document.getElementById("input-golnap").value = 0;
+      document.getElementById("input-golopp").value = 0;
+      document.getElementById("input-voto").value = "";
+      setHomeToggle(true);
+      buildVotoChips(null);
+      delBtn.classList.add("hidden");
+    }
+    updateLiveResultBadge();
+    toggleSheet("match", true);
+    setTimeout(function(){ document.getElementById("input-opponent").focus(); }, 300);
+  }
+
+  function closeMatchModal(){ toggleSheet("match", false); }
+
+  function saveMatchModal(){
+    var opponent = document.getElementById("input-opponent").value.trim();
+    if(!opponent){ showToast("⚠️ Inserisci l'avversario"); return; }
+    var golNap = parseInt(document.getElementById("input-golnap").value, 10);
+    var golOpp = parseInt(document.getElementById("input-golopp").value, 10);
+    if(isNaN(golNap) || golNap < 0) golNap = 0;
+    if(isNaN(golOpp) || golOpp < 0) golOpp = 0;
+    var votoRaw = document.getElementById("input-voto").value;
+    var voto = votoRaw === "" ? null : parseFloat(votoRaw);
+    if(voto !== null && (isNaN(voto) || voto < 1 || voto > 10)) voto = null;
+
+    var season = getActiveSeason();
+    var comp = season.competitions.find(function(c){ return c.id === matchCtx.compId; });
+    if(!comp) return;
+
+    if(matchCtx.matchId){
+      var m = comp.matches.find(function(x){ return x.id === matchCtx.matchId; });
+      m.opponent = opponent; m.home = matchCtx.home; m.golNap = golNap; m.golOpp = golOpp; m.voto = voto;
+      showToast("✓ Partita aggiornata");
+    } else {
+      comp.matches.push({ id: uid(), opponent: opponent, home: matchCtx.home, golNap: golNap, golOpp: golOpp, voto: voto });
+      showToast("✓ Partita salvata");
+    }
+    save(); render(); closeMatchModal();
+  }
+
+  function deleteMatchModal(){
+    var season = getActiveSeason();
+    var comp = season.competitions.find(function(c){ return c.id === matchCtx.compId; });
+    if(!comp) return;
+    if(!confirm("Eliminare questa partita?")) return;
+    comp.matches = comp.matches.filter(function(m){ return m.id !== matchCtx.matchId; });
+    save(); render(); closeMatchModal();
+    showToast("🗑️ Partita eliminata");
+  }
+
+  // ---------- SHEET / MODAL HELPERS ----------
+  function toggleSheet(name, show){
+    var backdrop = document.getElementById("backdrop-" + name);
+    var sheet = document.getElementById("sheet-" + name);
+    if(show){
+      backdrop.classList.add("show");
+      requestAnimationFrame(function(){ sheet.classList.add("show"); });
+      document.body.style.overflow = "hidden";
+    } else {
+      backdrop.classList.remove("show");
+      sheet.classList.remove("show");
+      document.body.style.overflow = "";
+    }
+  }
+
+  // ---------- TAB SWITCHING ----------
+  var currentTab = "stagioni";
+  function setTab(tab){
+    currentTab = tab;
+    ["stagioni","palmares","impostazioni"].forEach(function(t){
+      document.getElementById("tab-content-" + t).classList.toggle("hidden", t !== tab);
+    });
+    document.querySelectorAll(".tab-btn").forEach(function(btn){
+      btn.classList.toggle("active", btn.getAttribute("data-tab") === tab);
+    });
+    // la barra stagioni in basso ha senso solo nella tab "Stagioni"
+    document.getElementById("bottom-nav").classList.toggle("hidden", tab !== "stagioni");
+    document.getElementById("main").classList.toggle("pb-40", tab === "stagioni");
+    document.getElementById("main").classList.toggle("pb-16", tab !== "stagioni");
+  }
+
+  // ---------- BACKUP: ESPORTA / IMPORTA ----------
+  function exportBackup(){
+    try{
+      var json = JSON.stringify(state, null, 2);
+      var blob = new Blob([json], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      var today = new Date().toISOString().slice(0,10);
+      a.href = url;
+      a.download = "diario-azzurro-backup-" + today + ".json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("✓ Backup esportato");
+    }catch(e){
+      console.error(e);
+      showToast("⚠️ Esportazione non riuscita");
+    }
+  }
+
+  function importBackupFile(file){
+    if(!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      var parsed;
+      try{ parsed = JSON.parse(reader.result); }
+      catch(e){ showToast("⚠️ File non valido"); return; }
+      var normalized = normalizeState(parsed);
+      if(!normalized){ showToast("⚠️ Formato backup non riconosciuto"); return; }
+      if(!confirm("Importare questo backup sovrascriverà tutti i dati attuali dell'app. Continuare?")) return;
+      state = normalized;
+      save();
+      render();
+      renderPalmares();
+      setTab("stagioni");
+      showToast("✓ Backup importato");
+    };
+    reader.onerror = function(){ showToast("⚠️ Lettura del file non riuscita"); };
+    reader.readAsText(file);
+  }
+
+  // ---------- EVENT WIRING ----------
+  function init(){
+    load();
+    render();
+    renderPalmares();
+    setTab("stagioni");
+
+    document.querySelectorAll(".tab-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){ setTab(btn.getAttribute("data-tab")); });
+    });
+
+    document.getElementById("btn-add-custom-trophy").addEventListener("click", addCustomTrophy);
+
+    document.getElementById("btn-export-backup").addEventListener("click", exportBackup);
+    document.getElementById("btn-import-backup").addEventListener("click", function(){
+      document.getElementById("input-import-file").click();
+    });
+    document.getElementById("input-import-file").addEventListener("change", function(e){
+      var file = e.target.files && e.target.files[0];
+      importBackupFile(file);
+      e.target.value = ""; // permette di reimportare lo stesso file in seguito
+    });
+
+    document.getElementById("btn-add-season").addEventListener("click", function(){ openSeasonModal("add"); });
+    document.getElementById("btn-season-settings").addEventListener("click", function(){
+      if(!getActiveSeason()){ openSeasonModal("add"); } else { openSeasonModal("edit"); }
+    });
+    document.getElementById("btn-edit-obiettivo").addEventListener("click", function(){ openSeasonModal("edit"); });
+
+    document.getElementById("btn-save-season").addEventListener("click", saveSeasonModal);
+    document.getElementById("btn-cancel-season").addEventListener("click", closeSeasonModal);
+    document.getElementById("btn-delete-season").addEventListener("click", deleteSeasonModal);
+    document.getElementById("backdrop-season").addEventListener("click", closeSeasonModal);
+
+    document.getElementById("btn-save-comp").addEventListener("click", saveCompModal);
+    document.getElementById("btn-cancel-comp").addEventListener("click", closeCompModal);
+    document.getElementById("backdrop-comp").addEventListener("click", closeCompModal);
+
+    document.getElementById("btn-save-match").addEventListener("click", saveMatchModal);
+    document.getElementById("btn-cancel-match").addEventListener("click", closeMatchModal);
+    document.getElementById("btn-delete-match").addEventListener("click", deleteMatchModal);
+    document.getElementById("backdrop-match").addEventListener("click", closeMatchModal);
+
+    document.querySelectorAll(".home-toggle").forEach(function(btn){
+      btn.addEventListener("click", function(){ setHomeToggle(btn.getAttribute("data-home") === "1"); });
+    });
+
+    document.querySelectorAll("[data-step]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var target = btn.getAttribute("data-step") === "golNap" ? "input-golnap" : "input-golopp";
+        var dir = parseInt(btn.getAttribute("data-dir"), 10);
+        var input = document.getElementById(target);
+        var val = (parseInt(input.value, 10) || 0) + dir;
+        if(val < 0) val = 0;
+        input.value = val;
+        updateLiveResultBadge();
+      });
+    });
+
+    document.getElementById("input-golnap").addEventListener("input", updateLiveResultBadge);
+    document.getElementById("input-golopp").addEventListener("input", updateLiveResultBadge);
+
+    document.getElementById("input-voto").addEventListener("input", function(){
+      var v = parseFloat(this.value);
+      document.querySelectorAll("#voto-chip-row .voto-chip").forEach(function(c){
+        c.classList.toggle("active", parseFloat(c.textContent.replace(",", ".")) === v);
+      });
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
+</script>
+</body>
+</html>
