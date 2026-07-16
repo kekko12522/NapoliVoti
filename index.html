@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0A0F1C">
 <!-- PWA iOS: consente il salvataggio in Home e l'avvio "standalone" senza barra Safari -->
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -36,14 +36,19 @@
     --text-dim:#93a5c4;
     --text-mute:#5a6a8a;
   }
-  *{ -webkit-tap-highlight-color: transparent; }
+  *{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   html,body{ height:100%; }
   body{
     background: var(--bg-950);
     color: var(--text);
     font-family: 'Inter', system-ui, sans-serif;
     overscroll-behavior-y: none;
+    /* Margini di sicurezza iOS: lo sfondo resta full-bleed, il contenuto rientra sotto la Dynamic Island / notch */
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
+  button, input, a, select, textarea, [role="button"]{ touch-action: manipulation; }
   .font-display{ font-family:'Bebas Neue', 'Inter', sans-serif; letter-spacing:0.02em; }
   .scrollbar-hide::-webkit-scrollbar{ display:none; }
   .scrollbar-hide{ -ms-overflow-style:none; scrollbar-width:none; }
@@ -74,6 +79,8 @@
     backdrop-filter: blur(14px);
     border-top:1px solid var(--line);
     padding-bottom: max(env(safe-area-inset-bottom), 10px);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 
   .season-pill{
@@ -237,6 +244,8 @@
     transform: translateY(100%); transition: transform .32s cubic-bezier(.32,.72,0,1);
     max-height:88vh; overflow-y:auto;
     padding-bottom: max(env(safe-area-inset-bottom), 20px);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   .sheet.show{ transform: translateY(0); }
 
@@ -362,23 +371,18 @@
 
 <!-- TAB: PALMARÈS -->
 <div id="tab-content-palmares" class="hidden">
-  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">TROFEI UFFICIALI</p>
-  <div id="palmares-grid" class="grid grid-cols-2 gap-3"></div>
-
-  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">TROFEO PERSONALIZZATO</p>
-  <div class="glass rounded-2xl p-4">
-    <div class="flex gap-2 mb-2.5">
-      <input id="input-custom-trophy-name" type="text" placeholder="Nome trofeo" class="field-input flex-1">
-      <input id="input-custom-trophy-year" type="number" placeholder="Anno" class="field-input" style="width:96px;">
-    </div>
-    <button id="btn-add-custom-trophy" class="w-full py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg> Aggiungi trofeo
-    </button>
+  <div class="flex items-center justify-between mb-3 px-1">
+    <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide">I TUOI TROFEI</p>
   </div>
 
-  <div id="custom-trophies-list" class="mt-3 space-y-2"></div>
-  <div id="custom-trophies-empty" class="hidden mt-6 text-center text-sm text-[var(--text-mute)]">
-    Nessun trofeo personalizzato aggiunto.
+  <button id="btn-add-trofeo" type="button" class="w-full py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5 mb-4" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg> Nuovo trofeo
+  </button>
+
+  <div id="trofei-list" class="space-y-3"></div>
+
+  <div id="trofei-empty" class="hidden mt-10 text-center text-sm text-[var(--text-mute)]">
+    Nessun trofeo ancora. Crea la tua prima categoria (es. "Scudetto") e poi aggiungi le edizioni vinte.
   </div>
 </div>
 
@@ -405,7 +409,7 @@
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
   <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
-    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v1.1.0</span></p>
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v1.2.0</span></p>
     <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
   </div>
 </div>
@@ -452,7 +456,8 @@
   </div>
 
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">AVVERSARIO</label>
-  <input id="input-opponent" type="text" placeholder="es. Sassuolo" class="field-input mt-1.5 mb-4" autocomplete="off">
+  <input id="input-opponent" type="text" placeholder="es. Sassuolo" class="field-input mt-1.5 mb-4" autocomplete="off" list="opponents-datalist">
+  <datalist id="opponents-datalist"></datalist>
 
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">SEDE</label>
   <div class="flex gap-2 mb-4">
@@ -504,6 +509,35 @@
   <button id="btn-cancel-comp" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
 </div>
 
+<!-- MODAL: TROFEO (add/edit categoria) -->
+<div id="backdrop-trofeo" class="modal-backdrop"></div>
+<div id="sheet-trofeo" class="sheet px-5 pt-3">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <h3 id="trofeo-modal-title" class="font-display text-2xl mb-4">NUOVO TROFEO</h3>
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">NOME TROFEO</label>
+  <input id="input-trofeo-name" type="text" placeholder="es. Champions League" class="field-input mt-1.5 mb-5">
+  <button id="btn-save-trofeo" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
+  <button id="btn-delete-trofeo" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Elimina trofeo</button>
+  <button id="btn-cancel-trofeo" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
+</div>
+
+<!-- MODAL: EDIZIONE (add/edit anno vinto) -->
+<div id="backdrop-edizione" class="modal-backdrop"></div>
+<div id="sheet-edizione" class="sheet px-5 pt-3">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <div class="flex items-center justify-between mb-4">
+    <h3 id="edizione-modal-title" class="font-display text-2xl">NUOVA EDIZIONE</h3>
+    <span id="edizione-trofeo-label" class="text-[11px] font-bold text-[var(--azzurro)] uppercase"></span>
+  </div>
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">ANNO / STAGIONE</label>
+  <input id="input-edizione-anno" type="text" placeholder="es. 2022/2023" class="field-input mt-1.5 mb-4">
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">DETTAGLI (facoltativo)</label>
+  <textarea id="input-edizione-dettagli" rows="3" placeholder="es. Allenatore: Spalletti, capocannoniere Osimhen" class="field-input mt-1.5 mb-5" style="resize:vertical;"></textarea>
+  <button id="btn-save-edizione" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
+  <button id="btn-delete-edizione" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Elimina edizione</button>
+  <button id="btn-cancel-edizione" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
+</div>
+
 <script>
 (function(){
   "use strict";
@@ -520,14 +554,10 @@
     {id:"supercoppa-eu", name:"Supercoppa Europea"}
   ];
 
-  var PALMARES_CATALOG = [
-    {id:"scudetto", name:"Scudetto", icon:"⭐"},
-    {id:"coppa-italia-p", name:"Coppa Italia", icon:"🏆"},
-    {id:"supercoppa-it-p", name:"Supercoppa Italiana", icon:"🎖️"},
-    {id:"coppa-uefa", name:"Coppa UEFA / Europa League", icon:"🌍"}
-  ];
+  // Trofei iniziali suggeriti: l'utente può rinominarli, eliminarli o aggiungerne di nuovi liberamente.
+  var STARTER_TROFEI_NAMES = ["Scudetto", "Coppa Italia", "Supercoppa Italiana"];
 
-  var state = { seasons: [], activeSeasonId: null, palmares: { counts:{}, custom:[] } };
+  var state = { seasons: [], activeSeasonId: null, palmares: { trofei: [] }, knownOpponents: [] };
 
   function uid(){
     return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,9);
@@ -544,9 +574,9 @@
   }
 
   function defaultPalmares(){
-    var counts = {};
-    PALMARES_CATALOG.forEach(function(t){ counts[t.id] = 0; });
-    return { counts: counts, custom: [] };
+    return { trofei: STARTER_TROFEI_NAMES.map(function(name){
+      return { id: uid(), name: name, edizioni: [] };
+    }) };
   }
 
   // Assicura che uno stato caricato (da localStorage o da un backup importato)
@@ -554,15 +584,44 @@
   function normalizeState(s){
     if(!s || typeof s !== "object") return null;
     if(!Array.isArray(s.seasons)) return null;
+
+    if(!Array.isArray(s.knownOpponents)) s.knownOpponents = [];
+
     if(!s.palmares || typeof s.palmares !== "object"){
       s.palmares = defaultPalmares();
+    } else if(!Array.isArray(s.palmares.trofei)){
+      // Migrazione dal vecchio formato v1.1.0 (counts/custom) al nuovo formato dinamico (trofei/edizioni)
+      var trofei = [];
+      var findOrCreate = function(name){
+        var existing = trofei.find(function(t){ return t.name.toLowerCase() === name.toLowerCase(); });
+        if(existing) return existing;
+        var t = { id: uid(), name: name, edizioni: [] };
+        trofei.push(t);
+        return t;
+      };
+      var OLD_CATALOG_NAMES = { "scudetto":"Scudetto", "coppa-italia-p":"Coppa Italia", "supercoppa-it-p":"Supercoppa Italiana", "coppa-uefa":"Coppa UEFA / Europa League" };
+      if(s.palmares.counts && typeof s.palmares.counts === "object"){
+        Object.keys(s.palmares.counts).forEach(function(key){
+          var count = s.palmares.counts[key] || 0;
+          if(count <= 0) return;
+          var name = OLD_CATALOG_NAMES[key] || key;
+          var t = findOrCreate(name);
+          for(var i=0;i<count;i++){ t.edizioni.push({ id: uid(), anno:"", dettagli:"" }); }
+        });
+      }
+      if(Array.isArray(s.palmares.custom)){
+        s.palmares.custom.forEach(function(tr){
+          var t = findOrCreate(tr.name || "Trofeo");
+          t.edizioni.push({ id: uid(), anno: tr.anno || "", dettagli:"" });
+        });
+      }
+      s.palmares = { trofei: trofei };
     } else {
-      if(!s.palmares.counts || typeof s.palmares.counts !== "object") s.palmares.counts = {};
-      if(!Array.isArray(s.palmares.custom)) s.palmares.custom = [];
-      PALMARES_CATALOG.forEach(function(t){
-        if(typeof s.palmares.counts[t.id] !== "number") s.palmares.counts[t.id] = 0;
+      s.palmares.trofei.forEach(function(t){
+        if(!Array.isArray(t.edizioni)) t.edizioni = [];
       });
     }
+
     if(s.seasons.length && !s.seasons.some(function(se){ return se.id === s.activeSeasonId; })){
       s.activeSeasonId = s.seasons[s.seasons.length - 1].id;
     }
@@ -581,13 +640,30 @@
       }
     }catch(e){ console.warn("Impossibile leggere i dati salvati, avvio con stagione predefinita.", e); }
     var s = defaultSeason(guessSeasonLabel());
-    state = { seasons:[s], activeSeasonId: s.id, palmares: defaultPalmares() };
+    state = { seasons:[s], activeSeasonId: s.id, palmares: defaultPalmares(), knownOpponents: [] };
     save();
   }
 
   function save(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     catch(e){ console.error("Salvataggio non riuscito", e); showToast("⚠️ Salvataggio non riuscito"); }
+  }
+
+  function addKnownOpponent(name){
+    name = name.trim();
+    if(!name) return;
+    var exists = state.knownOpponents.some(function(o){ return o.toLowerCase() === name.toLowerCase(); });
+    if(!exists){
+      state.knownOpponents.push(name);
+      state.knownOpponents.sort(function(a,b){ return a.localeCompare(b, 'it'); });
+    }
+  }
+
+  function renderOpponentsDatalist(){
+    var dl = document.getElementById("opponents-datalist");
+    dl.innerHTML = state.knownOpponents.map(function(name){
+      return '<option value="' + escapeHtml(name) + '"></option>';
+    }).join("");
   }
 
   function guessSeasonLabel(){
@@ -828,76 +904,197 @@
     return d.innerHTML;
   }
 
-  // ---------- PALMARÈS ----------
+  // ---------- PALMARÈS (dinamico: trofei + edizioni) ----------
+  var openTrofeiAccordions = {};
+
   function renderPalmares(){
-    var grid = document.getElementById("palmares-grid");
-    grid.innerHTML = "";
-    PALMARES_CATALOG.forEach(function(t){
-      var count = state.palmares.counts[t.id] || 0;
+    var list = document.getElementById("trofei-list");
+    var emptyEl = document.getElementById("trofei-empty");
+    list.innerHTML = "";
+
+    if(state.palmares.trofei.length === 0){
+      emptyEl.classList.remove("hidden");
+      return;
+    }
+    emptyEl.classList.add("hidden");
+
+    state.palmares.trofei.forEach(function(trofeo, idx){
+      var isOpen = openTrofeiAccordions.hasOwnProperty(trofeo.id) ? openTrofeiAccordions[trofeo.id] : (idx === 0);
+      var edizioniOrdinate = trofeo.edizioni.slice().sort(function(a,b){ return (b.anno||"").localeCompare(a.anno||""); });
+
       var card = document.createElement("div");
-      card.className = "trophy-card";
-      card.innerHTML =
-        '<div class="trophy-icon">' + t.icon + '</div>' +
-        '<div class="trophy-count">' + count + '</div>' +
-        '<div class="trophy-name">' + escapeHtml(t.name) + '</div>' +
-        '<div class="trophy-controls">' +
-          '<button type="button" class="trophy-step" data-trophy-dir="-1" data-trophy-id="' + t.id + '" aria-label="Rimuovi">−</button>' +
-          '<button type="button" class="trophy-step" data-trophy-dir="1" data-trophy-id="' + t.id + '" aria-label="Aggiungi">+</button>' +
+      card.className = "glass rounded-2xl overflow-hidden";
+
+      var header = document.createElement("div");
+      header.className = "w-full flex items-center justify-between px-4 py-3.5 gap-2";
+      header.innerHTML =
+        '<button type="button" data-toggle-trofeo="' + trofeo.id + '" class="flex items-center gap-3 text-left flex-1 min-w-0">' +
+          '<span class="trophy-count" style="font-size:24px;">' + trofeo.edizioni.length + '</span>' +
+          '<div class="min-w-0">' +
+            '<p class="font-bold text-[15px] truncate">' + escapeHtml(trofeo.name) + '</p>' +
+            '<p class="text-[11px] text-[var(--text-mute)] font-medium">' + trofeo.edizioni.length + (trofeo.edizioni.length === 1 ? ' edizione vinta' : ' edizioni vinte') + '</p>' +
+          '</div>' +
+        '</button>' +
+        '<div class="flex items-center gap-1.5 flex-shrink-0">' +
+          '<button type="button" data-edit-trofeo="' + trofeo.id + '" class="trophy-step" aria-label="Modifica trofeo">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>' +
+          '</button>' +
+          '<svg data-toggle-trofeo="' + trofeo.id + '" class="chevron' + (isOpen?' open':'') + '" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>' +
         '</div>';
-      grid.appendChild(card);
-    });
-    grid.querySelectorAll("[data-trophy-dir]").forEach(function(btn){
-      btn.addEventListener("click", function(){
-        var id = btn.getAttribute("data-trophy-id");
-        var dir = parseInt(btn.getAttribute("data-trophy-dir"), 10);
-        var next = (state.palmares.counts[id] || 0) + dir;
-        if(next < 0) next = 0;
-        state.palmares.counts[id] = next;
-        save(); renderPalmares();
-      });
+
+      var contentOuter = document.createElement("div");
+      contentOuter.className = "accordion-content" + (isOpen ? " open" : "");
+      var contentInner = document.createElement("div");
+      var contentBody = document.createElement("div");
+      contentBody.className = "px-4 pb-4";
+
+      var edizioniHtml = "";
+      if(edizioniOrdinate.length === 0){
+        edizioniHtml = '<p class="text-xs text-[var(--text-mute)] text-center py-3">Nessuna edizione registrata.</p>';
+      } else {
+        edizioniOrdinate.forEach(function(ed){
+          edizioniHtml += '<button type="button" data-edit-edizione="' + trofeo.id + '|' + ed.id + '" class="ticket w-full flex items-center gap-3 pl-8 pr-3 py-3 text-left">' +
+            '<div class="flex-1 min-w-0">' +
+              '<p class="font-display text-lg tracking-wide">' + escapeHtml(ed.anno || "Anno non specificato") + '</p>' +
+              (ed.dettagli ? '<p class="text-[11.5px] text-[var(--text-mute)] mt-0.5">' + escapeHtml(ed.dettagli) + '</p>' : '') +
+            '</div>' +
+          '</button>';
+        });
+      }
+
+      var addBtnHtml = '<button type="button" data-add-edizione="' + trofeo.id + '" class="w-full mt-3 py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">' +
+        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg> Aggiungi edizione</button>';
+
+      contentBody.innerHTML = '<div class="space-y-2">' + edizioniHtml + '</div>' + addBtnHtml;
+      contentInner.appendChild(contentBody);
+      contentOuter.appendChild(contentInner);
+
+      card.appendChild(header);
+      card.appendChild(contentOuter);
+      list.appendChild(card);
     });
 
-    var list = document.getElementById("custom-trophies-list");
-    var emptyEl = document.getElementById("custom-trophies-empty");
-    list.innerHTML = "";
-    if(state.palmares.custom.length === 0){
-      emptyEl.classList.remove("hidden");
-    } else {
-      emptyEl.classList.add("hidden");
-      state.palmares.custom.slice().reverse().forEach(function(tr){
-        var row = document.createElement("div");
-        row.className = "settings-row";
-        row.innerHTML =
-          '<div>' +
-            '<p class="font-semibold text-[14px]">' + escapeHtml(tr.name) + '</p>' +
-            (tr.anno ? '<p class="text-[11.5px] text-[var(--text-mute)]">' + tr.anno + '</p>' : '') +
-          '</div>' +
-          '<button type="button" data-del-trophy="' + tr.id + '" class="trophy-step" style="color:var(--loss);" aria-label="Elimina">' +
-            '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>' +
-          '</button>';
-        list.appendChild(row);
+    list.querySelectorAll("[data-toggle-trofeo]").forEach(function(el){
+      el.addEventListener("click", function(){
+        var id = el.getAttribute("data-toggle-trofeo");
+        var wasOpen = openTrofeiAccordions.hasOwnProperty(id) ? openTrofeiAccordions[id] : false;
+        openTrofeiAccordions[id] = !wasOpen;
+        renderPalmares();
       });
-      list.querySelectorAll("[data-del-trophy]").forEach(function(btn){
-        btn.addEventListener("click", function(){
-          var id = btn.getAttribute("data-del-trophy");
-          state.palmares.custom = state.palmares.custom.filter(function(tr){ return tr.id !== id; });
-          save(); renderPalmares();
-          showToast("🗑️ Trofeo eliminato");
-        });
-      });
-    }
+    });
+    list.querySelectorAll("[data-edit-trofeo]").forEach(function(btn){
+      btn.addEventListener("click", function(){ openTrofeoModal("edit", btn.getAttribute("data-edit-trofeo")); });
+    });
+    list.querySelectorAll("[data-add-edizione]").forEach(function(btn){
+      btn.addEventListener("click", function(){ openEdizioneModal(btn.getAttribute("data-add-edizione"), null); });
+    });
+    list.querySelectorAll("[data-edit-edizione]").forEach(function(btn){
+      var parts = btn.getAttribute("data-edit-edizione").split("|");
+      btn.addEventListener("click", function(){ openEdizioneModal(parts[0], parts[1]); });
+    });
   }
 
-  function addCustomTrophy(){
-    var nameInput = document.getElementById("input-custom-trophy-name");
-    var yearInput = document.getElementById("input-custom-trophy-year");
-    var name = nameInput.value.trim();
-    var anno = yearInput.value.trim();
+  // ---- Modal: TROFEO ----
+  var trofeoModalMode = "add";
+  var trofeoCtx = { trofeoId: null };
+
+  function openTrofeoModal(mode, trofeoId){
+    trofeoModalMode = mode;
+    trofeoCtx.trofeoId = trofeoId || null;
+    var delBtn = document.getElementById("btn-delete-trofeo");
+    if(mode === "edit"){
+      var trofeo = state.palmares.trofei.find(function(t){ return t.id === trofeoId; });
+      if(!trofeo) return;
+      document.getElementById("trofeo-modal-title").textContent = "MODIFICA TROFEO";
+      document.getElementById("input-trofeo-name").value = trofeo.name;
+      delBtn.classList.remove("hidden");
+    } else {
+      document.getElementById("trofeo-modal-title").textContent = "NUOVO TROFEO";
+      document.getElementById("input-trofeo-name").value = "";
+      delBtn.classList.add("hidden");
+    }
+    toggleSheet("trofeo", true);
+    setTimeout(function(){ document.getElementById("input-trofeo-name").focus(); }, 300);
+  }
+  function closeTrofeoModal(){ toggleSheet("trofeo", false); }
+
+  function saveTrofeoModal(){
+    var name = document.getElementById("input-trofeo-name").value.trim();
     if(!name){ showToast("⚠️ Inserisci il nome del trofeo"); return; }
-    state.palmares.custom.push({ id: uid(), name: name, anno: anno ? anno : null });
-    nameInput.value = ""; yearInput.value = "";
-    save(); renderPalmares();
-    showToast("✓ Trofeo aggiunto");
+    if(trofeoModalMode === "edit"){
+      var trofeo = state.palmares.trofei.find(function(t){ return t.id === trofeoCtx.trofeoId; });
+      if(trofeo) trofeo.name = name;
+      showToast("✓ Trofeo aggiornato");
+    } else {
+      state.palmares.trofei.push({ id: uid(), name: name, edizioni: [] });
+      showToast("✓ Trofeo creato");
+    }
+    save(); renderPalmares(); closeTrofeoModal();
+  }
+
+  function deleteTrofeoModal(){
+    var trofeo = state.palmares.trofei.find(function(t){ return t.id === trofeoCtx.trofeoId; });
+    if(!trofeo) return;
+    if(!confirm('Eliminare il trofeo "' + trofeo.name + '" e tutte le edizioni al suo interno?')) return;
+    state.palmares.trofei = state.palmares.trofei.filter(function(t){ return t.id !== trofeo.id; });
+    delete openTrofeiAccordions[trofeo.id];
+    save(); renderPalmares(); closeTrofeoModal();
+    showToast("🗑️ Trofeo eliminato");
+  }
+
+  // ---- Modal: EDIZIONE ----
+  var edizioneCtx = { trofeoId: null, edizioneId: null };
+
+  function openEdizioneModal(trofeoId, edizioneId){
+    var trofeo = state.palmares.trofei.find(function(t){ return t.id === trofeoId; });
+    if(!trofeo) return;
+    edizioneCtx.trofeoId = trofeoId;
+    edizioneCtx.edizioneId = edizioneId;
+    document.getElementById("edizione-trofeo-label").textContent = trofeo.name;
+    var delBtn = document.getElementById("btn-delete-edizione");
+
+    if(edizioneId){
+      var ed = trofeo.edizioni.find(function(e){ return e.id === edizioneId; });
+      document.getElementById("edizione-modal-title").textContent = "MODIFICA EDIZIONE";
+      document.getElementById("input-edizione-anno").value = ed.anno || "";
+      document.getElementById("input-edizione-dettagli").value = ed.dettagli || "";
+      delBtn.classList.remove("hidden");
+    } else {
+      document.getElementById("edizione-modal-title").textContent = "NUOVA EDIZIONE";
+      document.getElementById("input-edizione-anno").value = "";
+      document.getElementById("input-edizione-dettagli").value = "";
+      delBtn.classList.add("hidden");
+    }
+    toggleSheet("edizione", true);
+    setTimeout(function(){ document.getElementById("input-edizione-anno").focus(); }, 300);
+  }
+  function closeEdizioneModal(){ toggleSheet("edizione", false); }
+
+  function saveEdizioneModal(){
+    var anno = document.getElementById("input-edizione-anno").value.trim();
+    var dettagli = document.getElementById("input-edizione-dettagli").value.trim();
+    if(!anno){ showToast("⚠️ Inserisci l'anno o la stagione"); return; }
+    var trofeo = state.palmares.trofei.find(function(t){ return t.id === edizioneCtx.trofeoId; });
+    if(!trofeo) return;
+
+    if(edizioneCtx.edizioneId){
+      var ed = trofeo.edizioni.find(function(e){ return e.id === edizioneCtx.edizioneId; });
+      ed.anno = anno; ed.dettagli = dettagli;
+      showToast("✓ Edizione aggiornata");
+    } else {
+      trofeo.edizioni.push({ id: uid(), anno: anno, dettagli: dettagli });
+      showToast("✓ Edizione aggiunta");
+    }
+    save(); renderPalmares(); closeEdizioneModal();
+  }
+
+  function deleteEdizioneModal(){
+    var trofeo = state.palmares.trofei.find(function(t){ return t.id === edizioneCtx.trofeoId; });
+    if(!trofeo) return;
+    if(!confirm("Eliminare questa edizione?")) return;
+    trofeo.edizioni = trofeo.edizioni.filter(function(e){ return e.id !== edizioneCtx.edizioneId; });
+    save(); renderPalmares(); closeEdizioneModal();
+    showToast("🗑️ Edizione eliminata");
   }
 
   // ---------- TOAST ----------
@@ -1078,6 +1275,8 @@
       comp.matches.push({ id: uid(), opponent: opponent, home: matchCtx.home, golNap: golNap, golOpp: golOpp, voto: voto });
       showToast("✓ Partita salvata");
     }
+    addKnownOpponent(opponent);
+    renderOpponentsDatalist();
     save(); render(); closeMatchModal();
   }
 
@@ -1169,13 +1368,13 @@
     load();
     render();
     renderPalmares();
+    renderOpponentsDatalist();
     setTab("stagioni");
 
     document.querySelectorAll(".tab-btn").forEach(function(btn){
       btn.addEventListener("click", function(){ setTab(btn.getAttribute("data-tab")); });
     });
 
-    document.getElementById("btn-add-custom-trophy").addEventListener("click", addCustomTrophy);
 
     document.getElementById("btn-export-backup").addEventListener("click", exportBackup);
     document.getElementById("btn-import-backup").addEventListener("click", function(){
@@ -1201,6 +1400,17 @@
     document.getElementById("btn-save-comp").addEventListener("click", saveCompModal);
     document.getElementById("btn-cancel-comp").addEventListener("click", closeCompModal);
     document.getElementById("backdrop-comp").addEventListener("click", closeCompModal);
+
+    document.getElementById("btn-add-trofeo").addEventListener("click", function(){ openTrofeoModal("add", null); });
+    document.getElementById("btn-save-trofeo").addEventListener("click", saveTrofeoModal);
+    document.getElementById("btn-cancel-trofeo").addEventListener("click", closeTrofeoModal);
+    document.getElementById("btn-delete-trofeo").addEventListener("click", deleteTrofeoModal);
+    document.getElementById("backdrop-trofeo").addEventListener("click", closeTrofeoModal);
+
+    document.getElementById("btn-save-edizione").addEventListener("click", saveEdizioneModal);
+    document.getElementById("btn-cancel-edizione").addEventListener("click", closeEdizioneModal);
+    document.getElementById("btn-delete-edizione").addEventListener("click", deleteEdizioneModal);
+    document.getElementById("backdrop-edizione").addEventListener("click", closeEdizioneModal);
 
     document.getElementById("btn-save-match").addEventListener("click", saveMatchModal);
     document.getElementById("btn-cancel-match").addEventListener("click", closeMatchModal);
