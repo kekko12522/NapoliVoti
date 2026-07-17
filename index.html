@@ -13,6 +13,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
 <style>
   :root{
     --bg-950:#080d18;
@@ -95,15 +96,21 @@
     white-space:nowrap;
     transition: all .18s ease;
   }
+  .season-pill.active{
+    color:#04141f;
+    background: linear-gradient(135deg, #4bc4f2, var(--azzurro-deep));
+    border-color: transparent;
+    box-shadow: 0 4px 16px -4px var(--azzurro-glow);
+  }
 
-  /* Top tab switcher: Stagioni / Palmarès / Impostazioni */
+  /* Top tab switcher: Stagioni / Statistiche / Palmarès / Impostazioni */
   .tab-switcher{
     display:flex; gap:6px; background:var(--bg-900); border:1px solid var(--line);
     border-radius:14px; padding:4px;
   }
   .tab-btn{
-    flex:1; text-align:center; padding:9px 0; border-radius:10px;
-    font-size:13px; font-weight:700; color:var(--text-mute);
+    flex:1; text-align:center; padding:9px 4px; border-radius:10px;
+    font-size:12.5px; font-weight:700; color:var(--text-mute);
     transition: all .18s ease;
   }
   .tab-btn.active{
@@ -115,13 +122,10 @@
     background: var(--bg-900); border:1px solid var(--line); border-radius:16px;
     padding:16px 14px; text-align:center;
   }
-  .trophy-icon{ font-size:26px; line-height:1; margin-bottom:6px; }
   .trophy-count{ font-family:'Bebas Neue', sans-serif; font-size:32px; color:var(--gold); line-height:1; }
-  .trophy-name{ font-size:11.5px; font-weight:700; color:var(--text-dim); margin-top:2px; }
-  .trophy-controls{ display:flex; align-items:center; justify-content:center; gap:10px; margin-top:10px; }
   .trophy-step{
     width:32px; height:32px; border-radius:9px; background:var(--bg-750); border:1px solid var(--line);
-    color:var(--text); font-size:17px; display:flex; align-items:center; justify-content:center;
+    color:var(--text); font-size:17px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
   }
   .trophy-step:active{ background:var(--bg-800); }
 
@@ -131,12 +135,6 @@
   }
   .settings-btn{
     padding:10px 18px; border-radius:10px; font-weight:700; font-size:13.5px; white-space:nowrap;
-  }
-  .season-pill.active{
-    color:#04141f;
-    background: linear-gradient(135deg, #4bc4f2, var(--azzurro-deep));
-    border-color: transparent;
-    box-shadow: 0 4px 16px -4px var(--azzurro-glow);
   }
 
   .comp-chip{
@@ -169,6 +167,7 @@
     padding:2px 8px; border-radius:6px;
     background:var(--bg-750); color:var(--gold);
     border:1px solid rgba(224,176,79,0.25);
+    flex-shrink:0;
   }
 
   /* ticket-stub match card: perforated left edge */
@@ -195,12 +194,16 @@
   }
   .accordion-content.open{ grid-template-rows: 1fr; }
   .accordion-content > div{ overflow:hidden; min-height:0; }
-  .chevron{ transition: transform .28s ease; }
+  .chevron{ transition: transform .28s ease; flex-shrink:0; }
   .chevron.open{ transform: rotate(180deg); }
 
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button{ -webkit-appearance:none; margin:0; }
   input[type=number]{ -moz-appearance:textfield; }
+
+  input[type=color]{ -webkit-appearance:none; appearance:none; border:none; padding:0; background:none; }
+  input[type=color]::-webkit-color-swatch-wrapper{ padding:0; }
+  input[type=color]::-webkit-color-swatch{ border:1px solid var(--line); border-radius:10px; }
 
   .field-input{
     width:100%; background:var(--bg-900); border:1px solid var(--line);
@@ -208,9 +211,10 @@
     outline:none; transition: border-color .15s ease;
   }
   .field-input:focus{ border-color: var(--azzurro); }
+  select.field-input{ appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2393a5c4' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
 
   .seg-btn{
-    flex:1; text-align:center; padding:10px 0; border-radius:10px; font-weight:600; font-size:14px;
+    flex:1; text-align:center; padding:10px 6px; border-radius:10px; font-weight:600; font-size:13px;
     color:var(--text-mute); background:var(--bg-900); border:1px solid var(--line);
     transition: all .15s ease;
   }
@@ -219,7 +223,7 @@
   .stepper-btn{
     width:42px; height:42px; border-radius:12px; background:var(--bg-900); border:1px solid var(--line);
     color:var(--text); font-size:20px; display:flex; align-items:center; justify-content:center;
-    user-select:none;
+    user-select:none; flex-shrink:0;
   }
   .stepper-btn:active{ background: var(--bg-750); }
 
@@ -293,6 +297,7 @@
 <div class="relative z-10 px-5 mb-4 max-w-2xl mx-auto">
   <div class="tab-switcher">
     <button type="button" class="tab-btn" data-tab="stagioni">Stagioni</button>
+    <button type="button" class="tab-btn" data-tab="statistiche">Statistiche</button>
     <button type="button" class="tab-btn" data-tab="palmares">Palmarès</button>
     <button type="button" class="tab-btn" data-tab="impostazioni">Impostazioni</button>
   </div>
@@ -340,16 +345,12 @@
       </div>
 
       <div class="mt-5 pt-4" style="border-top:1px solid var(--line)">
-        <div class="flex items-center justify-between text-xs font-semibold text-[var(--text-mute)] mb-2">
-          <span>VOTO STAGIONE</span>
-          <button id="btn-edit-obiettivo" class="flex items-center gap-1 text-[var(--text-dim)]">
-            OBIETTIVO <span id="stat-obiettivo" class="voto-tag ml-1">7.0</span>
-          </button>
-        </div>
+        <p class="text-xs font-semibold text-[var(--text-mute)] mb-2">VOTO STAGIONE <span class="text-[var(--text-mute)] opacity-60">(su 10)</span></p>
         <div class="flex items-center gap-3">
           <span id="stat-voto-stagione" class="font-display text-3xl" style="color:var(--azzurro)">—</span>
-          <div class="flex-1 progress-track"><div id="progress-obiettivo" class="progress-fill" style="width:0%"></div></div>
+          <div class="flex-1 progress-track"><div id="progress-voto" class="progress-fill" style="width:0%"></div></div>
         </div>
+        <p id="stat-voto-breakdown" class="text-[11px] text-[var(--text-mute)] mt-1.5"></p>
       </div>
     </section>
 
@@ -368,6 +369,45 @@
 
   </div>
 </div><!-- /tab-content-stagioni -->
+
+<!-- TAB: STATISTICHE -->
+<div id="tab-content-statistiche" class="hidden">
+  <div class="tab-switcher mb-4">
+    <button type="button" class="tab-btn chart-metric-btn active" data-metric="voti">Voti</button>
+    <button type="button" class="tab-btn chart-metric-btn" data-metric="gol">Gol</button>
+    <button type="button" class="tab-btn chart-metric-btn" data-metric="punti">Punti</button>
+  </div>
+
+  <div class="glass-elevated rounded-2xl p-4">
+    <div style="position:relative; height:220px;">
+      <canvas id="stats-chart"></canvas>
+      <p id="stats-chart-empty" class="hidden absolute inset-0 items-center justify-center text-center text-sm text-[var(--text-mute)] px-6"></p>
+    </div>
+  </div>
+
+  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">CASA E TRASFERTA</p>
+  <div class="grid grid-cols-2 gap-3">
+    <div class="glass rounded-xl p-3.5">
+      <p class="text-[11px] font-bold text-[var(--text-mute)] tracking-wide mb-1.5">🏠 CASA</p>
+      <p id="stats-home-summary" class="text-[13px] font-semibold leading-snug">—</p>
+    </div>
+    <div class="glass rounded-xl p-3.5">
+      <p class="text-[11px] font-bold text-[var(--text-mute)] tracking-wide mb-1.5">✈️ TRASFERTA</p>
+      <p id="stats-away-summary" class="text-[13px] font-semibold leading-snug">—</p>
+    </div>
+  </div>
+  <p class="text-[10.5px] text-[var(--text-mute)] mt-2 px-1">Le partite in campo neutro non sono conteggiate qui.</p>
+
+  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">VITTORIE, PAREGGI, SCONFITTE</p>
+  <div class="glass rounded-2xl p-4">
+    <div class="flex h-3 rounded-full overflow-hidden mb-3" id="stats-wdl-bar"></div>
+    <div id="stats-wdl-legend" class="flex items-center justify-between text-[12px] font-semibold"></div>
+  </div>
+
+  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">PUNTI CONTRO OGNI AVVERSARIO</p>
+  <div id="stats-opponents-list" class="space-y-2"></div>
+  <div id="stats-opponents-empty" class="hidden text-center text-sm text-[var(--text-mute)] py-4">Nessun dato ancora per questa stagione.</div>
+</div>
 
 <!-- TAB: PALMARÈS -->
 <div id="tab-content-palmares" class="hidden">
@@ -407,9 +447,14 @@
     </div>
   </div>
 
+  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">SQUADRE AVVERSARIE</p>
+  <p class="text-[11.5px] text-[var(--text-mute)] mb-2.5 px-1">Assegna fino a 3 colori sociali a ogni squadra: verranno usati per colorare i badge nelle partite.</p>
+  <div id="teams-list" class="space-y-2"></div>
+  <div id="teams-empty" class="hidden text-center text-sm text-[var(--text-mute)] py-4">Nessuna squadra salvata ancora. Verranno aggiunte automaticamente quando inserisci una partita.</div>
+
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
   <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
-    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v1.2.0</span></p>
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v1.3.0</span></p>
     <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
   </div>
 </div>
@@ -436,23 +481,23 @@
   <h3 id="season-modal-title" class="font-display text-2xl mb-4">NUOVA STAGIONE</h3>
 
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">NOME STAGIONE</label>
-  <input id="input-season-name" type="text" placeholder="es. 2026/2027" class="field-input mt-1.5 mb-4">
-
-  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">VOTO OBIETTIVO (1–10)</label>
-  <input id="input-season-obiettivo" type="number" step="0.5" min="1" max="10" placeholder="7.0" class="field-input mt-1.5 mb-5">
+  <input id="input-season-name" type="text" placeholder="es. 2026/2027" class="field-input mt-1.5 mb-5">
 
   <button id="btn-save-season" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
   <button id="btn-delete-season" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Elimina stagione</button>
   <button id="btn-cancel-season" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
 </div>
 
-<!-- MODAL: MATCH (add/edit) -->
+<!-- MODAL: MATCH (add/edit) — usato sia per partite a girone sia per singole gare/andata/ritorno delle coppe -->
 <div id="backdrop-match" class="modal-backdrop"></div>
 <div id="sheet-match" class="sheet px-5 pt-3">
   <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
   <div class="flex items-center justify-between mb-4">
     <h3 id="match-modal-title" class="font-display text-2xl">NUOVA PARTITA</h3>
-    <span id="match-comp-label" class="text-[11px] font-bold text-[var(--azzurro)] uppercase"></span>
+    <div class="flex items-center gap-1.5">
+      <span id="match-leg-badge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded-md" style="background:var(--bg-750); color:var(--gold);"></span>
+      <span id="match-comp-label" class="text-[11px] font-bold text-[var(--azzurro)] uppercase"></span>
+    </div>
   </div>
 
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">AVVERSARIO</label>
@@ -463,6 +508,12 @@
   <div class="flex gap-2 mb-4">
     <button type="button" data-home="1" class="seg-btn home-toggle active">🏠 Casa</button>
     <button type="button" data-home="0" class="seg-btn home-toggle">✈️ Trasferta</button>
+  </div>
+
+  <div id="field-campo-neutro" class="hidden mb-4">
+    <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">CAMPO NEUTRO</label>
+    <button type="button" id="btn-toggle-neutro-modal" class="seg-btn" style="width:100%;">Campo neutro: No</button>
+    <p class="text-[10.5px] text-[var(--text-mute)] mt-1.5">Se attivo, questa partita non conta nelle statistiche Casa/Trasferta.</p>
   </div>
 
   <div class="grid grid-cols-2 gap-4 mb-4">
@@ -498,15 +549,69 @@
   <button id="btn-cancel-match" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
 </div>
 
-<!-- MODAL: ADD CUSTOM COMPETITION -->
+<!-- MODAL: ADD COMPETITION -->
 <div id="backdrop-comp" class="modal-backdrop"></div>
 <div id="sheet-comp" class="sheet px-5 pt-3">
   <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
   <h3 class="font-display text-2xl mb-4">NUOVA COMPETIZIONE</h3>
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">NOME COMPETIZIONE</label>
-  <input id="input-comp-name" type="text" placeholder="es. Amichevole estiva" class="field-input mt-1.5 mb-5">
+  <input id="input-comp-name" type="text" placeholder="es. Amichevole estiva" class="field-input mt-1.5 mb-4">
+
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">TIPO COMPETIZIONE</label>
+  <div class="flex gap-2 mb-4">
+    <button type="button" data-tipo="girone" class="seg-btn tipo-toggle active">🏆 Girone</button>
+    <button type="button" data-tipo="eliminazione" class="seg-btn tipo-toggle">⚔️ Eliminazione diretta</button>
+  </div>
+
+  <div id="compadd-turno-field" class="hidden mb-5">
+    <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">IL NAPOLI PARTE DA</label>
+    <select id="input-compadd-turno" class="field-input"></select>
+  </div>
+
   <button id="btn-save-comp" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Aggiungi</button>
   <button id="btn-cancel-comp" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
+</div>
+
+<!-- MODAL: EDIT COMPETITION -->
+<div id="backdrop-comp-edit" class="modal-backdrop"></div>
+<div id="sheet-comp-edit" class="sheet px-5 pt-3">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <h3 class="font-display text-2xl mb-4">MODIFICA COMPETIZIONE</h3>
+
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">NOME</label>
+  <input id="input-compedit-name" type="text" class="field-input mt-1.5 mb-4">
+
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">TIPO COMPETIZIONE</label>
+  <div class="flex gap-2 mb-2">
+    <button type="button" data-tipo="girone" class="seg-btn tipo-toggle active">🏆 Girone</button>
+    <button type="button" data-tipo="eliminazione" class="seg-btn tipo-toggle">⚔️ Eliminazione diretta</button>
+  </div>
+  <p id="compedit-tipo-locked-note" class="hidden text-[11px] text-[var(--text-mute)] mb-4">Il tipo non può essere cambiato perché la competizione contiene già partite. Elimina la competizione per ricominciare da zero, se necessario.</p>
+
+  <div id="compedit-turno-field" class="hidden mb-5">
+    <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">IL NAPOLI PARTE DA</label>
+    <select id="input-compedit-turno" class="field-input"></select>
+  </div>
+
+  <button id="btn-save-compedit" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
+  <button id="btn-delete-compedit" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Elimina competizione</button>
+  <button id="btn-cancel-compedit" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
+</div>
+
+<!-- MODAL: VOTO OBIETTIVO (per competizione) -->
+<div id="backdrop-obiettivo" class="modal-backdrop"></div>
+<div id="sheet-obiettivo" class="sheet px-5 pt-3">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <div class="flex items-center justify-between mb-3">
+    <h3 class="font-display text-2xl">VOTO OBIETTIVO</h3>
+    <span id="obiettivo-comp-label" class="text-[11px] font-bold text-[var(--azzurro)] uppercase"></span>
+  </div>
+  <p class="text-[12.5px] text-[var(--text-dim)] mb-4">Il voto per l'obiettivo raggiunto in questa competizione (es. 10 se vinci il trofeo, un voto basso se esci subito). Contribuisce al Voto Stagione complessivo.</p>
+  <div id="obiettivo-chip-row" class="grid grid-cols-4 gap-1.5 mb-2.5"></div>
+  <input id="input-obiettivo-voto" type="number" step="0.5" min="1" max="10" placeholder="Voto personalizzato" class="field-input mb-5">
+  <button id="btn-save-obiettivo" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
+  <button id="btn-clear-obiettivo" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Rimuovi voto</button>
+  <button id="btn-cancel-obiettivo" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
 </div>
 
 <!-- MODAL: TROFEO (add/edit categoria) -->
@@ -538,20 +643,34 @@
   <button id="btn-cancel-edizione" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
 </div>
 
+<!-- MODAL: TEAM COLORS -->
+<div id="backdrop-team-colors" class="modal-backdrop"></div>
+<div id="sheet-team-colors" class="sheet px-5 pt-3">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <h3 class="font-display text-2xl mb-1">COLORI SQUADRA</h3>
+  <p id="team-colors-name" class="text-[13px] text-[var(--text-dim)] mb-4"></p>
+  <div id="team-colors-rows" class="space-y-2.5 mb-3"></div>
+  <button id="btn-add-team-color" type="button" class="w-full py-3 rounded-xl font-bold text-[13.5px] mb-5" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">+ Aggiungi colore</button>
+  <button id="btn-save-team-colors" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
+  <button id="btn-cancel-team-colors" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
+</div>
+
 <script>
 (function(){
   "use strict";
 
   var STORAGE_KEY = "diarioAzzurroData_v1";
 
+  var ROUND_NAMES = ["Trentaduesimi di finale","Sedicesimi di finale","Ottavi di finale","Quarti di finale","Semifinale","Finale"];
+
   var CATALOG = [
-    {id:"serie-a", name:"Serie A"},
-    {id:"coppa-italia", name:"Coppa Italia"},
-    {id:"champions", name:"Champions League"},
-    {id:"europa", name:"Europa League"},
-    {id:"conference", name:"Conference League"},
-    {id:"supercoppa-it", name:"Supercoppa Italiana"},
-    {id:"supercoppa-eu", name:"Supercoppa Europea"}
+    {id:"serie-a", name:"Serie A", tipo:"girone"},
+    {id:"coppa-italia", name:"Coppa Italia", tipo:"eliminazione"},
+    {id:"champions", name:"Champions League", tipo:"girone"},
+    {id:"europa", name:"Europa League", tipo:"girone"},
+    {id:"conference", name:"Conference League", tipo:"girone"},
+    {id:"supercoppa-it", name:"Supercoppa Italiana", tipo:"eliminazione"},
+    {id:"supercoppa-eu", name:"Supercoppa Europea", tipo:"eliminazione"}
   ];
 
   // Trofei iniziali suggeriti: l'utente può rinominarli, eliminarli o aggiungerne di nuovi liberamente.
@@ -563,14 +682,48 @@
     return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,9);
   }
 
+  // ---------- COPPE A ELIMINAZIONE DIRETTA ----------
+  function buildTurni(startIndex){
+    return ROUND_NAMES.slice(startIndex).map(function(nome, i){
+      return { id: uid(), nome: nome, ritorno:false, campoNeutro: nome === "Finale", sbloccato: i===0, opponent:"", legs: [], esitoManuale: null };
+    });
+  }
+
+  function computeTurnoEsito(turno){
+    if(!turno.legs || turno.legs.length === 0) return "vuoto";
+    var required = turno.ritorno ? 2 : 1;
+    if(turno.legs.length < required) return "in-corso";
+    var golNapTot = 0, golOppTot = 0;
+    turno.legs.forEach(function(l){ golNapTot += l.golNap; golOppTot += l.golOpp; });
+    if(golNapTot > golOppTot) return "passato";
+    if(golNapTot < golOppTot) return "eliminato";
+    if(turno.esitoManuale) return turno.esitoManuale;
+    return "pareggio-da-risolvere";
+  }
+
+  function computeSbloccato(comp){
+    if(!comp.turni) return;
+    comp.turni.forEach(function(t, i){
+      if(i === 0){ t.sbloccato = true; return; }
+      var prev = comp.turni[i-1];
+      t.sbloccato = (computeTurnoEsito(prev) === "passato") || (t.legs && t.legs.length > 0);
+    });
+  }
+
   function freshCompetitions(){
     return CATALOG.map(function(c){
-      return { id: uid(), catalogId: c.id, name: c.name, active: c.id === "serie-a", custom:false, matches: [] };
+      var comp = { id: uid(), catalogId: c.id, name: c.name, active: c.id === "serie-a", custom:false, tipo: c.tipo, obiettivoVoto: null, matches: [], turnoIniziale: null, turni: [] };
+      if(c.tipo === "eliminazione"){
+        var startIdx = c.id === "coppa-italia" ? 2 : (ROUND_NAMES.length - 1); // Coppa Italia: Ottavi; supercoppe: Finale secca
+        comp.turnoIniziale = startIdx;
+        comp.turni = buildTurni(startIdx);
+      }
+      return comp;
     });
   }
 
   function defaultSeason(name){
-    return { id: uid(), name: name, obiettivo: 7.0, competitions: freshCompetitions() };
+    return { id: uid(), name: name, competitions: freshCompetitions() };
   }
 
   function defaultPalmares(){
@@ -585,12 +738,40 @@
     if(!s || typeof s !== "object") return null;
     if(!Array.isArray(s.seasons)) return null;
 
+    s.seasons.forEach(function(season){
+      if(!Array.isArray(season.competitions)) season.competitions = [];
+      season.competitions.forEach(function(comp){
+        if(comp.tipo !== "girone" && comp.tipo !== "eliminazione") comp.tipo = "girone";
+        if(!Array.isArray(comp.matches)) comp.matches = [];
+        if(typeof comp.obiettivoVoto !== "number") comp.obiettivoVoto = null;
+        if(!Array.isArray(comp.turni)) comp.turni = [];
+        if(typeof comp.turnoIniziale !== "number") comp.turnoIniziale = null;
+        comp.turni.forEach(function(t){
+          if(!Array.isArray(t.legs)) t.legs = [];
+          if(typeof t.ritorno !== "boolean") t.ritorno = false;
+          if(typeof t.campoNeutro !== "boolean") t.campoNeutro = (t.nome === "Finale");
+          if(typeof t.sbloccato !== "boolean") t.sbloccato = false;
+          if(typeof t.opponent !== "string") t.opponent = "";
+          if(!("esitoManuale" in t)) t.esitoManuale = null;
+        });
+        computeSbloccato(comp);
+      });
+    });
+
     if(!Array.isArray(s.knownOpponents)) s.knownOpponents = [];
+    s.knownOpponents = s.knownOpponents.map(function(o){
+      if(typeof o === "string") return { name: o, colors: [] };
+      if(o && typeof o === "object" && typeof o.name === "string"){
+        if(!Array.isArray(o.colors)) o.colors = [];
+        return o;
+      }
+      return null;
+    }).filter(Boolean);
 
     if(!s.palmares || typeof s.palmares !== "object"){
       s.palmares = defaultPalmares();
     } else if(!Array.isArray(s.palmares.trofei)){
-      // Migrazione dal vecchio formato v1.1.0 (counts/custom) al nuovo formato dinamico (trofei/edizioni)
+      // Migrazione dal vecchio formato v1.1.0 (counts/custom) al formato dinamico (trofei/edizioni)
       var trofei = [];
       var findOrCreate = function(name){
         var existing = trofei.find(function(t){ return t.name.toLowerCase() === name.toLowerCase(); });
@@ -652,17 +833,37 @@
   function addKnownOpponent(name){
     name = name.trim();
     if(!name) return;
-    var exists = state.knownOpponents.some(function(o){ return o.toLowerCase() === name.toLowerCase(); });
+    var exists = state.knownOpponents.some(function(o){ return o.name.toLowerCase() === name.toLowerCase(); });
     if(!exists){
-      state.knownOpponents.push(name);
-      state.knownOpponents.sort(function(a,b){ return a.localeCompare(b, 'it'); });
+      state.knownOpponents.push({ name: name, colors: [] });
+      state.knownOpponents.sort(function(a,b){ return a.name.localeCompare(b.name, 'it'); });
     }
+  }
+
+  function getOpponentColors(name){
+    var found = state.knownOpponents.find(function(o){ return o.name.toLowerCase() === (name || "").trim().toLowerCase(); });
+    return found ? found.colors : [];
+  }
+
+  function buildAvatarGradient(colors){
+    if(!colors || colors.length === 0) return null;
+    if(colors.length === 1) return colors[0];
+    if(colors.length === 2) return 'linear-gradient(135deg,' + colors[0] + ' 50%,' + colors[1] + ' 50%)';
+    return 'linear-gradient(135deg,' + colors[0] + ' 33%,' + colors[1] + ' 33% 66%,' + colors[2] + ' 66%)';
+  }
+
+  function avatarStyleFor(name){
+    var colors = getOpponentColors(name);
+    if(colors.length){
+      return 'background:' + buildAvatarGradient(colors) + '; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.55);';
+    }
+    return 'background:var(--bg-750); color:var(--text-dim);';
   }
 
   function renderOpponentsDatalist(){
     var dl = document.getElementById("opponents-datalist");
-    dl.innerHTML = state.knownOpponents.map(function(name){
-      return '<option value="' + escapeHtml(name) + '"></option>';
+    dl.innerHTML = state.knownOpponents.map(function(o){
+      return '<option value="' + escapeHtml(o.name) + '"></option>';
     }).join("");
   }
 
@@ -686,6 +887,12 @@
 
   function getActiveSeason(){
     return state.seasons.find(function(s){ return s.id === state.activeSeasonId; }) || null;
+  }
+
+  function findComp(compId){
+    var season = getActiveSeason();
+    if(!season) return null;
+    return season.competitions.find(function(c){ return c.id === compId; }) || null;
   }
 
   // ---------- STATS ----------
@@ -713,7 +920,42 @@
 
   function fmt1(n){ return (Math.round(n*10)/10).toFixed(1); }
 
-  // ---------- RENDER ----------
+  // Appiattisce l'intera stagione (partite a girone + singole gare delle coppe) in un'unica lista
+  // cronologica di "partite", usata sia per le statistiche di stagione sia per il grafico.
+  function buildSeasonTimeline(season){
+    var out = [];
+    if(!season) return out;
+    season.competitions.forEach(function(comp){
+      if(comp.tipo === "eliminazione"){
+        comp.turni.forEach(function(turno){
+          turno.legs.forEach(function(leg){
+            out.push({ golNap: leg.golNap, golOpp: leg.golOpp, voto: leg.voto, opponent: turno.opponent, home: leg.home, campoNeutro: turno.campoNeutro, tipo: "eliminazione", compName: comp.name });
+          });
+        });
+      } else {
+        comp.matches.forEach(function(m){
+          out.push({ golNap: m.golNap, golOpp: m.golOpp, voto: m.voto, opponent: m.opponent, home: m.home, campoNeutro: false, tipo: "girone", compName: comp.name });
+        });
+      }
+    });
+    return out;
+  }
+
+  function computeSeasonVotoStagione(season){
+    var timeline = buildSeasonTimeline(season);
+    var st = computeMatchesStats(timeline);
+    var matchAvg = st.mediaVoti;
+    var objVals = season.competitions.map(function(c){ return c.obiettivoVoto; }).filter(function(v){ return typeof v === "number"; });
+    var objAvg = objVals.length ? (objVals.reduce(function(a,b){ return a+b; }, 0) / objVals.length) : null;
+    var finale;
+    if(matchAvg !== null && objAvg !== null) finale = matchAvg * 0.7 + objAvg * 0.3;
+    else if(matchAvg !== null) finale = matchAvg;
+    else if(objAvg !== null) finale = objAvg;
+    else finale = null;
+    return { finale: finale, matchAvg: matchAvg, objAvg: objAvg };
+  }
+
+  // ---------- RENDER: STAGIONI ----------
   function render(){
     renderSeasonNav();
     var season = getActiveSeason();
@@ -732,10 +974,8 @@
     document.getElementById("season-competitions-count").textContent =
       activeCompetitions.length + (activeCompetitions.length === 1 ? " competizione" : " competizioni");
 
-    // aggregate across ALL competitions (history persists even if later deactivated)
-    var allMatches = [];
-    season.competitions.forEach(function(c){ allMatches = allMatches.concat(c.matches); });
-    var st = computeMatchesStats(allMatches);
+    var timeline = buildSeasonTimeline(season);
+    var st = computeMatchesStats(timeline);
 
     document.getElementById("stat-pg").textContent = st.pg;
     document.getElementById("stat-gf").textContent = st.gf + " " + (st.pg ? "("+fmt1(st.gfAvg)+")" : "");
@@ -747,10 +987,20 @@
       '<span class="badge badge-P" style="width:auto;padding:0 8px;">' + st.p + 'P</span>' +
       '<span class="badge badge-S" style="width:auto;padding:0 8px;">' + st.s + 'S</span>';
 
-    document.getElementById("stat-obiettivo").textContent = fmt1(season.obiettivo);
-    document.getElementById("stat-voto-stagione").textContent = st.mediaVoti !== null ? fmt1(st.mediaVoti) : "—";
-    var pct = st.mediaVoti !== null ? Math.max(0, Math.min(100, (st.mediaVoti / season.obiettivo) * 100)) : 0;
-    document.getElementById("progress-obiettivo").style.width = pct + "%";
+    var voto = computeSeasonVotoStagione(season);
+    document.getElementById("stat-voto-stagione").textContent = voto.finale !== null ? fmt1(voto.finale) : "—";
+    var pct = voto.finale !== null ? Math.max(0, Math.min(100, (voto.finale / 10) * 100)) : 0;
+    document.getElementById("progress-voto").style.width = pct + "%";
+    var breakdownEl = document.getElementById("stat-voto-breakdown");
+    if(voto.matchAvg !== null && voto.objAvg !== null){
+      breakdownEl.textContent = "Media voti partite: " + fmt1(voto.matchAvg) + " · Media voti obiettivo: " + fmt1(voto.objAvg) + " (70/30)";
+    } else if(voto.matchAvg !== null){
+      breakdownEl.textContent = "Media dei voti partita. Imposta un Voto Obiettivo in una competizione per un calcolo più completo.";
+    } else if(voto.objAvg !== null){
+      breakdownEl.textContent = "Solo voti obiettivo impostati finora, nessun voto partita registrato.";
+    } else {
+      breakdownEl.textContent = "";
+    }
 
     renderCompChips(season);
     renderCompetitionsList(season);
@@ -807,30 +1057,36 @@
     noCompEl.classList.add("hidden");
 
     active.forEach(function(comp, idx){
-      var st = computeMatchesStats(comp.matches);
-      var isOpen = openAccordions.hasOwnProperty(comp.id) ? openAccordions[comp.id] : (idx === 0);
+      if(!openAccordions.hasOwnProperty(comp.id)) openAccordions[comp.id] = (idx === 0);
+      var isOpen = openAccordions[comp.id];
+
+      var legsFlat = comp.tipo === "eliminazione" ? comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, []) : comp.matches;
+      var st = computeMatchesStats(legsFlat);
 
       var card = document.createElement("div");
       card.className = "glass rounded-2xl overflow-hidden";
 
-      var header = document.createElement("button");
-      header.className = "w-full flex items-center justify-between px-4 py-3.5";
+      var header = document.createElement("div");
+      header.className = "w-full flex items-center justify-between px-4 py-3.5 gap-2";
       header.innerHTML =
-        '<div class="flex items-center gap-3 text-left">' +
-          '<div>' +
-            '<p class="font-bold text-[15px]">' + escapeHtml(comp.name) + '</p>' +
+        '<button type="button" data-toggle-comp="' + comp.id + '" class="flex items-center gap-3 text-left flex-1 min-w-0">' +
+          '<div class="min-w-0">' +
+            '<p class="font-bold text-[15px] truncate">' + escapeHtml(comp.name) + '</p>' +
             '<p class="text-[11px] text-[var(--text-mute)] font-medium">' +
               st.pg + ' PG · ' + st.v + 'V ' + st.p + 'P ' + st.s + 'S' +
               (st.mediaVoti !== null ? ' · voto ' + fmt1(st.mediaVoti) : '') +
             '</p>' +
           '</div>' +
-        '</div>' +
-        '<svg class="chevron' + (isOpen?' open':'') + '" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>';
-
-      header.addEventListener("click", function(){
-        openAccordions[comp.id] = !isOpen;
-        render();
-      });
+        '</button>' +
+        '<div class="flex items-center gap-1.5 flex-shrink-0">' +
+          (comp.obiettivoVoto !== null
+            ? '<button type="button" data-edit-obiettivo-comp="' + comp.id + '" class="voto-tag">🎯 ' + fmt1(comp.obiettivoVoto) + '</button>'
+            : '<button type="button" data-edit-obiettivo-comp="' + comp.id + '" class="trophy-step" style="width:auto;padding:0 9px;font-size:14px;" aria-label="Imposta voto obiettivo">🎯</button>') +
+          '<button type="button" data-edit-comp="' + comp.id + '" class="trophy-step" aria-label="Modifica competizione">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>' +
+          '</button>' +
+          '<svg data-toggle-comp="' + comp.id + '" class="chevron' + (isOpen?' open':'') + '" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>' +
+        '</div>';
 
       var contentOuter = document.createElement("div");
       contentOuter.className = "accordion-content" + (isOpen ? " open" : "");
@@ -838,26 +1094,37 @@
       var contentBody = document.createElement("div");
       contentBody.className = "px-4 pb-4";
 
-      // mini stat strip
-      var stripHtml = '<div class="grid grid-cols-3 gap-2 mb-3">' +
-        statPill("Gol fatti", st.pg ? st.gf + " (" + fmt1(st.gfAvg) + ")" : "—") +
-        statPill("Gol subiti", st.pg ? st.gs + " (" + fmt1(st.gsAvg) + ")" : "—") +
-        statPill("Media voti", st.mediaVoti !== null ? fmt1(st.mediaVoti) : "—") +
+      var bodyHtml = "";
+      if(comp.tipo === "girone"){
+        var punti = st.v*3 + st.p;
+        bodyHtml += '<div class="grid grid-cols-4 gap-2 mb-3">' +
+          statPill("Gol fatti", st.pg ? st.gf + " (" + fmt1(st.gfAvg) + ")" : "—") +
+          statPill("Gol subiti", st.pg ? st.gs + " (" + fmt1(st.gsAvg) + ")" : "—") +
+          statPill("Punti", st.pg ? String(punti) : "—") +
+          statPill("Media voti", st.mediaVoti !== null ? fmt1(st.mediaVoti) : "—") +
         '</div>';
 
-      var matchesHtml = "";
-      if(comp.matches.length === 0){
-        matchesHtml = '<p class="text-xs text-[var(--text-mute)] text-center py-3">Nessuna partita registrata.</p>';
+        var matchesHtml = "";
+        if(comp.matches.length === 0){
+          matchesHtml = '<p class="text-xs text-[var(--text-mute)] text-center py-3">Nessuna partita registrata.</p>';
+        } else {
+          comp.matches.slice().reverse().forEach(function(m){
+            matchesHtml += matchTicketHtml(m, comp.id);
+          });
+        }
+        bodyHtml += '<div class="space-y-2">' + matchesHtml + '</div>';
+        bodyHtml += '<button data-add-match="' + comp.id + '" class="w-full mt-3 py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">' +
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg> Aggiungi partita</button>';
       } else {
-        comp.matches.slice().reverse().forEach(function(m){
-          matchesHtml += matchTicketHtml(m, comp.id);
-        });
+        bodyHtml += '<div class="grid grid-cols-3 gap-2 mb-3">' +
+          statPill("Gol fatti", st.pg ? st.gf + " (" + fmt1(st.gfAvg) + ")" : "—") +
+          statPill("Gol subiti", st.pg ? st.gs + " (" + fmt1(st.gsAvg) + ")" : "—") +
+          statPill("Media voti", st.mediaVoti !== null ? fmt1(st.mediaVoti) : "—") +
+        '</div>';
+        bodyHtml += turniSectionHtml(comp);
       }
 
-      var addBtnHtml = '<button data-add-match="' + comp.id + '" class="w-full mt-3 py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">' +
-        '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg> Aggiungi partita</button>';
-
-      contentBody.innerHTML = stripHtml + '<div class="space-y-2">' + matchesHtml + '</div>' + addBtnHtml;
+      contentBody.innerHTML = bodyHtml;
       contentInner.appendChild(contentBody);
       contentOuter.appendChild(contentInner);
 
@@ -866,13 +1133,62 @@
       list.appendChild(card);
     });
 
-    // wire up match edit / add buttons
+    // wire up: toggle accordion, edit competizione, obiettivo, match girone, coppe
+    list.querySelectorAll("[data-toggle-comp]").forEach(function(el){
+      el.addEventListener("click", function(){
+        var id = el.getAttribute("data-toggle-comp");
+        openAccordions[id] = !openAccordions[id];
+        render();
+      });
+    });
+    list.querySelectorAll("[data-edit-comp]").forEach(function(btn){
+      btn.addEventListener("click", function(e){ e.stopPropagation(); openCompEditModal(btn.getAttribute("data-edit-comp")); });
+    });
+    list.querySelectorAll("[data-edit-obiettivo-comp]").forEach(function(btn){
+      btn.addEventListener("click", function(e){ e.stopPropagation(); openObiettivoModal(btn.getAttribute("data-edit-obiettivo-comp")); });
+    });
     list.querySelectorAll("[data-add-match]").forEach(function(btn){
       btn.addEventListener("click", function(){ openMatchModal(btn.getAttribute("data-add-match"), null); });
     });
     list.querySelectorAll("[data-edit-match]").forEach(function(btn){
       var parts = btn.getAttribute("data-edit-match").split("|");
       btn.addEventListener("click", function(){ openMatchModal(parts[0], parts[1]); });
+    });
+    list.querySelectorAll("[data-toggle-ritorno]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var parts = btn.getAttribute("data-toggle-ritorno").split("|");
+        var comp = findComp(parts[0]); if(!comp) return;
+        var turno = comp.turni.find(function(t){ return t.id === parts[1]; }); if(!turno) return;
+        turno.ritorno = !turno.ritorno;
+        computeSbloccato(comp);
+        save(); render();
+      });
+    });
+    list.querySelectorAll("[data-toggle-neutro]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var parts = btn.getAttribute("data-toggle-neutro").split("|");
+        var comp = findComp(parts[0]); if(!comp) return;
+        var turno = comp.turni.find(function(t){ return t.id === parts[1]; }); if(!turno) return;
+        turno.campoNeutro = !turno.campoNeutro;
+        save(); render();
+      });
+    });
+    list.querySelectorAll("[data-leg-action]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var parts = btn.getAttribute("data-leg-action").split("|");
+        openLegModal(parts[0], parts[1], parts[2], parts[3] || null);
+      });
+    });
+    list.querySelectorAll("[data-set-esito]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var parts = btn.getAttribute("data-set-esito").split("|");
+        var comp = findComp(parts[0]); if(!comp) return;
+        var turno = comp.turni.find(function(t){ return t.id === parts[1]; }); if(!turno) return;
+        turno.esitoManuale = parts[2];
+        computeSbloccato(comp);
+        save(); render();
+        showToast(parts[2] === "passato" ? "✓ Turno superato" : "Turno concluso");
+      });
     });
   }
 
@@ -883,11 +1199,76 @@
     '</div>';
   }
 
+  function esitoBadgeHtml(esito){
+    var map = {
+      "passato": {label:"PASSATO", bg:"var(--win-bg)", color:"var(--win)"},
+      "eliminato": {label:"ELIMINATO", bg:"var(--loss-bg)", color:"var(--loss)"},
+      "pareggio-da-risolvere": {label:"DA STABILIRE", bg:"var(--draw-bg)", color:"var(--draw)"},
+      "in-corso": {label:"IN CORSO", bg:"var(--bg-750)", color:"var(--text-dim)"},
+      "vuoto": {label:"DA GIOCARE", bg:"var(--bg-750)", color:"var(--text-mute)"}
+    };
+    var v = map[esito] || map.vuoto;
+    return '<span class="text-[10px] font-bold px-2 py-1 rounded-md flex-shrink-0" style="background:' + v.bg + '; color:' + v.color + ';">' + v.label + '</span>';
+  }
+
+  function turniSectionHtml(comp){
+    var html = "";
+    comp.turni.forEach(function(turno){
+      if(!turno.sbloccato){
+        html += '<div class="glass rounded-xl px-4 py-3 mb-2 flex items-center gap-2" style="opacity:0.5;">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>' +
+          '<span class="text-[13px] font-semibold text-[var(--text-mute)]">' + escapeHtml(turno.nome) + '</span>' +
+        '</div>';
+        return;
+      }
+      var esito = computeTurnoEsito(turno);
+      html += '<div class="glass rounded-xl p-3.5 mb-2.5">';
+      html += '<div class="flex items-center justify-between mb-2.5 gap-2">' +
+        '<div class="min-w-0">' +
+          '<p class="font-bold text-[14px]">' + escapeHtml(turno.nome) + '</p>' +
+          (turno.opponent ? '<p class="text-[11.5px] text-[var(--text-mute)] truncate">vs ' + escapeHtml(turno.opponent) + '</p>' : '') +
+        '</div>' + esitoBadgeHtml(esito) +
+      '</div>';
+
+      html += '<div class="flex gap-2 mb-2.5">' +
+        '<button type="button" data-toggle-ritorno="' + comp.id + '|' + turno.id + '" class="seg-btn' + (turno.ritorno?' active':'') + '" style="flex:none; padding:7px 12px; font-size:11.5px;">↩︎ Ritorno: ' + (turno.ritorno ? 'Sì' : 'No') + '</button>' +
+        '<button type="button" data-toggle-neutro="' + comp.id + '|' + turno.id + '" class="seg-btn' + (turno.campoNeutro?' active':'') + '" style="flex:none; padding:7px 12px; font-size:11.5px;">⚪ Neutro: ' + (turno.campoNeutro ? 'Sì' : 'No') + '</button>' +
+      '</div>';
+
+      var legTypes = turno.ritorno ? ["andata","ritorno"] : ["unica"];
+      legTypes.forEach(function(legTipo){
+        var leg = turno.legs.find(function(l){ return l.tipo === legTipo; });
+        var label = legTipo === "andata" ? "Andata" : legTipo === "ritorno" ? "Ritorno" : "Partita";
+        if(leg){
+          var r = resultOf(leg);
+          html += '<button type="button" data-leg-action="' + comp.id + '|' + turno.id + '|' + legTipo + '|' + leg.id + '" class="ticket w-full flex items-center gap-3 pl-8 pr-3 py-2.5 text-left mb-1.5">' +
+            '<div class="w-7 h-7 rounded-full flex items-center justify-center font-display text-[11px] flex-shrink-0" style="' + avatarStyleFor(turno.opponent) + '">' + (turno.opponent||"?").trim().slice(0,2).toUpperCase() + '</div>' +
+            '<div class="flex-1 min-w-0"><p class="text-[10.5px] font-bold text-[var(--text-mute)] tracking-wide">' + label.toUpperCase() + (leg.home ? ' · CASA' : ' · TRASFERTA') + '</p></div>' +
+            '<span class="font-display text-lg tracking-wider">' + leg.golNap + '&nbsp;–&nbsp;' + leg.golOpp + '</span>' +
+            '<span class="badge badge-' + r + '" style="width:22px;height:22px;font-size:12px;">' + r + '</span>' +
+            (typeof leg.voto === "number" ? '<span class="voto-tag">' + fmt1(leg.voto) + '</span>' : '') +
+          '</button>';
+        } else {
+          html += '<button type="button" data-leg-action="' + comp.id + '|' + turno.id + '|' + legTipo + '|" class="w-full py-2.5 rounded-lg font-semibold text-[12.5px] mb-1.5 flex items-center justify-center gap-1.5" style="background:rgba(38,160,224,0.10); color:var(--azzurro);">+ Aggiungi ' + label.toLowerCase() + '</button>';
+        }
+      });
+
+      if(esito === "pareggio-da-risolvere"){
+        html += '<div class="flex gap-2 mt-1.5">' +
+          '<button type="button" data-set-esito="' + comp.id + '|' + turno.id + '|passato" class="flex-1 py-2 rounded-lg font-bold text-[12.5px]" style="background:var(--win-bg); color:var(--win);">Passato il turno</button>' +
+          '<button type="button" data-set-esito="' + comp.id + '|' + turno.id + '|eliminato" class="flex-1 py-2 rounded-lg font-bold text-[12.5px]" style="background:var(--loss-bg); color:var(--loss);">Eliminato</button>' +
+        '</div>';
+      }
+      html += '</div>';
+    });
+    return html;
+  }
+
   function matchTicketHtml(m, compId){
     var r = resultOf(m);
     var initials = m.opponent.trim().slice(0,3).toUpperCase() || "AVV";
     return '<button data-edit-match="' + compId + '|' + m.id + '" class="ticket w-full flex items-center gap-3 pl-8 pr-3 py-3 text-left">' +
-      '<div class="w-9 h-9 rounded-full flex items-center justify-center font-display text-[13px] flex-shrink-0" style="background:var(--bg-750); color:var(--text-dim);">' + initials + '</div>' +
+      '<div class="w-9 h-9 rounded-full flex items-center justify-center font-display text-[13px] flex-shrink-0" style="' + avatarStyleFor(m.opponent) + '">' + initials + '</div>' +
       '<div class="flex-1 min-w-0">' +
         '<p class="font-semibold text-[14px] truncate">' + escapeHtml(m.opponent) + '</p>' +
         '<p class="text-[11px] text-[var(--text-mute)] font-medium">' + (m.home ? "Casa" : "Trasferta") + '</p>' +
@@ -902,6 +1283,158 @@
     var d = document.createElement("div");
     d.textContent = str;
     return d.innerHTML;
+  }
+
+  // ---------- STATISTICHE (grafici + curiosità) ----------
+  var currentChartMetric = "voti";
+  var statsChartInstance = null;
+
+  function renderStatsTab(){
+    var season = getActiveSeason();
+    var timeline = buildSeasonTimeline(season);
+
+    renderStatsChart(timeline);
+
+    var homeSt = computeMatchesStats(timeline.filter(function(x){ return x.home && !x.campoNeutro; }));
+    var awaySt = computeMatchesStats(timeline.filter(function(x){ return !x.home && !x.campoNeutro; }));
+    document.getElementById("stats-home-summary").textContent =
+      homeSt.pg ? (homeSt.gf + ' fatti (' + fmt1(homeSt.gfAvg) + ') · ' + homeSt.gs + ' subiti (' + fmt1(homeSt.gsAvg) + ')') : '—';
+    document.getElementById("stats-away-summary").textContent =
+      awaySt.pg ? (awaySt.gf + ' fatti (' + fmt1(awaySt.gfAvg) + ') · ' + awaySt.gs + ' subiti (' + fmt1(awaySt.gsAvg) + ')') : '—';
+
+    var st = computeMatchesStats(timeline);
+    var bar = document.getElementById("stats-wdl-bar");
+    var legend = document.getElementById("stats-wdl-legend");
+    if(st.pg === 0){
+      bar.innerHTML = "";
+      legend.innerHTML = '<span class="text-[var(--text-mute)]">Nessuna partita registrata.</span>';
+    } else {
+      var pv = (st.v/st.pg*100), pp = (st.p/st.pg*100), ps = (st.s/st.pg*100);
+      bar.innerHTML =
+        '<div style="width:' + pv + '%; background:var(--win);"></div>' +
+        '<div style="width:' + pp + '%; background:var(--draw);"></div>' +
+        '<div style="width:' + ps + '%; background:var(--loss);"></div>';
+      legend.innerHTML =
+        '<span style="color:var(--win);">' + Math.round(pv) + '% V</span>' +
+        '<span style="color:var(--draw);">' + Math.round(pp) + '% P</span>' +
+        '<span style="color:var(--loss);">' + Math.round(ps) + '% S</span>';
+    }
+
+    renderOpponentRecords(timeline);
+  }
+
+  function renderOpponentRecords(timeline){
+    var groups = {};
+    timeline.forEach(function(item){
+      var key = (item.opponent || "Sconosciuto").trim().toLowerCase() || "sconosciuto";
+      if(!groups[key]) groups[key] = { name: item.opponent || "Sconosciuto", items: [] };
+      groups[key].items.push(item);
+    });
+    var rows = Object.keys(groups).map(function(key){
+      var g = groups[key];
+      var st = computeMatchesStats(g.items);
+      return { name: g.name, st: st, punti: st.v*3 + st.p };
+    });
+    rows.sort(function(a,b){ return b.punti - a.punti; });
+
+    var wrap = document.getElementById("stats-opponents-list");
+    var emptyEl = document.getElementById("stats-opponents-empty");
+    wrap.innerHTML = "";
+    if(rows.length === 0){ emptyEl.classList.remove("hidden"); return; }
+    emptyEl.classList.add("hidden");
+    rows.forEach(function(row){
+      var el = document.createElement("div");
+      el.className = "settings-row";
+      el.innerHTML =
+        '<div class="flex items-center gap-2.5 min-w-0">' +
+          '<div class="w-8 h-8 rounded-full flex items-center justify-center font-display text-[11px] flex-shrink-0" style="' + avatarStyleFor(row.name) + '">' + row.name.trim().slice(0,2).toUpperCase() + '</div>' +
+          '<div class="min-w-0">' +
+            '<p class="font-semibold text-[14px] truncate">' + escapeHtml(row.name) + '</p>' +
+            '<p class="text-[11px] text-[var(--text-mute)]">' + row.st.pg + ' partite · ' + row.st.v + 'V ' + row.st.p + 'P ' + row.st.s + 'S · gol ' + row.st.gf + '-' + row.st.gs + '</p>' +
+          '</div>' +
+        '</div>' +
+        '<span class="font-display text-xl flex-shrink-0" style="color:var(--gold);">' + row.punti + 'pt</span>';
+      wrap.appendChild(el);
+    });
+  }
+
+  function chartBaseOptions(showLegend, isVotoScale){
+    var gridColor = "rgba(150,180,220,0.10)";
+    var textColor = "#93a5c4";
+    return {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ display: !!showLegend, labels:{ color:textColor, font:{size:11} } },
+        tooltip:{ backgroundColor:"#111c33", borderColor:"rgba(150,180,220,0.2)", borderWidth:1, titleColor:"#eef3fa", bodyColor:"#eef3fa" }
+      },
+      scales:{
+        x:{ grid:{ color:gridColor }, ticks:{ color:textColor, font:{size:10} } },
+        y:{ grid:{ color:gridColor }, ticks:{ color:textColor, font:{size:10} }, beginAtZero:true, min: isVotoScale?0:undefined, max: isVotoScale?10:undefined }
+      }
+    };
+  }
+
+  function setChartEmpty(msg){
+    var canvas = document.getElementById("stats-chart");
+    var emptyEl = document.getElementById("stats-chart-empty");
+    canvas.classList.add("hidden");
+    emptyEl.classList.remove("hidden");
+    emptyEl.classList.add("flex");
+    emptyEl.textContent = msg;
+  }
+
+  function setChartVisible(){
+    var canvas = document.getElementById("stats-chart");
+    var emptyEl = document.getElementById("stats-chart-empty");
+    canvas.classList.remove("hidden");
+    emptyEl.classList.add("hidden");
+    emptyEl.classList.remove("flex");
+  }
+
+  function renderStatsChart(timeline){
+    if(statsChartInstance){ statsChartInstance.destroy(); statsChartInstance = null; }
+    var canvas = document.getElementById("stats-chart");
+
+    if(typeof Chart === "undefined"){
+      setChartEmpty("Impossibile caricare la libreria dei grafici (verifica la connessione).");
+      return;
+    }
+
+    if(currentChartMetric === "punti"){
+      var girone = timeline.filter(function(x){ return x.tipo === "girone"; });
+      if(girone.length === 0){ setChartEmpty("Nessuna partita di competizione a girone registrata."); return; }
+      setChartVisible();
+      var cum = 0;
+      var data = girone.map(function(x){ var r = resultOf(x); cum += (r==="V"?3:r==="P"?1:0); return cum; });
+      var labels = girone.map(function(_,i){ return String(i+1); });
+      statsChartInstance = new Chart(canvas.getContext("2d"), {
+        type:"line",
+        data:{ labels:labels, datasets:[{ label:"Punti cumulati", data:data, borderColor:"#e0b04f", backgroundColor:"rgba(224,176,79,0.15)", tension:0.3, fill:true, pointRadius:3 }] },
+        options: chartBaseOptions(false, false)
+      });
+    } else if(currentChartMetric === "gol"){
+      if(timeline.length === 0){ setChartEmpty("Nessuna partita registrata."); return; }
+      setChartVisible();
+      var labels2 = timeline.map(function(_,i){ return String(i+1); });
+      statsChartInstance = new Chart(canvas.getContext("2d"), {
+        type:"line",
+        data:{ labels:labels2, datasets:[
+          { label:"Gol fatti", data: timeline.map(function(x){ return x.golNap; }), borderColor:"#32c777", backgroundColor:"rgba(50,199,119,0.12)", tension:0.3, pointRadius:2.5 },
+          { label:"Gol subiti", data: timeline.map(function(x){ return x.golOpp; }), borderColor:"#e6555f", backgroundColor:"rgba(230,85,95,0.12)", tension:0.3, pointRadius:2.5 }
+        ]},
+        options: chartBaseOptions(true, false)
+      });
+    } else {
+      var withVoto = timeline.filter(function(x){ return typeof x.voto === "number"; });
+      if(withVoto.length === 0){ setChartEmpty("Nessun voto inserito ancora."); return; }
+      setChartVisible();
+      var labels3 = withVoto.map(function(_,i){ return String(i+1); });
+      statsChartInstance = new Chart(canvas.getContext("2d"), {
+        type:"line",
+        data:{ labels:labels3, datasets:[{ label:"Voto", data: withVoto.map(function(x){ return x.voto; }), borderColor:"#26a0e0", backgroundColor:"rgba(38,160,224,0.15)", tension:0.3, fill:true, pointRadius:3 }] },
+        options: chartBaseOptions(false, true)
+      });
+    }
   }
 
   // ---------- PALMARÈS (dinamico: trofei + edizioni) ----------
@@ -919,7 +1452,8 @@
     emptyEl.classList.add("hidden");
 
     state.palmares.trofei.forEach(function(trofeo, idx){
-      var isOpen = openTrofeiAccordions.hasOwnProperty(trofeo.id) ? openTrofeiAccordions[trofeo.id] : (idx === 0);
+      if(!openTrofeiAccordions.hasOwnProperty(trofeo.id)) openTrofeiAccordions[trofeo.id] = (idx === 0);
+      var isOpen = openTrofeiAccordions[trofeo.id];
       var edizioniOrdinate = trofeo.edizioni.slice().sort(function(a,b){ return (b.anno||"").localeCompare(a.anno||""); });
 
       var card = document.createElement("div");
@@ -977,8 +1511,7 @@
     list.querySelectorAll("[data-toggle-trofeo]").forEach(function(el){
       el.addEventListener("click", function(){
         var id = el.getAttribute("data-toggle-trofeo");
-        var wasOpen = openTrofeiAccordions.hasOwnProperty(id) ? openTrofeiAccordions[id] : false;
-        openTrofeiAccordions[id] = !wasOpen;
+        openTrofeiAccordions[id] = !openTrofeiAccordions[id];
         renderPalmares();
       });
     });
@@ -1097,6 +1630,81 @@
     showToast("🗑️ Edizione eliminata");
   }
 
+  // ---------- IMPOSTAZIONI: squadre avversarie e colori ----------
+  function renderTeamsList(){
+    var wrap = document.getElementById("teams-list");
+    var emptyEl = document.getElementById("teams-empty");
+    wrap.innerHTML = "";
+    if(state.knownOpponents.length === 0){ emptyEl.classList.remove("hidden"); return; }
+    emptyEl.classList.add("hidden");
+    state.knownOpponents.slice().sort(function(a,b){ return a.name.localeCompare(b.name, 'it'); }).forEach(function(team){
+      var row = document.createElement("div");
+      row.className = "settings-row";
+      row.innerHTML =
+        '<div class="flex items-center gap-2.5 min-w-0">' +
+          '<div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;' + (team.colors.length ? 'background:' + buildAvatarGradient(team.colors) + ';' : 'background:var(--bg-750);') + '"></div>' +
+          '<p class="font-semibold text-[14px] truncate">' + escapeHtml(team.name) + '</p>' +
+        '</div>' +
+        '<button type="button" data-edit-team-color="' + escapeHtml(team.name) + '" class="settings-btn" style="background:var(--bg-750); color:var(--text);">Colori</button>';
+      wrap.appendChild(row);
+    });
+    wrap.querySelectorAll("[data-edit-team-color]").forEach(function(btn){
+      btn.addEventListener("click", function(){ openTeamColorsModal(btn.getAttribute("data-edit-team-color")); });
+    });
+  }
+
+  var teamColorsCtx = { name: null, colors: [] };
+
+  function openTeamColorsModal(name){
+    var team = state.knownOpponents.find(function(o){ return o.name === name; });
+    if(!team) return;
+    teamColorsCtx = { name: name, colors: team.colors.slice() };
+    document.getElementById("team-colors-name").textContent = name;
+    renderTeamColorRows();
+    toggleSheet("team-colors", true);
+  }
+
+  function renderTeamColorRows(){
+    var wrap = document.getElementById("team-colors-rows");
+    wrap.innerHTML = "";
+    teamColorsCtx.colors.forEach(function(color, i){
+      var row = document.createElement("div");
+      row.className = "flex items-center gap-2.5";
+      row.innerHTML =
+        '<input type="color" value="' + color + '" data-color-idx="' + i + '" style="width:48px;height:42px;border-radius:10px;flex-shrink:0;">' +
+        '<span class="flex-1 text-[13px] text-[var(--text-dim)]" style="font-family:monospace;">' + color.toUpperCase() + '</span>' +
+        '<button type="button" data-remove-color-idx="' + i + '" class="trophy-step" style="color:var(--loss);" aria-label="Rimuovi colore">✕</button>';
+      wrap.appendChild(row);
+    });
+    wrap.querySelectorAll("[data-color-idx]").forEach(function(inp){
+      inp.addEventListener("input", function(){
+        var idx = parseInt(inp.getAttribute("data-color-idx"), 10);
+        teamColorsCtx.colors[idx] = inp.value;
+        inp.nextElementSibling.textContent = inp.value.toUpperCase();
+      });
+    });
+    wrap.querySelectorAll("[data-remove-color-idx]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var idx = parseInt(btn.getAttribute("data-remove-color-idx"), 10);
+        teamColorsCtx.colors.splice(idx, 1);
+        renderTeamColorRows();
+      });
+    });
+    var addBtn = document.getElementById("btn-add-team-color");
+    addBtn.disabled = teamColorsCtx.colors.length >= 3;
+    addBtn.style.opacity = teamColorsCtx.colors.length >= 3 ? "0.4" : "1";
+  }
+
+  function closeTeamColorsModal(){ toggleSheet("team-colors", false); }
+
+  function saveTeamColorsModal(){
+    var team = state.knownOpponents.find(function(o){ return o.name === teamColorsCtx.name; });
+    if(!team) return;
+    team.colors = teamColorsCtx.colors.slice();
+    save(); renderTeamsList(); render(); closeTeamColorsModal();
+    showToast("✓ Colori aggiornati");
+  }
+
   // ---------- TOAST ----------
   var toastTimer = null;
   function showToast(msg){
@@ -1117,12 +1725,10 @@
     if(seasonModalMode === "edit" && season){
       title.textContent = "MODIFICA STAGIONE";
       document.getElementById("input-season-name").value = season.name;
-      document.getElementById("input-season-obiettivo").value = season.obiettivo;
       delBtn.classList.remove("hidden");
     } else {
       title.textContent = "NUOVA STAGIONE";
       document.getElementById("input-season-name").value = nextSeasonLabel();
-      document.getElementById("input-season-obiettivo").value = 7.0;
       delBtn.classList.add("hidden");
     }
     toggleSheet("season", true);
@@ -1132,17 +1738,14 @@
 
   function saveSeasonModal(){
     var name = document.getElementById("input-season-name").value.trim();
-    var obiettivo = parseFloat(document.getElementById("input-season-obiettivo").value);
     if(!name){ showToast("⚠️ Inserisci un nome stagione"); return; }
-    if(isNaN(obiettivo) || obiettivo < 1 || obiettivo > 10) obiettivo = 7.0;
 
     if(seasonModalMode === "edit"){
       var season = getActiveSeason();
-      if(season){ season.name = name; season.obiettivo = obiettivo; }
+      if(season){ season.name = name; }
       showToast("✓ Stagione aggiornata");
     } else {
       var s = defaultSeason(name);
-      s.obiettivo = obiettivo;
       state.seasons.push(s);
       state.activeSeasonId = s.id;
       showToast("✓ Stagione creata");
@@ -1160,9 +1763,17 @@
     showToast("🗑️ Stagione eliminata");
   }
 
-  // ---------- MODAL: COMPETITION ----------
+  // ---------- MODAL: NUOVA COMPETIZIONE ----------
+  var compAddTipo = "girone";
+  function setCompAddTipo(t){
+    compAddTipo = t;
+    document.querySelectorAll("#sheet-comp .tipo-toggle").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-tipo") === t); });
+    document.getElementById("compadd-turno-field").classList.toggle("hidden", t !== "eliminazione");
+  }
   function openCompModal(){
     document.getElementById("input-comp-name").value = "";
+    document.getElementById("input-compadd-turno").value = String(ROUND_NAMES.length - 1);
+    setCompAddTipo("girone");
     toggleSheet("comp", true);
   }
   function closeCompModal(){ toggleSheet("comp", false); }
@@ -1171,13 +1782,133 @@
     if(!name){ showToast("⚠️ Inserisci un nome"); return; }
     var season = getActiveSeason();
     if(!season) return;
-    season.competitions.push({ id: uid(), catalogId: null, name: name, active: true, custom:true, matches: [] });
+    var comp = { id: uid(), catalogId: null, name: name, active: true, custom:true, tipo: compAddTipo, obiettivoVoto: null, matches: [], turnoIniziale: null, turni: [] };
+    if(compAddTipo === "eliminazione"){
+      var idx = parseInt(document.getElementById("input-compadd-turno").value, 10) || 0;
+      comp.turnoIniziale = idx;
+      comp.turni = buildTurni(idx);
+    }
+    season.competitions.push(comp);
     save(); render(); closeCompModal();
     showToast("✓ Competizione aggiunta");
   }
 
-  // ---------- MODAL: MATCH ----------
-  var matchCtx = { compId: null, matchId: null, home: true };
+  // ---------- MODAL: MODIFICA COMPETIZIONE ----------
+  var compEditCtx = { compId: null };
+  function openCompEditModal(compId){
+    var comp = findComp(compId);
+    if(!comp) return;
+    compEditCtx.compId = compId;
+    document.getElementById("input-compedit-name").value = comp.name;
+    var hasData = comp.matches.length > 0 || comp.turni.some(function(t){ return t.legs.length > 0; });
+    document.querySelectorAll("#sheet-comp-edit .tipo-toggle").forEach(function(b){
+      var isThisTipo = b.getAttribute("data-tipo") === comp.tipo;
+      b.classList.toggle("active", isThisTipo);
+      b.disabled = hasData;
+      b.style.opacity = hasData ? "0.5" : "1";
+    });
+    document.getElementById("compedit-tipo-locked-note").classList.toggle("hidden", !hasData);
+    document.getElementById("compedit-turno-field").classList.toggle("hidden", comp.tipo !== "eliminazione");
+    var turnoSelect = document.getElementById("input-compedit-turno");
+    turnoSelect.value = comp.turnoIniziale != null ? String(comp.turnoIniziale) : String(ROUND_NAMES.length - 1);
+    turnoSelect.disabled = hasData;
+    toggleSheet("comp-edit", true);
+  }
+  function closeCompEditModal(){ toggleSheet("comp-edit", false); }
+
+  function saveCompEditModal(){
+    var comp = findComp(compEditCtx.compId);
+    if(!comp) return;
+    var name = document.getElementById("input-compedit-name").value.trim();
+    if(!name){ showToast("⚠️ Inserisci un nome"); return; }
+    comp.name = name;
+
+    var hasData = comp.matches.length > 0 || comp.turni.some(function(t){ return t.legs.length > 0; });
+    if(!hasData){
+      var activeBtn = document.querySelector("#sheet-comp-edit .tipo-toggle.active");
+      var newTipo = activeBtn ? activeBtn.getAttribute("data-tipo") : comp.tipo;
+      var newTurnoIdx = parseInt(document.getElementById("input-compedit-turno").value, 10) || 0;
+      if(newTipo !== comp.tipo){
+        comp.tipo = newTipo;
+        if(newTipo === "eliminazione"){
+          comp.turnoIniziale = newTurnoIdx;
+          comp.turni = buildTurni(newTurnoIdx);
+          comp.matches = [];
+        } else {
+          comp.turnoIniziale = null;
+          comp.turni = [];
+        }
+      } else if(newTipo === "eliminazione" && newTurnoIdx !== comp.turnoIniziale){
+        comp.turnoIniziale = newTurnoIdx;
+        comp.turni = buildTurni(newTurnoIdx);
+      }
+    }
+    save(); render(); closeCompEditModal();
+    showToast("✓ Competizione aggiornata");
+  }
+
+  function deleteCompEditModal(){
+    var comp = findComp(compEditCtx.compId);
+    if(!comp) return;
+    if(!confirm('Eliminare la competizione "' + comp.name + '" e tutti i suoi dati?')) return;
+    var season = getActiveSeason();
+    season.competitions = season.competitions.filter(function(c){ return c.id !== comp.id; });
+    delete openAccordions[comp.id];
+    save(); render(); closeCompEditModal();
+    showToast("🗑️ Competizione eliminata");
+  }
+
+  // ---------- MODAL: VOTO OBIETTIVO ----------
+  var obiettivoCtx = { compId: null };
+  var OBIETTIVO_PRESETS = [4,5,6,7,8,9,10,10];
+  function openObiettivoModal(compId){
+    var comp = findComp(compId);
+    if(!comp) return;
+    obiettivoCtx.compId = compId;
+    document.getElementById("obiettivo-comp-label").textContent = comp.name;
+    document.getElementById("input-obiettivo-voto").value = comp.obiettivoVoto != null ? comp.obiettivoVoto : "";
+    buildObiettivoChips(comp.obiettivoVoto);
+    document.getElementById("btn-clear-obiettivo").classList.toggle("hidden", comp.obiettivoVoto == null);
+    toggleSheet("obiettivo", true);
+  }
+  function buildObiettivoChips(selected){
+    var row = document.getElementById("obiettivo-chip-row");
+    row.innerHTML = "";
+    [4,5,6,7,8,9,10].forEach(function(v){
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "voto-chip" + (selected === v ? " active" : "");
+      chip.textContent = v;
+      chip.addEventListener("click", function(){
+        document.getElementById("input-obiettivo-voto").value = v;
+        Array.from(row.children).forEach(function(c){ c.classList.remove("active"); });
+        chip.classList.add("active");
+      });
+      row.appendChild(chip);
+    });
+  }
+  function closeObiettivoModal(){ toggleSheet("obiettivo", false); }
+  function saveObiettivoModal(){
+    var comp = findComp(obiettivoCtx.compId);
+    if(!comp) return;
+    var raw = document.getElementById("input-obiettivo-voto").value;
+    var v = raw === "" ? null : parseFloat(raw);
+    if(v !== null && (isNaN(v) || v < 1 || v > 10)){ showToast("⚠️ Voto non valido (1–10)"); return; }
+    comp.obiettivoVoto = v;
+    save(); render(); closeObiettivoModal();
+    showToast("✓ Obiettivo salvato");
+  }
+  function clearObiettivoModal(){
+    var comp = findComp(obiettivoCtx.compId);
+    if(!comp) return;
+    comp.obiettivoVoto = null;
+    save(); render(); closeObiettivoModal();
+    showToast("Obiettivo rimosso");
+  }
+
+  // ---------- MODAL: MATCH (girone e gare/andata/ritorno coppe) ----------
+  var matchCtx = { mode:"girone", compId: null, matchId: null, home: true, campoNeutro:false };
+  var legCtx = { compId: null, turnoId: null, legTipo: null, legId: null };
   var VOTO_PRESETS = [5,5.5,6,6.5,7,7.5,8,8.5,9];
 
   function buildVotoChips(selected){
@@ -1214,15 +1945,25 @@
     });
   }
 
+  function setNeutroToggle(val){
+    matchCtx.campoNeutro = val;
+    var btn = document.getElementById("btn-toggle-neutro-modal");
+    btn.classList.toggle("active", val);
+    btn.textContent = "Campo neutro: " + (val ? "Sì" : "No");
+  }
+
   function openMatchModal(compId, matchId){
     var season = getActiveSeason();
     if(!season) return;
     var comp = season.competitions.find(function(c){ return c.id === compId; });
     if(!comp) return;
+    matchCtx.mode = "girone";
     matchCtx.compId = compId;
     matchCtx.matchId = matchId;
 
     document.getElementById("match-comp-label").textContent = comp.name;
+    document.getElementById("match-leg-badge").classList.add("hidden");
+    document.getElementById("field-campo-neutro").classList.add("hidden");
     var delBtn = document.getElementById("btn-delete-match");
 
     if(matchId){
@@ -1250,6 +1991,53 @@
     setTimeout(function(){ document.getElementById("input-opponent").focus(); }, 300);
   }
 
+  function openLegModal(compId, turnoId, legTipo, legId){
+    var comp = findComp(compId);
+    if(!comp) return;
+    var turno = comp.turni.find(function(t){ return t.id === turnoId; });
+    if(!turno) return;
+
+    matchCtx.mode = "eliminazione-leg";
+    legCtx = { compId: compId, turnoId: turnoId, legTipo: legTipo, legId: legId || null };
+
+    document.getElementById("match-comp-label").textContent = comp.name + " · " + turno.nome;
+    var legBadge = document.getElementById("match-leg-badge");
+    if(legTipo === "unica"){
+      legBadge.classList.add("hidden");
+    } else {
+      legBadge.textContent = legTipo === "andata" ? "ANDATA" : "RITORNO";
+      legBadge.classList.remove("hidden");
+    }
+    document.getElementById("field-campo-neutro").classList.remove("hidden");
+
+    var delBtn = document.getElementById("btn-delete-match");
+    var existingLeg = legCtx.legId ? turno.legs.find(function(l){ return l.id === legCtx.legId; }) : null;
+
+    if(existingLeg){
+      document.getElementById("match-modal-title").textContent = "MODIFICA PARTITA";
+      document.getElementById("input-opponent").value = turno.opponent || "";
+      document.getElementById("input-golnap").value = existingLeg.golNap;
+      document.getElementById("input-golopp").value = existingLeg.golOpp;
+      document.getElementById("input-voto").value = (typeof existingLeg.voto === "number") ? existingLeg.voto : "";
+      setHomeToggle(!!existingLeg.home);
+      buildVotoChips(existingLeg.voto);
+      delBtn.classList.remove("hidden");
+    } else {
+      document.getElementById("match-modal-title").textContent = "NUOVA PARTITA";
+      document.getElementById("input-opponent").value = turno.opponent || "";
+      document.getElementById("input-golnap").value = 0;
+      document.getElementById("input-golopp").value = 0;
+      document.getElementById("input-voto").value = "";
+      setHomeToggle(true);
+      buildVotoChips(null);
+      delBtn.classList.add("hidden");
+    }
+    setNeutroToggle(!!turno.campoNeutro);
+    updateLiveResultBadge();
+    toggleSheet("match", true);
+    setTimeout(function(){ document.getElementById("input-opponent").focus(); }, 300);
+  }
+
   function closeMatchModal(){ toggleSheet("match", false); }
 
   function saveMatchModal(){
@@ -1263,16 +2051,38 @@
     var voto = votoRaw === "" ? null : parseFloat(votoRaw);
     if(voto !== null && (isNaN(voto) || voto < 1 || voto > 10)) voto = null;
 
-    var season = getActiveSeason();
-    var comp = season.competitions.find(function(c){ return c.id === matchCtx.compId; });
-    if(!comp) return;
+    if(matchCtx.mode === "eliminazione-leg"){
+      var comp = findComp(legCtx.compId);
+      if(!comp) return;
+      var turno = comp.turni.find(function(t){ return t.id === legCtx.turnoId; });
+      if(!turno) return;
+      turno.opponent = opponent;
+      turno.campoNeutro = matchCtx.campoNeutro;
+
+      var leg = legCtx.legId ? turno.legs.find(function(l){ return l.id === legCtx.legId; }) : null;
+      if(leg){
+        leg.home = matchCtx.home; leg.golNap = golNap; leg.golOpp = golOpp; leg.voto = voto;
+        showToast("✓ Partita aggiornata");
+      } else {
+        turno.legs.push({ id: uid(), tipo: legCtx.legTipo, home: matchCtx.home, golNap: golNap, golOpp: golOpp, voto: voto });
+        showToast("✓ Partita salvata");
+      }
+      addKnownOpponent(opponent);
+      renderOpponentsDatalist();
+      computeSbloccato(comp);
+      save(); render(); closeMatchModal();
+      return;
+    }
+
+    var seasonComp = findComp(matchCtx.compId);
+    if(!seasonComp) return;
 
     if(matchCtx.matchId){
-      var m = comp.matches.find(function(x){ return x.id === matchCtx.matchId; });
+      var m = seasonComp.matches.find(function(x){ return x.id === matchCtx.matchId; });
       m.opponent = opponent; m.home = matchCtx.home; m.golNap = golNap; m.golOpp = golOpp; m.voto = voto;
       showToast("✓ Partita aggiornata");
     } else {
-      comp.matches.push({ id: uid(), opponent: opponent, home: matchCtx.home, golNap: golNap, golOpp: golOpp, voto: voto });
+      seasonComp.matches.push({ id: uid(), opponent: opponent, home: matchCtx.home, golNap: golNap, golOpp: golOpp, voto: voto });
       showToast("✓ Partita salvata");
     }
     addKnownOpponent(opponent);
@@ -1281,11 +2091,22 @@
   }
 
   function deleteMatchModal(){
-    var season = getActiveSeason();
-    var comp = season.competitions.find(function(c){ return c.id === matchCtx.compId; });
-    if(!comp) return;
+    if(matchCtx.mode === "eliminazione-leg"){
+      var comp = findComp(legCtx.compId);
+      if(!comp) return;
+      var turno = comp.turni.find(function(t){ return t.id === legCtx.turnoId; });
+      if(!turno) return;
+      if(!confirm("Eliminare questa partita?")) return;
+      turno.legs = turno.legs.filter(function(l){ return l.id !== legCtx.legId; });
+      computeSbloccato(comp);
+      save(); render(); closeMatchModal();
+      showToast("🗑️ Partita eliminata");
+      return;
+    }
+    var seasonComp = findComp(matchCtx.compId);
+    if(!seasonComp) return;
     if(!confirm("Eliminare questa partita?")) return;
-    comp.matches = comp.matches.filter(function(m){ return m.id !== matchCtx.matchId; });
+    seasonComp.matches = seasonComp.matches.filter(function(m){ return m.id !== matchCtx.matchId; });
     save(); render(); closeMatchModal();
     showToast("🗑️ Partita eliminata");
   }
@@ -1309,16 +2130,17 @@
   var currentTab = "stagioni";
   function setTab(tab){
     currentTab = tab;
-    ["stagioni","palmares","impostazioni"].forEach(function(t){
+    ["stagioni","statistiche","palmares","impostazioni"].forEach(function(t){
       document.getElementById("tab-content-" + t).classList.toggle("hidden", t !== tab);
     });
-    document.querySelectorAll(".tab-btn").forEach(function(btn){
+    document.querySelectorAll(".tab-switcher .tab-btn[data-tab]").forEach(function(btn){
       btn.classList.toggle("active", btn.getAttribute("data-tab") === tab);
     });
-    // la barra stagioni in basso ha senso solo nella tab "Stagioni"
     document.getElementById("bottom-nav").classList.toggle("hidden", tab !== "stagioni");
     document.getElementById("main").classList.toggle("pb-40", tab === "stagioni");
     document.getElementById("main").classList.toggle("pb-16", tab !== "stagioni");
+    if(tab === "statistiche") renderStatsTab();
+    if(tab === "impostazioni") renderTeamsList();
   }
 
   // ---------- BACKUP: ESPORTA / IMPORTA ----------
@@ -1353,9 +2175,13 @@
       if(!normalized){ showToast("⚠️ Formato backup non riconosciuto"); return; }
       if(!confirm("Importare questo backup sovrascriverà tutti i dati attuali dell'app. Continuare?")) return;
       state = normalized;
+      openAccordions = {};
+      openTrofeiAccordions = {};
       save();
       render();
       renderPalmares();
+      renderOpponentsDatalist();
+      renderTeamsList();
       setTab("stagioni");
       showToast("✓ Backup importato");
     };
@@ -1364,17 +2190,31 @@
   }
 
   // ---------- EVENT WIRING ----------
+  function populateTurnoSelects(){
+    var opts = ROUND_NAMES.map(function(n,i){ return '<option value="' + i + '">' + n + '</option>'; }).join("");
+    document.getElementById("input-compadd-turno").innerHTML = opts;
+    document.getElementById("input-compedit-turno").innerHTML = opts;
+  }
+
   function init(){
     load();
+    populateTurnoSelects();
     render();
     renderPalmares();
     renderOpponentsDatalist();
+    renderTeamsList();
     setTab("stagioni");
 
-    document.querySelectorAll(".tab-btn").forEach(function(btn){
+    document.querySelectorAll(".tab-switcher .tab-btn[data-tab]").forEach(function(btn){
       btn.addEventListener("click", function(){ setTab(btn.getAttribute("data-tab")); });
     });
-
+    document.querySelectorAll(".chart-metric-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        currentChartMetric = btn.getAttribute("data-metric");
+        document.querySelectorAll(".chart-metric-btn").forEach(function(b){ b.classList.toggle("active", b === btn); });
+        renderStatsChart(buildSeasonTimeline(getActiveSeason()));
+      });
+    });
 
     document.getElementById("btn-export-backup").addEventListener("click", exportBackup);
     document.getElementById("btn-import-backup").addEventListener("click", function(){
@@ -1383,15 +2223,13 @@
     document.getElementById("input-import-file").addEventListener("change", function(e){
       var file = e.target.files && e.target.files[0];
       importBackupFile(file);
-      e.target.value = ""; // permette di reimportare lo stesso file in seguito
+      e.target.value = "";
     });
 
     document.getElementById("btn-add-season").addEventListener("click", function(){ openSeasonModal("add"); });
     document.getElementById("btn-season-settings").addEventListener("click", function(){
       if(!getActiveSeason()){ openSeasonModal("add"); } else { openSeasonModal("edit"); }
     });
-    document.getElementById("btn-edit-obiettivo").addEventListener("click", function(){ openSeasonModal("edit"); });
-
     document.getElementById("btn-save-season").addEventListener("click", saveSeasonModal);
     document.getElementById("btn-cancel-season").addEventListener("click", closeSeasonModal);
     document.getElementById("btn-delete-season").addEventListener("click", deleteSeasonModal);
@@ -1400,6 +2238,31 @@
     document.getElementById("btn-save-comp").addEventListener("click", saveCompModal);
     document.getElementById("btn-cancel-comp").addEventListener("click", closeCompModal);
     document.getElementById("backdrop-comp").addEventListener("click", closeCompModal);
+
+    document.getElementById("btn-save-compedit").addEventListener("click", saveCompEditModal);
+    document.getElementById("btn-cancel-compedit").addEventListener("click", closeCompEditModal);
+    document.getElementById("btn-delete-compedit").addEventListener("click", deleteCompEditModal);
+    document.getElementById("backdrop-comp-edit").addEventListener("click", closeCompEditModal);
+
+    document.querySelectorAll(".tipo-toggle").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        if(btn.disabled) return;
+        var container = btn.closest(".sheet");
+        var tipo = btn.getAttribute("data-tipo");
+        container.querySelectorAll(".tipo-toggle").forEach(function(b){ b.classList.toggle("active", b === btn); });
+        if(container.id === "sheet-comp"){
+          compAddTipo = tipo;
+          document.getElementById("compadd-turno-field").classList.toggle("hidden", tipo !== "eliminazione");
+        } else if(container.id === "sheet-comp-edit"){
+          document.getElementById("compedit-turno-field").classList.toggle("hidden", tipo !== "eliminazione");
+        }
+      });
+    });
+
+    document.getElementById("btn-save-obiettivo").addEventListener("click", saveObiettivoModal);
+    document.getElementById("btn-clear-obiettivo").addEventListener("click", clearObiettivoModal);
+    document.getElementById("btn-cancel-obiettivo").addEventListener("click", closeObiettivoModal);
+    document.getElementById("backdrop-obiettivo").addEventListener("click", closeObiettivoModal);
 
     document.getElementById("btn-add-trofeo").addEventListener("click", function(){ openTrofeoModal("add", null); });
     document.getElementById("btn-save-trofeo").addEventListener("click", saveTrofeoModal);
@@ -1417,8 +2280,20 @@
     document.getElementById("btn-delete-match").addEventListener("click", deleteMatchModal);
     document.getElementById("backdrop-match").addEventListener("click", closeMatchModal);
 
+    document.getElementById("btn-add-team-color").addEventListener("click", function(){
+      if(teamColorsCtx.colors.length >= 3) return;
+      teamColorsCtx.colors.push("#26a0e0");
+      renderTeamColorRows();
+    });
+    document.getElementById("btn-save-team-colors").addEventListener("click", saveTeamColorsModal);
+    document.getElementById("btn-cancel-team-colors").addEventListener("click", closeTeamColorsModal);
+    document.getElementById("backdrop-team-colors").addEventListener("click", closeTeamColorsModal);
+
     document.querySelectorAll(".home-toggle").forEach(function(btn){
       btn.addEventListener("click", function(){ setHomeToggle(btn.getAttribute("data-home") === "1"); });
+    });
+    document.getElementById("btn-toggle-neutro-modal").addEventListener("click", function(){
+      setNeutroToggle(!matchCtx.campoNeutro);
     });
 
     document.querySelectorAll("[data-step]").forEach(function(btn){
