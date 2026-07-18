@@ -201,9 +201,10 @@
     box-shadow: 0 0 16px -4px rgba(224,176,79,0.4);
     overflow:hidden;
   }
+  .trofeo-plinth img{ background: transparent !important; }
 
-  .img-picker-preview{ width:64px; height:64px; border-radius:14px; flex-shrink:0; overflow:hidden; display:flex; align-items:center; justify-content:center; background:var(--bg-900); border:1px solid var(--line); }
-  .img-picker-preview img{ width:100%; height:100%; object-fit:cover; }
+  .img-picker-preview{ width:64px; height:64px; border-radius:14px; flex-shrink:0; overflow:hidden; display:flex; align-items:center; justify-content:center; background: transparent !important; border:1px solid var(--line); }
+  .img-picker-preview img{ width:100%; height:100%; object-fit:contain; background: transparent !important; }
 
   @media (min-width:768px){ .app-nav{ position:sticky; } }
 </style>
@@ -409,7 +410,7 @@
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
   <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
-    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v1.5.0</span></p>
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v1.6.0</span></p>
     <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
   </div>
 </div>
@@ -539,13 +540,18 @@
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">TIPO (per questa stagione)</label>
   <div class="flex gap-2 mb-2">
     <button type="button" data-tipo="girone" class="seg-btn tipo-toggle active">🏆 Girone</button>
-    <button type="button" data-tipo="eliminazione" class="seg-btn tipo-toggle">⚔️ Eliminazione diretta</button>
+    <button type="button" data-tipo="eliminazione" class="seg-btn tipo-toggle">⚔️ Eliminazione</button>
+    <button type="button" data-tipo="misto" class="seg-btn tipo-toggle">🔀 Misto</button>
   </div>
   <p id="compedit-tipo-locked-note" class="hidden text-[11px] text-[var(--text-mute)] mb-4">Il tipo non può essere cambiato perché la competizione contiene già partite.</p>
 
   <div id="compedit-turno-field" class="hidden mb-5">
     <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">IL NAPOLI PARTE DA</label>
     <select id="input-compedit-turno" class="field-input"></select>
+  </div>
+  <div id="compedit-gironi-field" class="hidden mb-5">
+    <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">QUANTE PARTITE HA LA FASE A GIRONI?</label>
+    <input id="input-compedit-gironi" type="number" min="1" value="8" class="field-input">
   </div>
 
   <button id="btn-save-compedit" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
@@ -569,8 +575,30 @@
   <button id="btn-cancel-obiettivo" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
 </div>
 
-<!-- MODAL: EDIZIONE -->
-<div id="backdrop-edizione" class="modal-backdrop"></div>
+<!-- MODAL: TRANSIZIONE FASE (competizioni Miste) -->
+<div id="backdrop-misto-transition" class="modal-backdrop"></div>
+<div id="sheet-misto-transition" class="sheet px-5 pt-3">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <h3 class="font-display text-2xl mb-2">FASE A GIRONI CONCLUSA</h3>
+  <p id="misto-transition-comp-name" class="text-[13px] text-[var(--azzurro)] font-bold uppercase mb-3"></p>
+
+  <div id="misto-step-question">
+    <p class="text-[14px] text-[var(--text-dim)] mb-5">Hai raggiunto il numero di partite previsto per la fase a gironi. Il Napoli è passato alla fase a eliminazione diretta?</p>
+    <div class="flex gap-2 mb-2">
+      <button id="btn-misto-si" type="button" class="flex-1 py-3.5 rounded-xl font-bold text-[15px]" style="background:var(--win-bg); color:var(--win);">Sì</button>
+      <button id="btn-misto-no" type="button" class="flex-1 py-3.5 rounded-xl font-bold text-[15px]" style="background:var(--loss-bg); color:var(--loss);">No, eliminato</button>
+    </div>
+    <button id="btn-misto-later" type="button" class="w-full py-3 rounded-xl font-bold text-[13.5px] mt-2.5 text-[var(--text-mute)]">Chiedimelo più tardi</button>
+  </div>
+
+  <div id="misto-step-turno" class="hidden">
+    <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">DA QUALE TURNO RIPARTE?</label>
+    <select id="input-misto-turno" class="field-input mb-5"></select>
+    <button id="btn-misto-confirm-turno" type="button" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Conferma</button>
+  </div>
+</div>
+
+<!-- MODAL: EDIZIONE --><div id="backdrop-edizione" class="modal-backdrop"></div>
 <div id="sheet-edizione" class="sheet px-5 pt-3">
   <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
   <div class="flex items-center justify-between mb-4">
@@ -614,11 +642,17 @@
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">TIPO PREDEFINITO</label>
   <div class="flex gap-2 mb-2">
     <button type="button" data-tipo="girone" class="seg-btn tipo-toggle active">🏆 Girone</button>
-    <button type="button" data-tipo="eliminazione" class="seg-btn tipo-toggle">⚔️ Eliminazione diretta</button>
+    <button type="button" data-tipo="eliminazione" class="seg-btn tipo-toggle">⚔️ Eliminazione</button>
+    <button type="button" data-tipo="misto" class="seg-btn tipo-toggle">🔀 Misto</button>
   </div>
   <div id="catalogmodal-turno-field" class="hidden mb-5">
     <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">TURNO DI PARTENZA PREDEFINITO</label>
     <select id="input-catalog-turno" class="field-input"></select>
+  </div>
+  <div id="catalogmodal-gironi-field" class="hidden mb-5">
+    <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">QUANTE PARTITE HA LA FASE A GIRONI?</label>
+    <input id="input-catalog-gironi" type="number" min="1" value="8" class="field-input">
+    <p class="text-[10.5px] text-[var(--text-mute)] mt-1.5">Dopo queste partite l'app chiederà se il Napoli è passato alla fase a eliminazione diretta.</p>
   </div>
 
   <button id="btn-save-catalog" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
@@ -662,13 +696,13 @@
   var ROUND_NAMES = ["Trentaduesimi di finale","Sedicesimi di finale","Ottavi di finale","Quarti di finale","Semifinale","Finale"];
 
   var DEFAULT_CATALOG = [
-    {id:"serie-a", name:"Serie A", categoria:"nazionale", tipoDefault:"girone", turnoInizialeDefault:null},
-    {id:"coppa-italia", name:"Coppa Italia", categoria:"nazionale", tipoDefault:"eliminazione", turnoInizialeDefault:2},
-    {id:"supercoppa-it", name:"Supercoppa Italiana", categoria:"nazionale", tipoDefault:"eliminazione", turnoInizialeDefault:5},
-    {id:"champions", name:"Champions League", categoria:"europea", tipoDefault:"girone", turnoInizialeDefault:null},
-    {id:"europa", name:"Europa League", categoria:"europea", tipoDefault:"girone", turnoInizialeDefault:null},
-    {id:"conference", name:"Conference League", categoria:"europea", tipoDefault:"girone", turnoInizialeDefault:null},
-    {id:"supercoppa-eu", name:"Supercoppa Europea", categoria:"europea", tipoDefault:"eliminazione", turnoInizialeDefault:5}
+    {id:"serie-a", name:"Serie A", categoria:"nazionale", tipoDefault:"girone", turnoInizialeDefault:null, gironiPartiteDefault:8},
+    {id:"coppa-italia", name:"Coppa Italia", categoria:"nazionale", tipoDefault:"eliminazione", turnoInizialeDefault:2, gironiPartiteDefault:8},
+    {id:"supercoppa-it", name:"Supercoppa Italiana", categoria:"nazionale", tipoDefault:"eliminazione", turnoInizialeDefault:5, gironiPartiteDefault:8},
+    {id:"champions", name:"Champions League", categoria:"europea", tipoDefault:"girone", turnoInizialeDefault:null, gironiPartiteDefault:8},
+    {id:"europa", name:"Europa League", categoria:"europea", tipoDefault:"girone", turnoInizialeDefault:null, gironiPartiteDefault:8},
+    {id:"conference", name:"Conference League", categoria:"europea", tipoDefault:"girone", turnoInizialeDefault:null, gironiPartiteDefault:8},
+    {id:"supercoppa-eu", name:"Supercoppa Europea", categoria:"europea", tipoDefault:"eliminazione", turnoInizialeDefault:5, gironiPartiteDefault:8}
   ];
 
   var DEFAULT_LEAGUES = [
@@ -719,7 +753,7 @@
   // ---------- CATALOGO COMPETIZIONI ----------
   function defaultCompetitionsCatalog(){
     return DEFAULT_CATALOG.map(function(c){
-      return { id:c.id, name:c.name, trofeoImg:null, categoria:c.categoria, tipoDefault:c.tipoDefault, turnoInizialeDefault:c.turnoInizialeDefault };
+      return { id:c.id, name:c.name, trofeoImg:null, categoria:c.categoria, tipoDefault:c.tipoDefault, turnoInizialeDefault:c.turnoInizialeDefault, gironiPartiteDefault:c.gironiPartiteDefault || 8 };
     });
   }
   function getCatalogEntry(catalogId){
@@ -733,6 +767,12 @@
       categoria: cat ? cat.categoria : "nazionale",
       tipoDefault: cat ? cat.tipoDefault : "girone"
     };
+  }
+  // Per le competizioni "misto" la fase davvero attiva è quella salvata in comp.misto.faseAttuale;
+  // per girone/eliminazione pure coincide semplicemente con comp.tipo.
+  function effectiveFase(comp){
+    if(comp.tipo === "misto") return comp.misto ? comp.misto.faseAttuale : "girone";
+    return comp.tipo;
   }
   function getThemeKeyForName(name){
     var n = (name || "").toLowerCase();
@@ -824,6 +864,9 @@
     if(!Array.isArray(s.seasons)) return null;
 
     if(!Array.isArray(s.competitionsCatalog)) s.competitionsCatalog = defaultCompetitionsCatalog();
+    s.competitionsCatalog.forEach(function(c){
+      if(typeof c.gironiPartiteDefault !== "number") c.gironiPartiteDefault = 8;
+    });
     if(!Array.isArray(s.leagues)) s.leagues = defaultLeagues();
     s.leagues.forEach(function(lg){
       if(!Array.isArray(lg.teams)) lg.teams = [];
@@ -848,11 +891,24 @@
     s.seasons.forEach(function(season){
       if(!Array.isArray(season.competitions)) season.competitions = [];
       season.competitions.forEach(function(comp){
-        if(comp.tipo !== "girone" && comp.tipo !== "eliminazione") comp.tipo = "girone";
+        if(comp.tipo !== "girone" && comp.tipo !== "eliminazione" && comp.tipo !== "misto") comp.tipo = "girone";
         if(!Array.isArray(comp.matches)) comp.matches = [];
         if(typeof comp.obiettivoVoto !== "number") comp.obiettivoVoto = null;
         if(!Array.isArray(comp.turni)) comp.turni = [];
         if(typeof comp.turnoIniziale !== "number") comp.turnoIniziale = null;
+        if(comp.tipo === "misto"){
+          if(!comp.misto || typeof comp.misto !== "object"){
+            comp.misto = { gironiTarget: 8, faseAttuale: "girone", transitionAsked: false, decided: false, eliminatoAiGironi: false };
+          } else {
+            if(typeof comp.misto.gironiTarget !== "number") comp.misto.gironiTarget = 8;
+            if(comp.misto.faseAttuale !== "girone" && comp.misto.faseAttuale !== "eliminazione") comp.misto.faseAttuale = "girone";
+            if(typeof comp.misto.transitionAsked !== "boolean") comp.misto.transitionAsked = false;
+            if(typeof comp.misto.decided !== "boolean") comp.misto.decided = false;
+            if(typeof comp.misto.eliminatoAiGironi !== "boolean") comp.misto.eliminatoAiGironi = false;
+          }
+        } else {
+          comp.misto = null;
+        }
 
         if(!comp.catalogId || !getCatalogEntryIn(s.competitionsCatalog, comp.catalogId)){
           var entry = findOrCreateCatalogEntry(s.competitionsCatalog, comp.name || "Competizione", comp.trofeoImg || null, comp.tipo);
@@ -958,15 +1014,18 @@
     if(!season) return out;
     season.competitions.forEach(function(comp){
       var disp = compDisplay(comp);
-      if(comp.tipo === "eliminazione"){
+      // fase a girone: presente per competizioni "girone" pure, o per la fase iniziale di una "misto"
+      if(comp.tipo === "girone" || comp.tipo === "misto"){
+        comp.matches.forEach(function(m){
+          out.push({ golNap: m.golNap, golOpp: m.golOpp, voto: m.voto, opponent: m.opponent, home: m.home, campoNeutro: false, tipo: "girone", compName: disp.name });
+        });
+      }
+      // fase a eliminazione diretta: presente per competizioni "eliminazione" pure, o per la fase avanzata di una "misto"
+      if(comp.tipo === "eliminazione" || comp.tipo === "misto"){
         comp.turni.forEach(function(turno){
           turno.legs.forEach(function(leg){
             out.push({ golNap: leg.golNap, golOpp: leg.golOpp, voto: leg.voto, opponent: turno.opponent, home: leg.home, campoNeutro: turno.campoNeutro, tipo: "eliminazione", compName: disp.name });
           });
-        });
-      } else {
-        comp.matches.forEach(function(m){
-          out.push({ golNap: m.golNap, golOpp: m.golOpp, voto: m.voto, opponent: m.opponent, home: m.home, campoNeutro: false, tipo: "girone", compName: disp.name });
         });
       }
     });
@@ -1044,7 +1103,7 @@
       var chip = document.createElement("button");
       chip.className = "comp-chip" + (c.active ? " active" : "");
       chip.style.display = "inline-flex"; chip.style.alignItems = "center"; chip.style.gap = "5px";
-      chip.innerHTML = (disp.trofeoImg ? '<img src="' + disp.trofeoImg + '" style="width:16px;height:16px;border-radius:4px;object-fit:cover;">' : '') + escapeHtml(disp.name);
+      chip.innerHTML = (disp.trofeoImg ? '<img src="' + disp.trofeoImg + '" style="width:16px;height:16px;border-radius:4px;object-fit:contain;background:transparent;">' : '') + escapeHtml(disp.name);
       chip.addEventListener("click", function(){ c.active = !c.active; save(); render(); });
       row.appendChild(chip);
     });
@@ -1069,10 +1128,14 @@
     active.forEach(function(comp, idx){
       if(!openAccordions.hasOwnProperty(comp.id)) openAccordions[comp.id] = (idx === 0);
       var isOpen = openAccordions[comp.id];
-      var legsFlat = comp.tipo === "eliminazione" ? comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, []) : comp.matches;
+      var legsFlat;
+      if(comp.tipo === "eliminazione"){ legsFlat = comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, []); }
+      else if(comp.tipo === "misto"){ legsFlat = comp.matches.concat(comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, [])); }
+      else { legsFlat = comp.matches; }
       var st = computeMatchesStats(legsFlat);
       var themeKey = getThemeKeyForComp(comp);
       var disp = compDisplay(comp);
+      var fase = effectiveFase(comp);
 
       var card = document.createElement("div");
       card.className = "glass rounded-2xl overflow-hidden";
@@ -1084,11 +1147,12 @@
       header.className = "w-full flex items-center justify-between px-4 py-3.5 gap-2 theme-bg-" + themeKey;
       header.innerHTML =
         '<button type="button" data-toggle-comp="' + comp.id + '" class="flex items-center gap-3 text-left flex-1 min-w-0">' +
-          (disp.trofeoImg ? '<img src="' + disp.trofeoImg + '" class="w-10 h-10 rounded-lg flex-shrink-0" style="object-fit:cover;border:1px solid var(--line);">' : '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--bg-750);font-size:17px;">🏆</div>') +
+          (disp.trofeoImg ? '<img src="' + disp.trofeoImg + '" class="w-10 h-10 rounded-lg flex-shrink-0" style="object-fit:contain;border:1px solid var(--line);background:transparent;">' : '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--bg-750);font-size:17px;">🏆</div>') +
           '<div class="min-w-0">' +
-            '<div class="flex items-center gap-1.5">' +
+            '<div class="flex items-center gap-1.5 flex-wrap">' +
               '<p class="font-bold text-[15px] truncate">' + escapeHtml(disp.name) + '</p>' +
               (themeLabel(themeKey) ? '<span class="theme-badge theme-' + themeKey + '">' + themeLabel(themeKey) + '</span>' : '') +
+              (comp.tipo === "misto" ? '<span class="theme-badge" style="background:rgba(224,176,79,0.18);color:var(--gold);">🔀 MISTO</span>' : '') +
             '</div>' +
             '<p class="text-[11px] text-[var(--text-mute)] font-medium">' + st.pg + ' PG · ' + st.v + 'V ' + st.p + 'P ' + st.s + 'S' + (st.mediaVoti !== null ? ' · voto ' + fmt1(st.mediaVoti) : '') + '</p>' +
           '</div>' +
@@ -1110,7 +1174,7 @@
       contentBody.className = "px-4 pb-4";
 
       var bodyHtml = "";
-      if(comp.tipo === "girone"){
+      if(fase === "girone"){
         var puntiItems = comp.matches.map(function(m){ return { golNap:m.golNap, golOpp:m.golOpp, tipo:"girone" }; });
         var punti = puntiTotali(puntiItems);
         bodyHtml += '<div class="grid grid-cols-4 gap-2 mb-3">' +
@@ -1119,6 +1183,21 @@
           statPill("Punti", st.pg ? String(punti) : "—") +
           statPill("Media voti", st.mediaVoti !== null ? fmt1(st.mediaVoti) : "—") +
         '</div>';
+
+        if(comp.tipo === "misto"){
+          var target = comp.misto.gironiTarget;
+          var progressPct = target > 0 ? Math.max(0, Math.min(100, (comp.matches.length/target)*100)) : 0;
+          bodyHtml += '<div class="mb-3">' +
+            '<div class="flex items-center justify-between text-[11px] font-semibold text-[var(--text-mute)] mb-1">' +
+              '<span>FASE A GIRONI</span><span>' + comp.matches.length + ' / ' + target + '</span>' +
+            '</div>' +
+            '<div class="progress-track"><div class="progress-fill" style="width:' + progressPct + '%;"></div></div>' +
+          '</div>';
+          if(comp.matches.length >= target && !comp.misto.decided){
+            bodyHtml += '<button type="button" data-misto-prompt="' + comp.id + '" class="w-full mb-3 py-2.5 rounded-lg font-bold text-[12.5px]" style="background:var(--draw-bg); color:var(--draw);">⏳ Fase gironi conclusa — indica se sei passato al turno successivo</button>';
+          }
+        }
+
         var matchesHtml = "";
         if(comp.matches.length === 0){ matchesHtml = '<p class="text-xs text-[var(--text-mute)] text-center py-3">Nessuna partita registrata.</p>'; }
         else { comp.matches.slice().reverse().forEach(function(m){ matchesHtml += matchTicketHtml(m, comp.id); }); }
@@ -1126,12 +1205,24 @@
         bodyHtml += '<button data-add-match="' + comp.id + '" class="w-full mt-3 py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">' +
           '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg> Aggiungi partita</button>';
       } else {
-        // Fase a eliminazione diretta: niente riga "Punti", non è prevista classifica.
+        // Fase a eliminazione diretta (pura, o fase avanzata di una "misto"): niente riga "Punti", non è prevista classifica.
         bodyHtml += '<div class="grid grid-cols-3 gap-2 mb-3">' +
           statPill("Gol fatti", st.pg ? st.gf + " (" + fmt1(st.gfAvg) + ")" : "—") +
           statPill("Gol subiti", st.pg ? st.gs + " (" + fmt1(st.gsAvg) + ")" : "—") +
           statPill("Media voti", st.mediaVoti !== null ? fmt1(st.mediaVoti) : "—") +
         '</div>';
+
+        if(comp.tipo === "misto"){
+          var gironeSt = computeMatchesStats(comp.matches);
+          var gironePunti = puntiTotali(comp.matches.map(function(m){ return {golNap:m.golNap, golOpp:m.golOpp, tipo:"girone"}; }));
+          bodyHtml += '<div class="glass rounded-xl px-3.5 py-2.5 mb-3 flex items-center justify-between text-[12px]">' +
+            '<span class="font-semibold text-[var(--text-dim)]">📋 Fase a gironi: ' + comp.matches.length + ' PG, voto ' + (gironeSt.mediaVoti!==null?fmt1(gironeSt.mediaVoti):"—") + '</span>' +
+            '<span class="font-display text-base" style="color:var(--gold);">' + gironePunti + ' pt</span>' +
+          '</div>';
+          if(comp.misto.eliminatoAiGironi){
+            bodyHtml += '<div class="glass rounded-xl px-3.5 py-2.5 mb-3 text-center text-[12.5px] font-bold" style="color:var(--loss);">Eliminato nella fase a gironi</div>';
+          }
+        }
         bodyHtml += turniSectionHtml(comp);
       }
 
@@ -1189,6 +1280,9 @@
         turno.esitoManuale = parts[2]; computeSbloccato(comp); save(); render();
         showToast(parts[2] === "passato" ? "✓ Turno superato" : "Turno concluso");
       });
+    });
+    list.querySelectorAll("[data-misto-prompt]").forEach(function(btn){
+      btn.addEventListener("click", function(){ openMistoTransitionModal(btn.getAttribute("data-misto-prompt")); });
     });
   }
 
@@ -1394,8 +1488,9 @@
       header.className = "w-full flex items-center justify-between px-4 py-3.5 gap-2";
       header.innerHTML =
         '<button type="button" data-toggle-trofeo="' + trofeo.id + '" class="flex items-center gap-3 text-left flex-1 min-w-0">' +
-          '<div class="trofeo-plinth">' + (disp.trofeoImg ? '<img src="' + disp.trofeoImg + '" style="width:100%;height:100%;object-fit:cover;">' : '<span style="font-size:26px;">🏆</span>') + '</div>' +
-          '<div class="min-w-0"><p class="font-bold text-[15px] truncate">' + escapeHtml(disp.name) + '</p>' +
+          '<div class="trofeo-plinth">' + (disp.trofeoImg ? '<img src="' + disp.trofeoImg + '" style="width:100%;height:100%;object-fit:contain;background:transparent;">' : '<span style="font-size:26px;">🏆</span>') + '</div>' +
+          '<div class="min-w-0"><div class="flex items-center gap-1.5 flex-wrap"><p class="font-bold text-[15px] truncate">' + escapeHtml(disp.name) + '</p>' +
+          (disp.tipoDefault === "misto" ? '<span class="theme-badge" style="background:rgba(224,176,79,0.18);color:var(--gold);">🔀 MISTO</span>' : '') + '</div>' +
           '<p class="text-[11px] text-[var(--text-mute)] font-medium">' + trofeo.edizioni.length + (trofeo.edizioni.length === 1 ? ' edizione vinta' : ' edizioni vinte') + (lastYear ? ' · ultima: ' + escapeHtml(lastYear) : '') + '</p></div>' +
         '</button>' +
         '<div class="flex items-center gap-1.5 flex-shrink-0">' +
@@ -1535,8 +1630,12 @@
         else { if(h > maxSize){ w = Math.round(w * maxSize / h); h = maxSize; } }
         var canvas = document.createElement("canvas");
         canvas.width = w; canvas.height = h;
-        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-        callback(canvas.toDataURL("image/jpeg", 0.82));
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, w, h); // il canvas 2D è già trasparente di default: lo rendiamo esplicito
+        ctx.drawImage(img, 0, 0, w, h);
+        // PNG preserva la trasparenza. JPEG non ha canale alfa: ricodificare in JPEG
+        // forzava uno sfondo NERO dietro ai loghi con sfondo trasparente — era il vero bug.
+        callback(canvas.toDataURL("image/png"));
       };
       img.onerror = function(){ showToast("⚠️ Immagine non valida"); };
       img.src = e.target.result;
@@ -1641,8 +1740,8 @@
         row.className = "settings-row w-full text-left";
         row.innerHTML =
           '<div class="flex items-center gap-3 min-w-0">' +
-            (c.trofeoImg ? '<img src="'+c.trofeoImg+'" class="w-10 h-10 rounded-lg flex-shrink-0" style="object-fit:cover;">' : '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--bg-750);font-size:16px;">🏆</div>') +
-            '<div class="min-w-0"><p class="font-semibold text-[14px] truncate">'+escapeHtml(c.name)+'</p><p class="text-[11px] text-[var(--text-mute)]">'+(c.categoria==="nazionale"?"Nazionale":"Europea")+'</p></div>' +
+            (c.trofeoImg ? '<img src="'+c.trofeoImg+'" class="w-10 h-10 rounded-lg flex-shrink-0" style="object-fit:contain;background:transparent;">' : '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--bg-750);font-size:16px;">🏆</div>') +
+            '<div class="min-w-0"><p class="font-semibold text-[14px] truncate">'+escapeHtml(c.name)+'</p><p class="text-[11px] text-[var(--text-mute)]">'+(c.categoria==="nazionale"?"Nazionale":"Europea")+(c.tipoDefault==="misto"?' · 🔀 Misto':'')+'</p></div>' +
           '</div>';
         row.addEventListener("click", function(){ selectFromCompPicker(c.id); });
         list.appendChild(row);
@@ -1656,11 +1755,13 @@
       var season = getActiveSeason();
       if(!season) return;
       var cat = getCatalogEntry(catalogId);
-      var comp = { id: uid(), catalogId: catalogId, active: true, tipo: cat.tipoDefault, obiettivoVoto: null, matches: [], turnoIniziale: null, turni: [] };
+      var comp = { id: uid(), catalogId: catalogId, active: true, tipo: cat.tipoDefault, obiettivoVoto: null, matches: [], turnoIniziale: null, turni: [], misto: null };
       if(cat.tipoDefault === "eliminazione"){
         var startIdx = cat.turnoInizialeDefault != null ? cat.turnoInizialeDefault : (ROUND_NAMES.length - 1);
         comp.turnoIniziale = startIdx;
         comp.turni = buildTurni(startIdx);
+      } else if(cat.tipoDefault === "misto"){
+        comp.misto = { gironiTarget: cat.gironiPartiteDefault || 8, faseAttuale: "girone", transitionAsked:false, decided:false, eliminatoAiGironi:false };
       }
       season.competitions.push(comp);
       save(); render();
@@ -1690,9 +1791,13 @@
     });
     document.getElementById("compedit-tipo-locked-note").classList.toggle("hidden", !hasData);
     document.getElementById("compedit-turno-field").classList.toggle("hidden", comp.tipo !== "eliminazione");
+    document.getElementById("compedit-gironi-field").classList.toggle("hidden", comp.tipo !== "misto");
     var turnoSelect = document.getElementById("input-compedit-turno");
     turnoSelect.value = comp.turnoIniziale != null ? String(comp.turnoIniziale) : String(ROUND_NAMES.length - 1);
     turnoSelect.disabled = hasData;
+    var gironiInput = document.getElementById("input-compedit-gironi");
+    gironiInput.value = comp.misto ? comp.misto.gironiTarget : (getCatalogEntry(comp.catalogId) ? getCatalogEntry(comp.catalogId).gironiPartiteDefault : 8);
+    gironiInput.disabled = hasData;
     toggleSheet("comp-edit", true);
   }
   function closeCompEditModal(){ toggleSheet("comp-edit", false); }
@@ -1704,12 +1809,17 @@
       var activeBtn = document.querySelector("#sheet-comp-edit .tipo-toggle.active");
       var newTipo = activeBtn ? activeBtn.getAttribute("data-tipo") : comp.tipo;
       var newTurnoIdx = parseInt(document.getElementById("input-compedit-turno").value, 10) || 0;
+      var newGironiCount = parseInt(document.getElementById("input-compedit-gironi").value, 10);
+      if(isNaN(newGironiCount) || newGironiCount < 1) newGironiCount = 8;
       if(newTipo !== comp.tipo){
         comp.tipo = newTipo;
-        if(newTipo === "eliminazione"){ comp.turnoIniziale = newTurnoIdx; comp.turni = buildTurni(newTurnoIdx); comp.matches = []; }
-        else { comp.turnoIniziale = null; comp.turni = []; }
+        if(newTipo === "eliminazione"){ comp.turnoIniziale = newTurnoIdx; comp.turni = buildTurni(newTurnoIdx); comp.matches = []; comp.misto = null; }
+        else if(newTipo === "misto"){ comp.turnoIniziale = null; comp.turni = []; comp.matches = []; comp.misto = { gironiTarget: newGironiCount, faseAttuale: "girone", transitionAsked:false, decided:false, eliminatoAiGironi:false }; }
+        else { comp.turnoIniziale = null; comp.turni = []; comp.misto = null; }
       } else if(newTipo === "eliminazione" && newTurnoIdx !== comp.turnoIniziale){
         comp.turnoIniziale = newTurnoIdx; comp.turni = buildTurni(newTurnoIdx);
+      } else if(newTipo === "misto" && comp.misto && newGironiCount !== comp.misto.gironiTarget){
+        comp.misto.gironiTarget = newGironiCount;
       }
     }
     save(); render(); closeCompEditModal();
@@ -1773,6 +1883,55 @@
     showToast("Obiettivo rimosso");
   }
 
+  // ---------- TORNEI MISTI: transizione girone -> eliminazione diretta ----------
+  var mistoTransitionCompId = null;
+
+  function checkMistoTransition(comp){
+    if(comp.tipo !== "misto") return;
+    if(!comp.misto || comp.misto.faseAttuale !== "girone") return;
+    if(comp.misto.decided) return;
+    if(comp.matches.length < comp.misto.gironiTarget) return;
+    if(comp.misto.transitionAsked) return; // già chiesto una volta in automatico: si può riaprire dal banner in-card
+    comp.misto.transitionAsked = true;
+    openMistoTransitionModal(comp.id);
+  }
+  function openMistoTransitionModal(compId){
+    var comp = findComp(compId);
+    if(!comp) return;
+    mistoTransitionCompId = compId;
+    document.getElementById("misto-transition-comp-name").textContent = compDisplay(comp).name;
+    document.getElementById("misto-step-question").classList.remove("hidden");
+    document.getElementById("misto-step-turno").classList.add("hidden");
+    toggleSheet("misto-transition", true);
+  }
+  function closeMistoTransitionModal(){ toggleSheet("misto-transition", false); }
+  function mistoAnswerSi(){
+    document.getElementById("misto-step-question").classList.add("hidden");
+    document.getElementById("misto-step-turno").classList.remove("hidden");
+    document.getElementById("input-misto-turno").value = "0";
+  }
+  function mistoAnswerNo(){
+    var comp = findComp(mistoTransitionCompId);
+    if(!comp) return;
+    comp.misto.decided = true;
+    comp.misto.eliminatoAiGironi = true;
+    comp.misto.faseAttuale = "eliminazione"; // niente più punti da qui in poi, come da logica eliminazione diretta
+    save(); render(); closeMistoTransitionModal();
+    showToast("Competizione conclusa ai gironi");
+  }
+  function mistoConfirmTurno(){
+    var comp = findComp(mistoTransitionCompId);
+    if(!comp) return;
+    var idx = parseInt(document.getElementById("input-misto-turno").value, 10) || 0;
+    comp.misto.decided = true;
+    comp.misto.faseAttuale = "eliminazione";
+    comp.turnoIniziale = idx;
+    comp.turni = buildTurni(idx);
+    save(); render(); closeMistoTransitionModal();
+    showToast("✓ Passato alla fase a eliminazione diretta");
+  }
+  function mistoLater(){ closeMistoTransitionModal(); }
+
   // ---------- MODAL: CATALOGO COMPETIZIONE ----------
   var catalogModalMode = "add";
   var catalogModalTipo = "girone";
@@ -1790,8 +1949,8 @@
       row.className = "settings-row";
       row.innerHTML =
         '<div class="flex items-center gap-3 min-w-0">' +
-          (c.trofeoImg ? '<img src="'+c.trofeoImg+'" class="w-10 h-10 rounded-lg flex-shrink-0" style="object-fit:cover;">' : '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--bg-750);font-size:16px;">🏆</div>') +
-          '<div class="min-w-0"><p class="font-semibold text-[14px] truncate">'+escapeHtml(c.name)+'</p><p class="text-[11px] text-[var(--text-mute)]">'+(c.categoria==="nazionale"?"Nazionale":"Europea")+' · '+(c.tipoDefault==="girone"?"Girone":"Eliminazione")+'</p></div>' +
+          (c.trofeoImg ? '<img src="'+c.trofeoImg+'" class="w-10 h-10 rounded-lg flex-shrink-0" style="object-fit:contain;background:transparent;">' : '<div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style="background:var(--bg-750);font-size:16px;">🏆</div>') +
+          '<div class="min-w-0"><p class="font-semibold text-[14px] truncate">'+escapeHtml(c.name)+'</p><p class="text-[11px] text-[var(--text-mute)]">'+(c.categoria==="nazionale"?"Nazionale":"Europea")+' · '+(c.tipoDefault==="girone"?"Girone":c.tipoDefault==="misto"?"🔀 Misto":"Eliminazione")+'</p></div>' +
         '</div>' +
         '<button type="button" data-edit-catalog="'+c.id+'" class="settings-btn" style="background:var(--bg-750);color:var(--text);">Modifica</button>';
       wrap.appendChild(row);
@@ -1827,9 +1986,11 @@
     document.querySelectorAll("#sheet-catalog-comp .categoria-toggle").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-categoria")===catalogModalCategoria); });
     document.querySelectorAll("#sheet-catalog-comp .tipo-toggle").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-tipo")===catalogModalTipo); });
     document.getElementById("catalogmodal-turno-field").classList.toggle("hidden", catalogModalTipo !== "eliminazione");
+    document.getElementById("catalogmodal-gironi-field").classList.toggle("hidden", catalogModalTipo !== "misto");
     var turnoSel = document.getElementById("input-catalog-turno");
     var c2 = mode === "edit" ? getCatalogEntry(catalogId) : null;
     turnoSel.value = c2 && c2.turnoInizialeDefault != null ? String(c2.turnoInizialeDefault) : String(ROUND_NAMES.length-1);
+    document.getElementById("input-catalog-gironi").value = c2 && c2.gironiPartiteDefault != null ? c2.gironiPartiteDefault : 8;
     toggleSheet("catalog-comp", true);
   }
   function closeCatalogModal(){ toggleSheet("catalog-comp", false); }
@@ -1837,14 +1998,17 @@
     var name = document.getElementById("input-catalog-name").value.trim();
     if(!name){ showToast("⚠️ Inserisci un nome"); return; }
     var turnoIdx = parseInt(document.getElementById("input-catalog-turno").value, 10);
+    var gironiCount = parseInt(document.getElementById("input-catalog-gironi").value, 10);
+    if(isNaN(gironiCount) || gironiCount < 1) gironiCount = 8;
     if(catalogModalMode === "edit"){
       var c = getCatalogEntry(catalogEditCtx.id);
       if(!c) return;
       c.name = name; c.trofeoImg = pendingImageDataUrl; c.categoria = catalogModalCategoria; c.tipoDefault = catalogModalTipo;
       c.turnoInizialeDefault = catalogModalTipo === "eliminazione" ? turnoIdx : null;
+      c.gironiPartiteDefault = gironiCount;
       showToast("✓ Competizione aggiornata");
     } else {
-      state.competitionsCatalog.push({ id: uid(), name:name, trofeoImg: pendingImageDataUrl, categoria: catalogModalCategoria, tipoDefault: catalogModalTipo, turnoInizialeDefault: catalogModalTipo==="eliminazione"?turnoIdx:null });
+      state.competitionsCatalog.push({ id: uid(), name:name, trofeoImg: pendingImageDataUrl, categoria: catalogModalCategoria, tipoDefault: catalogModalTipo, turnoInizialeDefault: catalogModalTipo==="eliminazione"?turnoIdx:null, gironiPartiteDefault: gironiCount });
       showToast("✓ Competizione creata");
     }
     save(); renderCatalogList(); render(); closeCatalogModal();
@@ -2232,6 +2396,7 @@
       showToast("✓ Partita salvata");
     }
     save(); render(); closeMatchModal();
+    checkMistoTransition(seasonComp);
   }
 
   function deleteMatchModal(){
@@ -2371,7 +2536,10 @@
     html += '<table style="width:100%;border-collapse:collapse;font-size:12.5px;"><tr style="background:#f3f4f6;"><th style="text-align:left;padding:6px 8px;">Competizione</th><th style="padding:6px 8px;">PG</th><th style="padding:6px 8px;">V-P-S</th><th style="padding:6px 8px;">Voto</th></tr>';
     season.competitions.forEach(function(comp){
       var disp = compDisplay(comp);
-      var lf = comp.tipo === "eliminazione" ? comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, []) : comp.matches;
+      var lf;
+      if(comp.tipo === "eliminazione"){ lf = comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, []); }
+      else if(comp.tipo === "misto"){ lf = comp.matches.concat(comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, [])); }
+      else { lf = comp.matches; }
       var s3 = computeMatchesStats(lf);
       if(s3.pg === 0) return;
       html += '<tr style="border-bottom:1px solid #e5e7eb;">' +
@@ -2407,22 +2575,50 @@
     return div;
   }
 
+  function waitForImagesAndFonts(container){
+    var imgs = Array.prototype.slice.call(container.querySelectorAll("img"));
+    var imgPromises = imgs.map(function(img){
+      if(img.complete && img.naturalWidth > 0) return Promise.resolve();
+      return new Promise(function(resolve){
+        img.addEventListener("load", resolve, { once:true });
+        img.addEventListener("error", resolve, { once:true });
+      });
+    });
+    var fontsPromise = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+    return Promise.all(imgPromises.concat([fontsPromise]));
+  }
+
   function generateSeasonReport(){
     var season = getActiveSeason();
     if(!season){ showToast("⚠️ Nessuna stagione attiva"); return; }
     if(typeof html2pdf === "undefined"){ showToast("⚠️ Libreria PDF non disponibile (verifica la connessione)"); return; }
     var container = buildReportContainer(season);
-    container.style.position = "fixed"; container.style.left = "-9999px"; container.style.top = "0";
+    // Il contenitore resta "dipinto" normalmente dal browser (niente display:none, niente
+    // opacity/visibility ridotte: html2canvas produrrebbe una cattura vuota). Lo teniamo
+    // fuori dalla vista con uno z-index negativo invece di spostarlo fuori schermo a -9999px,
+    // posizionamento che su alcune versioni di html2canvas genera una pagina bianca.
+    container.style.position = "fixed";
+    container.style.top = "0";
+    container.style.left = "0";
+    container.style.zIndex = "-9999";
     document.body.appendChild(container);
     showToast("⏳ Generazione PDF...");
-    var opt = {
-      margin: 10,
-      filename: "Report-" + season.name.replace("/", "-") + ".pdf",
-      image: { type: "jpeg", quality: 0.95 },
-      html2canvas: { scale: 2, backgroundColor: "#ffffff" },
-      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-    };
-    html2pdf().set(opt).from(container).save().then(function(){
+
+    waitForImagesAndFonts(container).then(function(){
+      // due frame per essere certi che il layout sia stato calcolato e dipinto prima dello screenshot
+      return new Promise(function(resolve){
+        requestAnimationFrame(function(){ requestAnimationFrame(resolve); });
+      });
+    }).then(function(){
+      var opt = {
+        margin: 10,
+        filename: "Report-" + season.name.replace("/", "-") + ".pdf",
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+      };
+      return html2pdf().set(opt).from(container).save();
+    }).then(function(){
       if(container.parentNode) document.body.removeChild(container);
       showToast("✓ Report scaricato");
     }).catch(function(err){
@@ -2437,6 +2633,7 @@
     var opts = ROUND_NAMES.map(function(n,i){ return '<option value="' + i + '">' + n + '</option>'; }).join("");
     document.getElementById("input-compedit-turno").innerHTML = opts;
     document.getElementById("input-catalog-turno").innerHTML = opts;
+    document.getElementById("input-misto-turno").innerHTML = opts;
   }
 
   function init(){
@@ -2503,9 +2700,11 @@
         container.querySelectorAll(".tipo-toggle").forEach(function(b){ b.classList.toggle("active", b === btn); });
         if(container.id === "sheet-comp-edit"){
           document.getElementById("compedit-turno-field").classList.toggle("hidden", tipo !== "eliminazione");
+          document.getElementById("compedit-gironi-field").classList.toggle("hidden", tipo !== "misto");
         } else if(container.id === "sheet-catalog-comp"){
           catalogModalTipo = tipo;
           document.getElementById("catalogmodal-turno-field").classList.toggle("hidden", tipo !== "eliminazione");
+          document.getElementById("catalogmodal-gironi-field").classList.toggle("hidden", tipo !== "misto");
         }
       });
     });
@@ -2527,6 +2726,12 @@
     document.getElementById("btn-clear-obiettivo").addEventListener("click", clearObiettivoModal);
     document.getElementById("btn-cancel-obiettivo").addEventListener("click", closeObiettivoModal);
     document.getElementById("backdrop-obiettivo").addEventListener("click", closeObiettivoModal);
+
+    document.getElementById("btn-misto-si").addEventListener("click", mistoAnswerSi);
+    document.getElementById("btn-misto-no").addEventListener("click", mistoAnswerNo);
+    document.getElementById("btn-misto-later").addEventListener("click", mistoLater);
+    document.getElementById("btn-misto-confirm-turno").addEventListener("click", mistoConfirmTurno);
+    document.getElementById("backdrop-misto-transition").addEventListener("click", mistoLater);
 
     document.getElementById("btn-add-trofeo").addEventListener("click", function(){ openCompPicker("palmares"); });
     document.getElementById("btn-save-edizione").addEventListener("click", saveEdizioneModal);
