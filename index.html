@@ -294,7 +294,7 @@
       </div>
 
       <button id="btn-generate-report" type="button" class="w-full mt-4 py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(224,176,79,0.14); color:var(--gold); border:1px solid rgba(224,176,79,0.3);">
-        📄 Genera Report Stagione
+        📊 Resoconto Stagionale
       </button>
     </section>
 
@@ -325,6 +325,7 @@
       <p id="stats-chart-empty" class="hidden absolute inset-0 items-center justify-center text-center text-sm text-[var(--text-mute)] px-6"></p>
     </div>
   </div>
+  <p id="stats-chart-caption" class="hidden text-[10.5px] text-[var(--text-mute)] mt-2 px-1">Solo campionato nazionale: le competizioni Europee non sono conteggiate in questo grafico.</p>
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">CASA E TRASFERTA</p>
   <div class="grid grid-cols-2 gap-3">
@@ -410,7 +411,7 @@
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
   <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
-    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v1.6.0</span></p>
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v1.7.0</span></p>
     <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
   </div>
 </div>
@@ -467,6 +468,17 @@
     <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">CAMPO NEUTRO</label>
     <button type="button" id="btn-toggle-neutro-modal" class="seg-btn" style="width:100%;">Campo neutro: No</button>
     <p class="text-[10.5px] text-[var(--text-mute)] mt-1.5">Se attivo, questa partita non conta nelle statistiche Casa/Trasferta.</p>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+      <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">DATA (facoltativa)</label>
+      <input id="input-match-data" type="date" class="field-input">
+    </div>
+    <div id="field-giornata">
+      <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">GIORNATA</label>
+      <input id="input-match-giornata" type="number" min="1" placeholder="es. 3" class="field-input">
+    </div>
   </div>
 
   <div class="grid grid-cols-2 gap-4 mb-4">
@@ -554,6 +566,11 @@
     <input id="input-compedit-gironi" type="number" min="1" value="8" class="field-input">
   </div>
 
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">POSIZIONE FINALE (facoltativa)</label>
+  <select id="input-compedit-posizione" class="field-input mb-5">
+    <option value="">Nessuna</option>
+  </select>
+
   <button id="btn-save-compedit" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
   <button id="btn-delete-compedit" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Rimuovi dalla stagione</button>
   <button id="btn-cancel-compedit" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
@@ -607,11 +624,37 @@
   </div>
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">ANNO / STAGIONE</label>
   <input id="input-edizione-anno" type="text" placeholder="es. 2022/2023" class="field-input mt-1.5 mb-4">
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">POSIZIONE FINALE (facoltativa)</label>
+  <select id="input-edizione-posizione" class="field-input mb-4">
+    <option value="">Nessuna</option>
+  </select>
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">DETTAGLI (facoltativo)</label>
   <textarea id="input-edizione-dettagli" rows="3" placeholder="es. Allenatore: Spalletti, capocannoniere Osimhen" class="field-input mt-1.5 mb-5" style="resize:vertical;"></textarea>
   <button id="btn-save-edizione" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
   <button id="btn-delete-edizione" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Elimina edizione</button>
   <button id="btn-cancel-edizione" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
+</div>
+
+<!-- MODAL: RESOCONTO STAGIONALE -->
+<div id="backdrop-report" class="modal-backdrop"></div>
+<div id="sheet-report" class="sheet px-5 pt-3">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h3 class="font-display text-2xl leading-none">RESOCONTO STAGIONALE</h3>
+      <p id="report-season-label" class="text-[11.5px] text-[var(--text-mute)] mt-1"></p>
+    </div>
+    <button id="btn-close-report" type="button" class="w-9 h-9 rounded-full flex items-center justify-center" style="background:var(--bg-750);">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+    </button>
+  </div>
+
+  <div id="report-content"></div>
+
+  <button id="btn-print-report" type="button" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-5 flex items-center justify-center gap-1.5" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">
+    🖨️ Stampa / Esporta PDF
+  </button>
+  <button id="btn-dismiss-report" type="button" class="w-full py-3 rounded-xl font-bold text-[13.5px] mt-2.5 text-[var(--text-mute)]">Chiudi</button>
 </div>
 
 <!-- MODAL: CATALOGO COMPETIZIONE (add/edit) -->
@@ -694,6 +737,11 @@
 
   var STORAGE_KEY = "diarioAzzurroData_v1";
   var ROUND_NAMES = ["Trentaduesimi di finale","Sedicesimi di finale","Ottavi di finale","Quarti di finale","Semifinale","Finale"];
+  var POSIZIONE_OPTIONS = ["1° Posto","2° Posto","3° Posto","4° Posto","Semifinalista","Quarti di finale","Ottavi di finale","Fase a gironi","Altro"];
+  function isPosizioneVincitore(pos){ return pos === "1° Posto"; }
+  function vincitoreBadgeHtml(){
+    return '<span class="theme-badge" style="background:linear-gradient(135deg,#e8c473,var(--gold));color:#241a05;">🏆 VINCITORE</span>';
+  }
 
   var DEFAULT_CATALOG = [
     {id:"serie-a", name:"Serie A", categoria:"nazionale", tipoDefault:"girone", turnoInizialeDefault:null, gironiPartiteDefault:8},
@@ -893,7 +941,12 @@
       season.competitions.forEach(function(comp){
         if(comp.tipo !== "girone" && comp.tipo !== "eliminazione" && comp.tipo !== "misto") comp.tipo = "girone";
         if(!Array.isArray(comp.matches)) comp.matches = [];
+        comp.matches.forEach(function(m){
+          if(typeof m.data !== "string") m.data = null;
+          if(typeof m.giornata !== "number") m.giornata = null;
+        });
         if(typeof comp.obiettivoVoto !== "number") comp.obiettivoVoto = null;
+        if(typeof comp.posizioneFinale !== "string") comp.posizioneFinale = null;
         if(!Array.isArray(comp.turni)) comp.turni = [];
         if(typeof comp.turnoIniziale !== "number") comp.turnoIniziale = null;
         if(comp.tipo === "misto"){
@@ -923,6 +976,7 @@
           if(typeof t.sbloccato !== "boolean") t.sbloccato = false;
           if(typeof t.opponent !== "string") t.opponent = "";
           if(!("esitoManuale" in t)) t.esitoManuale = null;
+          t.legs.forEach(function(leg){ if(typeof leg.data !== "string") leg.data = null; });
         });
         computeSbloccato(comp);
       });
@@ -932,6 +986,7 @@
     if(!Array.isArray(s.palmares.trofei)) s.palmares.trofei = [];
     s.palmares.trofei.forEach(function(t){
       if(!Array.isArray(t.edizioni)) t.edizioni = [];
+      t.edizioni.forEach(function(ed){ if(typeof ed.posizione !== "string") ed.posizione = null; });
       if(!t.catalogId || !getCatalogEntryIn(s.competitionsCatalog, t.catalogId)){
         var entry2 = findOrCreateCatalogEntry(s.competitionsCatalog, t.name || "Trofeo", t.img || null, "girone");
         t.catalogId = entry2.id;
@@ -1017,14 +1072,14 @@
       // fase a girone: presente per competizioni "girone" pure, o per la fase iniziale di una "misto"
       if(comp.tipo === "girone" || comp.tipo === "misto"){
         comp.matches.forEach(function(m){
-          out.push({ golNap: m.golNap, golOpp: m.golOpp, voto: m.voto, opponent: m.opponent, home: m.home, campoNeutro: false, tipo: "girone", compName: disp.name });
+          out.push({ golNap: m.golNap, golOpp: m.golOpp, voto: m.voto, opponent: m.opponent, home: m.home, campoNeutro: false, tipo: "girone", compName: disp.name, categoria: disp.categoria, data: m.data || null, giornata: m.giornata || null });
         });
       }
       // fase a eliminazione diretta: presente per competizioni "eliminazione" pure, o per la fase avanzata di una "misto"
       if(comp.tipo === "eliminazione" || comp.tipo === "misto"){
         comp.turni.forEach(function(turno){
           turno.legs.forEach(function(leg){
-            out.push({ golNap: leg.golNap, golOpp: leg.golOpp, voto: leg.voto, opponent: turno.opponent, home: leg.home, campoNeutro: turno.campoNeutro, tipo: "eliminazione", compName: disp.name });
+            out.push({ golNap: leg.golNap, golOpp: leg.golOpp, voto: leg.voto, opponent: turno.opponent, home: leg.home, campoNeutro: turno.campoNeutro, tipo: "eliminazione", compName: disp.name, categoria: disp.categoria, data: leg.data || null, giornata: null });
           });
         });
       }
@@ -1116,6 +1171,7 @@
   }
 
   var openAccordions = {};
+  var openMistoStorico = {};
 
   function renderCompetitionsList(season){
     var list = document.getElementById("competitions-list");
@@ -1153,8 +1209,9 @@
               '<p class="font-bold text-[15px] truncate">' + escapeHtml(disp.name) + '</p>' +
               (themeLabel(themeKey) ? '<span class="theme-badge theme-' + themeKey + '">' + themeLabel(themeKey) + '</span>' : '') +
               (comp.tipo === "misto" ? '<span class="theme-badge" style="background:rgba(224,176,79,0.18);color:var(--gold);">🔀 MISTO</span>' : '') +
+              (isPosizioneVincitore(comp.posizioneFinale) ? vincitoreBadgeHtml() : '') +
             '</div>' +
-            '<p class="text-[11px] text-[var(--text-mute)] font-medium">' + st.pg + ' PG · ' + st.v + 'V ' + st.p + 'P ' + st.s + 'S' + (st.mediaVoti !== null ? ' · voto ' + fmt1(st.mediaVoti) : '') + '</p>' +
+            '<p class="text-[11px] text-[var(--text-mute)] font-medium">' + st.pg + ' PG · ' + st.v + 'V ' + st.p + 'P ' + st.s + 'S' + (st.mediaVoti !== null ? ' · voto ' + fmt1(st.mediaVoti) : '') + (comp.posizioneFinale && !isPosizioneVincitore(comp.posizioneFinale) ? ' · ' + escapeHtml(comp.posizioneFinale) : '') + '</p>' +
           '</div>' +
         '</button>' +
         '<div class="flex items-center gap-1.5 flex-shrink-0">' +
@@ -1215,12 +1272,22 @@
         if(comp.tipo === "misto"){
           var gironeSt = computeMatchesStats(comp.matches);
           var gironePunti = puntiTotali(comp.matches.map(function(m){ return {golNap:m.golNap, golOpp:m.golOpp, tipo:"girone"}; }));
-          bodyHtml += '<div class="glass rounded-xl px-3.5 py-2.5 mb-3 flex items-center justify-between text-[12px]">' +
-            '<span class="font-semibold text-[var(--text-dim)]">📋 Fase a gironi: ' + comp.matches.length + ' PG, voto ' + (gironeSt.mediaVoti!==null?fmt1(gironeSt.mediaVoti):"—") + '</span>' +
-            '<span class="font-display text-base" style="color:var(--gold);">' + gironePunti + ' pt</span>' +
+          if(!openMistoStorico.hasOwnProperty(comp.id)) openMistoStorico[comp.id] = false;
+          var storicoOpen = openMistoStorico[comp.id];
+          var storicoMatchesHtml = "";
+          if(comp.matches.length === 0){ storicoMatchesHtml = '<p class="text-xs text-[var(--text-mute)] text-center py-3">Nessuna partita registrata.</p>'; }
+          else { comp.matches.slice().reverse().forEach(function(m){ storicoMatchesHtml += matchTicketHtml(m, comp.id); }); }
+          bodyHtml += '<div class="mb-3">' +
+            '<button type="button" data-toggle-misto-storico="' + comp.id + '" class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl glass">' +
+              '<span class="font-semibold text-[12px] text-[var(--text-dim)]">📋 FASE A GIRONI (storico) — ' + comp.matches.length + ' PG · ' + gironePunti + ' pt' + (gironeSt.mediaVoti!==null?' · voto '+fmt1(gironeSt.mediaVoti):'') + '</span>' +
+              '<svg data-toggle-misto-storico="' + comp.id + '" class="chevron' + (storicoOpen?' open':'') + '" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>' +
+            '</button>' +
+            '<div class="accordion-content' + (storicoOpen?' open':'') + '"><div><div class="space-y-2 pt-2">' + storicoMatchesHtml + '</div></div></div>' +
           '</div>';
           if(comp.misto.eliminatoAiGironi){
             bodyHtml += '<div class="glass rounded-xl px-3.5 py-2.5 mb-3 text-center text-[12.5px] font-bold" style="color:var(--loss);">Eliminato nella fase a gironi</div>';
+          } else {
+            bodyHtml += '<p class="text-[11px] font-bold text-[var(--text-mute)] tracking-wide mb-2 px-0.5">⚔️ FASE A ELIMINAZIONE DIRETTA</p>';
           }
         }
         bodyHtml += turniSectionHtml(comp);
@@ -1284,6 +1351,13 @@
     list.querySelectorAll("[data-misto-prompt]").forEach(function(btn){
       btn.addEventListener("click", function(){ openMistoTransitionModal(btn.getAttribute("data-misto-prompt")); });
     });
+    list.querySelectorAll("[data-toggle-misto-storico]").forEach(function(el){
+      el.addEventListener("click", function(){
+        var id = el.getAttribute("data-toggle-misto-storico");
+        openMistoStorico[id] = !openMistoStorico[id];
+        render();
+      });
+    });
   }
 
   function statPill(label, value){
@@ -1326,7 +1400,7 @@
           var r = resultOf(leg);
           html += '<button type="button" data-leg-action="' + comp.id + '|' + turno.id + '|' + legTipo + '|' + leg.id + '" class="ticket w-full flex items-center gap-3 pl-8 pr-3 py-2.5 text-left mb-1.5">' +
             '<div class="w-7 h-7 rounded-full flex items-center justify-center font-display text-[11px] flex-shrink-0" style="' + avatarStyleFor(turno.opponent) + '">' + (turno.opponent||"?").trim().slice(0,2).toUpperCase() + '</div>' +
-            '<div class="flex-1 min-w-0"><p class="text-[10.5px] font-bold text-[var(--text-mute)] tracking-wide">' + label.toUpperCase() + (leg.home ? ' · CASA' : ' · TRASFERTA') + '</p></div>' +
+            '<div class="flex-1 min-w-0"><p class="text-[10.5px] font-bold text-[var(--text-mute)] tracking-wide">' + label.toUpperCase() + (leg.home ? ' · CASA' : ' · TRASFERTA') + (leg.data ? ' · ' + formatDataIt(leg.data) : '') + '</p></div>' +
             '<span class="font-display text-lg tracking-wider">' + leg.golNap + '&nbsp;–&nbsp;' + leg.golOpp + '</span>' +
             '<span class="badge badge-' + r + '" style="width:22px;height:22px;font-size:12px;">' + r + '</span>' +
             (typeof leg.voto === "number" ? '<span class="voto-tag">' + fmt1(leg.voto) + '</span>' : '') + '</button>';
@@ -1343,12 +1417,24 @@
     });
     return html;
   }
+  function formatDataIt(iso){
+    if(!iso) return null;
+    var parts = iso.split("-");
+    if(parts.length !== 3) return iso;
+    return parts[2] + "/" + parts[1] + "/" + parts[0];
+  }
+  function matchMetaLine(m){
+    var bits = [m.home ? "Casa" : "Trasferta"];
+    if(m.giornata) bits.push("Giornata " + m.giornata);
+    if(m.data) bits.push(formatDataIt(m.data));
+    return bits.join(" · ");
+  }
   function matchTicketHtml(m, compId){
     var r = resultOf(m);
     var initials = m.opponent.trim().slice(0,3).toUpperCase() || "AVV";
     return '<button data-edit-match="' + compId + '|' + m.id + '" class="ticket w-full flex items-center gap-3 pl-8 pr-3 py-3 text-left">' +
       '<div class="w-9 h-9 rounded-full flex items-center justify-center font-display text-[13px] flex-shrink-0" style="' + avatarStyleFor(m.opponent) + '">' + initials + '</div>' +
-      '<div class="flex-1 min-w-0"><p class="font-semibold text-[14px] truncate">' + escapeHtml(m.opponent) + '</p><p class="text-[11px] text-[var(--text-mute)] font-medium">' + (m.home ? "Casa" : "Trasferta") + '</p></div>' +
+      '<div class="flex-1 min-w-0"><p class="font-semibold text-[14px] truncate">' + escapeHtml(m.opponent) + '</p><p class="text-[11px] text-[var(--text-mute)] font-medium truncate">' + matchMetaLine(m) + '</p></div>' +
       '<span class="font-display text-xl tracking-wider">' + m.golNap + '&nbsp;–&nbsp;' + m.golOpp + '</span>' +
       '<span class="badge badge-' + r + '">' + r + '</span>' +
       (typeof m.voto === "number" ? '<span class="voto-tag">' + fmt1(m.voto) + '</span>' : '') + '</button>';
@@ -1433,16 +1519,19 @@
   function renderStatsChart(timeline){
     if(statsChartInstance){ statsChartInstance.destroy(); statsChartInstance = null; }
     var canvas = document.getElementById("stats-chart");
+    document.getElementById("stats-chart-caption").classList.toggle("hidden", currentChartMetric !== "punti");
     if(typeof Chart === "undefined"){ setChartEmpty("Impossibile caricare la libreria dei grafici (verifica la connessione)."); return; }
 
     if(currentChartMetric === "punti"){
-      var girone = timeline.filter(function(x){ return x.tipo === "girone"; });
-      if(girone.length === 0){ setChartEmpty("Nessuna partita di competizione a girone registrata."); return; }
+      // Il grafico generale traccia solo il campionato nazionale: le competizioni Europee
+      // (Champions/Europa/Conference ecc.) non contribuiscono a questo andamento punti.
+      var girone = timeline.filter(function(x){ return x.tipo === "girone" && x.categoria === "nazionale"; });
+      if(girone.length === 0){ setChartEmpty("Nessuna partita di campionato nazionale registrata."); return; }
       setChartVisible();
       var cum = 0;
       var data = girone.map(function(x){ cum += puntiClassifica(x); return cum; });
       var labels = girone.map(function(_,i){ return String(i+1); });
-      statsChartInstance = new Chart(canvas.getContext("2d"), { type:"line", data:{ labels:labels, datasets:[{ label:"Punti cumulati", data:data, borderColor:"#e0b04f", backgroundColor:"rgba(224,176,79,0.15)", tension:0.3, fill:true, pointRadius:3 }] }, options: chartBaseOptions(false, false) });
+      statsChartInstance = new Chart(canvas.getContext("2d"), { type:"line", data:{ labels:labels, datasets:[{ label:"Punti cumulati (campionato)", data:data, borderColor:"#e0b04f", backgroundColor:"rgba(224,176,79,0.15)", tension:0.3, fill:true, pointRadius:3 }] }, options: chartBaseOptions(false, false) });
     } else if(currentChartMetric === "gol"){
       if(timeline.length === 0){ setChartEmpty("Nessuna partita registrata."); return; }
       setChartVisible();
@@ -1510,7 +1599,8 @@
       else {
         edizioniOrdinate.forEach(function(ed){
           edizioniHtml += '<button type="button" data-edit-edizione="' + trofeo.id + '|' + ed.id + '" class="ticket w-full flex items-center gap-3 pl-8 pr-3 py-3 text-left">' +
-            '<div class="flex-1 min-w-0"><p class="font-display text-lg tracking-wide">' + escapeHtml(ed.anno || "Anno non specificato") + '</p>' +
+            '<div class="flex-1 min-w-0"><div class="flex items-center gap-1.5 flex-wrap"><p class="font-display text-lg tracking-wide">' + escapeHtml(ed.anno || "Anno non specificato") + '</p>' +
+            (isPosizioneVincitore(ed.posizione) ? vincitoreBadgeHtml() : (ed.posizione ? '<span class="theme-badge" style="background:var(--bg-750);color:var(--text-dim);">' + escapeHtml(ed.posizione) + '</span>' : '')) + '</div>' +
             (ed.dettagli ? '<p class="text-[11.5px] text-[var(--text-mute)] mt-0.5">' + escapeHtml(ed.dettagli) + '</p>' : '') + '</div></button>';
         });
       }
@@ -1580,11 +1670,13 @@
       var ed = trofeo.edizioni.find(function(e){ return e.id === edizioneId; });
       document.getElementById("edizione-modal-title").textContent = "MODIFICA EDIZIONE";
       document.getElementById("input-edizione-anno").value = ed.anno || "";
+      document.getElementById("input-edizione-posizione").value = ed.posizione || "";
       document.getElementById("input-edizione-dettagli").value = ed.dettagli || "";
       delBtn.classList.remove("hidden");
     } else {
       document.getElementById("edizione-modal-title").textContent = "NUOVA EDIZIONE";
       document.getElementById("input-edizione-anno").value = "";
+      document.getElementById("input-edizione-posizione").value = "1° Posto";
       document.getElementById("input-edizione-dettagli").value = "";
       delBtn.classList.add("hidden");
     }
@@ -1594,16 +1686,17 @@
   function closeEdizioneModal(){ toggleSheet("edizione", false); }
   function saveEdizioneModal(){
     var anno = document.getElementById("input-edizione-anno").value.trim();
+    var posizione = document.getElementById("input-edizione-posizione").value;
     var dettagli = document.getElementById("input-edizione-dettagli").value.trim();
     if(!anno){ showToast("⚠️ Inserisci l'anno o la stagione"); return; }
     var trofeo = state.palmares.trofei.find(function(t){ return t.id === edizioneCtx.trofeoId; });
     if(!trofeo) return;
     if(edizioneCtx.edizioneId){
       var ed = trofeo.edizioni.find(function(e){ return e.id === edizioneCtx.edizioneId; });
-      ed.anno = anno; ed.dettagli = dettagli;
+      ed.anno = anno; ed.posizione = posizione || null; ed.dettagli = dettagli;
       showToast("✓ Edizione aggiornata");
     } else {
-      trofeo.edizioni.push({ id: uid(), anno: anno, dettagli: dettagli });
+      trofeo.edizioni.push({ id: uid(), anno: anno, posizione: posizione || null, dettagli: dettagli });
       showToast("✓ Edizione aggiunta");
     }
     save(); renderPalmares(); closeEdizioneModal();
@@ -1755,7 +1848,7 @@
       var season = getActiveSeason();
       if(!season) return;
       var cat = getCatalogEntry(catalogId);
-      var comp = { id: uid(), catalogId: catalogId, active: true, tipo: cat.tipoDefault, obiettivoVoto: null, matches: [], turnoIniziale: null, turni: [], misto: null };
+      var comp = { id: uid(), catalogId: catalogId, active: true, tipo: cat.tipoDefault, obiettivoVoto: null, matches: [], turnoIniziale: null, turni: [], misto: null, posizioneFinale: null };
       if(cat.tipoDefault === "eliminazione"){
         var startIdx = cat.turnoInizialeDefault != null ? cat.turnoInizialeDefault : (ROUND_NAMES.length - 1);
         comp.turnoIniziale = startIdx;
@@ -1798,6 +1891,7 @@
     var gironiInput = document.getElementById("input-compedit-gironi");
     gironiInput.value = comp.misto ? comp.misto.gironiTarget : (getCatalogEntry(comp.catalogId) ? getCatalogEntry(comp.catalogId).gironiPartiteDefault : 8);
     gironiInput.disabled = hasData;
+    document.getElementById("input-compedit-posizione").value = comp.posizioneFinale || "";
     toggleSheet("comp-edit", true);
   }
   function closeCompEditModal(){ toggleSheet("comp-edit", false); }
@@ -1822,6 +1916,8 @@
         comp.misto.gironiTarget = newGironiCount;
       }
     }
+    var posizioneVal = document.getElementById("input-compedit-posizione").value;
+    comp.posizioneFinale = posizioneVal ? posizioneVal : null;
     save(); render(); closeCompEditModal();
     showToast("✓ Competizione aggiornata");
   }
@@ -2237,6 +2333,7 @@
     document.getElementById("match-comp-label").textContent = compDisplay(comp).name;
     document.getElementById("match-leg-badge").classList.add("hidden");
     document.getElementById("field-campo-neutro").classList.add("hidden");
+    document.getElementById("field-giornata").classList.remove("hidden");
     var delBtn = document.getElementById("btn-delete-match");
     if(matchId){
       var m = comp.matches.find(function(x){ return x.id === matchId; });
@@ -2245,6 +2342,8 @@
       document.getElementById("input-golnap").value = m.golNap;
       document.getElementById("input-golopp").value = m.golOpp;
       document.getElementById("input-voto").value = (typeof m.voto === "number") ? m.voto : "";
+      document.getElementById("input-match-data").value = m.data || "";
+      document.getElementById("input-match-giornata").value = m.giornata != null ? m.giornata : "";
       setHomeToggle(!!m.home);
       buildVotoChips(m.voto);
       delBtn.classList.remove("hidden");
@@ -2254,6 +2353,8 @@
       document.getElementById("input-golnap").value = 0;
       document.getElementById("input-golopp").value = 0;
       document.getElementById("input-voto").value = "";
+      document.getElementById("input-match-data").value = "";
+      document.getElementById("input-match-giornata").value = "";
       setHomeToggle(true);
       buildVotoChips(null);
       delBtn.classList.add("hidden");
@@ -2275,6 +2376,7 @@
     if(legTipo === "unica"){ legBadge.classList.add("hidden"); }
     else { legBadge.textContent = legTipo === "andata" ? "ANDATA" : "RITORNO"; legBadge.classList.remove("hidden"); }
     document.getElementById("field-campo-neutro").classList.remove("hidden");
+    document.getElementById("field-giornata").classList.add("hidden");
     var delBtn = document.getElementById("btn-delete-match");
     var existingLeg = legCtx.legId ? turno.legs.find(function(l){ return l.id === legCtx.legId; }) : null;
     if(existingLeg){
@@ -2283,6 +2385,7 @@
       document.getElementById("input-golnap").value = existingLeg.golNap;
       document.getElementById("input-golopp").value = existingLeg.golOpp;
       document.getElementById("input-voto").value = (typeof existingLeg.voto === "number") ? existingLeg.voto : "";
+      document.getElementById("input-match-data").value = existingLeg.data || "";
       setHomeToggle(!!existingLeg.home);
       buildVotoChips(existingLeg.voto);
       delBtn.classList.remove("hidden");
@@ -2292,6 +2395,7 @@
       document.getElementById("input-golnap").value = 0;
       document.getElementById("input-golopp").value = 0;
       document.getElementById("input-voto").value = "";
+      document.getElementById("input-match-data").value = "";
       setHomeToggle(true);
       buildVotoChips(null);
       delBtn.classList.add("hidden");
@@ -2353,6 +2457,10 @@
     var votoRaw = document.getElementById("input-voto").value;
     var voto = votoRaw === "" ? null : parseFloat(votoRaw);
     if(voto !== null && (isNaN(voto) || voto < 1 || voto > 10)) voto = null;
+    var dataVal = document.getElementById("input-match-data").value || null;
+    var giornataRaw = document.getElementById("input-match-giornata").value;
+    var giornataVal = giornataRaw === "" ? null : parseInt(giornataRaw, 10);
+    if(giornataVal !== null && (isNaN(giornataVal) || giornataVal < 1)) giornataVal = null;
 
     var compCategoria;
     if(matchCtx.mode === "eliminazione-leg"){
@@ -2366,11 +2474,11 @@
     }
 
     proceedWithOpponent(opponentRaw, compCategoria, function(team){
-      finalizeMatchSave(team.name, golNap, golOpp, voto);
+      finalizeMatchSave(team.name, golNap, golOpp, voto, dataVal, giornataVal);
     });
   }
 
-  function finalizeMatchSave(opponent, golNap, golOpp, voto){
+  function finalizeMatchSave(opponent, golNap, golOpp, voto, dataVal, giornataVal){
     if(matchCtx.mode === "eliminazione-leg"){
       var comp = findComp(legCtx.compId);
       if(!comp) return;
@@ -2379,8 +2487,8 @@
       turno.opponent = opponent;
       turno.campoNeutro = matchCtx.campoNeutro;
       var leg = legCtx.legId ? turno.legs.find(function(l){ return l.id === legCtx.legId; }) : null;
-      if(leg){ leg.home = matchCtx.home; leg.golNap = golNap; leg.golOpp = golOpp; leg.voto = voto; showToast("✓ Partita aggiornata"); }
-      else { turno.legs.push({ id: uid(), tipo: legCtx.legTipo, home: matchCtx.home, golNap: golNap, golOpp: golOpp, voto: voto }); showToast("✓ Partita salvata"); }
+      if(leg){ leg.home = matchCtx.home; leg.golNap = golNap; leg.golOpp = golOpp; leg.voto = voto; leg.data = dataVal; showToast("✓ Partita aggiornata"); }
+      else { turno.legs.push({ id: uid(), tipo: legCtx.legTipo, home: matchCtx.home, golNap: golNap, golOpp: golOpp, voto: voto, data: dataVal }); showToast("✓ Partita salvata"); }
       computeSbloccato(comp);
       save(); render(); closeMatchModal();
       return;
@@ -2389,10 +2497,10 @@
     if(!seasonComp) return;
     if(matchCtx.matchId){
       var m = seasonComp.matches.find(function(x){ return x.id === matchCtx.matchId; });
-      m.opponent = opponent; m.home = matchCtx.home; m.golNap = golNap; m.golOpp = golOpp; m.voto = voto;
+      m.opponent = opponent; m.home = matchCtx.home; m.golNap = golNap; m.golOpp = golOpp; m.voto = voto; m.data = dataVal; m.giornata = giornataVal;
       showToast("✓ Partita aggiornata");
     } else {
-      seasonComp.matches.push({ id: uid(), opponent: opponent, home: matchCtx.home, golNap: golNap, golOpp: golOpp, voto: voto });
+      seasonComp.matches.push({ id: uid(), opponent: opponent, home: matchCtx.home, golNap: golNap, golOpp: golOpp, voto: voto, data: dataVal, giornata: giornataVal });
       showToast("✓ Partita salvata");
     }
     save(); render(); closeMatchModal();
@@ -2485,6 +2593,124 @@
     };
     reader.onerror = function(){ showToast("⚠️ Lettura del file non riuscita"); };
     reader.readAsText(file);
+  }
+
+  // ---------- RESOCONTO STAGIONALE (dashboard in-app) ----------
+  function computeBestPerformance(timeline){
+    var withVoto = timeline.filter(function(x){ return typeof x.voto === "number"; });
+    if(withVoto.length === 0) return null;
+    return withVoto.reduce(function(best, x){ return (!best || x.voto > best.voto) ? x : best; }, null);
+  }
+  function openReportModal(){
+    var season = getActiveSeason();
+    if(!season){ showToast("⚠️ Nessuna stagione attiva"); return; }
+    document.getElementById("report-season-label").textContent = season.name;
+    renderReportContent(season);
+    toggleSheet("report", true);
+  }
+  function closeReportModal(){ toggleSheet("report", false); }
+
+  function renderReportContent(season){
+    var timeline = buildSeasonTimeline(season);
+    var st = computeMatchesStats(timeline);
+    var voto = computeSeasonVotoStagione(season);
+    var oreStima = Math.round(st.pg * 2 * 10) / 10; // stima: ~2 ore per partita (gioco + pre/post)
+    var best = computeBestPerformance(timeline);
+
+    var trofeiStagione = [];
+    state.palmares.trofei.forEach(function(t){
+      var disp = compDisplay(t);
+      t.edizioni.forEach(function(ed){
+        if((ed.anno || "").indexOf(season.name) !== -1){ trofeiStagione.push({ nome: disp.name, anno: ed.anno, posizione: ed.posizione }); }
+      });
+    });
+
+    var groups = {};
+    timeline.forEach(function(item){
+      var key = (item.opponent || "?").toLowerCase();
+      if(!groups[key]) groups[key] = { name: item.opponent || "?", items: [] };
+      groups[key].items.push(item);
+    });
+    var opponentRows = Object.keys(groups).map(function(k){
+      var g = groups[k]; var s2 = computeMatchesStats(g.items);
+      return { name: g.name, st: s2, punti: puntiTotali(g.items) };
+    }).sort(function(a,b){ return b.punti - a.punti; }).slice(0, 5);
+
+    var html = "";
+    html += '<div class="grid grid-cols-3 gap-2 mb-3">' +
+      statPill("Partite", String(st.pg)) +
+      statPill("Ore di gioco*", st.pg ? fmt1(oreStima) : "—") +
+      statPill("Voto Stagione", voto.finale !== null ? fmt1(voto.finale) : "—") +
+    '</div>';
+    html += '<div class="grid grid-cols-4 gap-2 mb-1">' +
+      statPill("Gol fatti", String(st.gf)) +
+      statPill("Gol subiti", String(st.gs)) +
+      statPill("Media voti", st.mediaVoti !== null ? fmt1(st.mediaVoti) : "—") +
+      statPill("Trofei", String(trofeiStagione.length)) +
+    '</div>';
+    html += '<p class="text-[10px] text-[var(--text-mute)] mb-4 px-0.5">*stima approssimativa (~2 ore a partita)</p>';
+
+    html += '<div class="glass rounded-2xl p-4 mb-4">' +
+      '<p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2">RECORD</p>' +
+      '<div class="flex items-center gap-1.5">' +
+        '<span class="badge badge-V" style="width:auto;padding:0 8px;">' + st.v + 'V</span>' +
+        '<span class="badge badge-P" style="width:auto;padding:0 8px;">' + st.p + 'P</span>' +
+        '<span class="badge badge-S" style="width:auto;padding:0 8px;">' + st.s + 'S</span>' +
+      '</div>' +
+    '</div>';
+
+    if(best){
+      var r = resultOf(best);
+      html += '<p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-0.5">MIGLIOR PRESTAZIONE DELLA STAGIONE</p>' +
+        '<div class="ticket flex items-center gap-3 pl-8 pr-3 py-3 mb-4">' +
+          '<div class="w-9 h-9 rounded-full flex items-center justify-center font-display text-[13px] flex-shrink-0" style="' + avatarStyleFor(best.opponent) + '">' + (best.opponent||"?").trim().slice(0,3).toUpperCase() + '</div>' +
+          '<div class="flex-1 min-w-0"><p class="font-semibold text-[14px] truncate">' + escapeHtml(best.opponent || "") + '</p><p class="text-[11px] text-[var(--text-mute)]">' + escapeHtml(best.compName) + '</p></div>' +
+          '<span class="font-display text-xl tracking-wider">' + best.golNap + '&nbsp;–&nbsp;' + best.golOpp + '</span>' +
+          '<span class="badge badge-' + r + '">' + r + '</span>' +
+          '<span class="voto-tag">' + fmt1(best.voto) + '</span>' +
+        '</div>' +
+        '<p class="text-[10px] text-[var(--text-mute)] mb-4 px-0.5">Nota: l\'app non traccia ancora le statistiche dei singoli giocatori, quindi qui mostriamo la miglior prestazione di squadra (voto più alto) invece di un "top player".</p>';
+    }
+
+    if(trofeiStagione.length){
+      html += '<p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-0.5">TROFEI VINTI QUESTA STAGIONE</p><div class="space-y-2 mb-4">';
+      trofeiStagione.forEach(function(t){
+        html += '<div class="settings-row">' +
+          '<p class="font-semibold text-[13.5px]">' + escapeHtml(t.nome) + '</p>' +
+          (isPosizioneVincitore(t.posizione) ? vincitoreBadgeHtml() : '') +
+        '</div>';
+      });
+      html += '</div>';
+    }
+
+    html += '<p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-0.5">COMPETIZIONI</p><div class="space-y-2 mb-4">';
+    season.competitions.forEach(function(comp){
+      var lf;
+      if(comp.tipo === "eliminazione"){ lf = comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, []); }
+      else if(comp.tipo === "misto"){ lf = comp.matches.concat(comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, [])); }
+      else { lf = comp.matches; }
+      var s3 = computeMatchesStats(lf);
+      if(s3.pg === 0) return;
+      var disp = compDisplay(comp);
+      html += '<div class="settings-row">' +
+        '<div class="min-w-0"><p class="font-semibold text-[13.5px] truncate">' + escapeHtml(disp.name) + '</p><p class="text-[11px] text-[var(--text-mute)]">' + s3.pg + ' PG · ' + s3.v + 'V ' + s3.p + 'P ' + s3.s + 'S' + '</p></div>' +
+        (isPosizioneVincitore(comp.posizioneFinale) ? vincitoreBadgeHtml() : (s3.mediaVoti!==null ? '<span class="voto-tag">' + fmt1(s3.mediaVoti) + '</span>' : '')) +
+      '</div>';
+    });
+    html += '</div>';
+
+    if(opponentRows.length){
+      html += '<p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-0.5">TOP 5 AVVERSARI PER PUNTI</p><div class="space-y-2">';
+      opponentRows.forEach(function(row){
+        html += '<div class="settings-row">' +
+          '<div class="min-w-0"><p class="font-semibold text-[13.5px] truncate">' + escapeHtml(row.name) + '</p><p class="text-[11px] text-[var(--text-mute)]">' + row.st.pg + ' partite · gol ' + row.st.gf + '-' + row.st.gs + '</p></div>' +
+          '<span class="font-display text-lg flex-shrink-0" style="color:var(--gold);">' + row.punti + 'pt</span>' +
+        '</div>';
+      });
+      html += '</div>';
+    }
+
+    document.getElementById("report-content").innerHTML = html;
   }
 
   // ---------- REPORT PDF FINE STAGIONE ----------
@@ -2635,10 +2861,16 @@
     document.getElementById("input-catalog-turno").innerHTML = opts;
     document.getElementById("input-misto-turno").innerHTML = opts;
   }
+  function populatePosizioneSelects(){
+    var opts = POSIZIONE_OPTIONS.map(function(p){ return '<option value="' + p + '">' + p + '</option>'; }).join("");
+    document.getElementById("input-compedit-posizione").innerHTML = '<option value="">Nessuna</option>' + opts;
+    document.getElementById("input-edizione-posizione").innerHTML = '<option value="">Nessuna</option>' + opts;
+  }
 
   function init(){
     load();
     populateTurnoSelects();
+    populatePosizioneSelects();
     render();
     renderPalmares();
     renderOpponentsDatalist();
@@ -2667,7 +2899,11 @@
       e.target.value = "";
     });
 
-    document.getElementById("btn-generate-report").addEventListener("click", generateSeasonReport);
+    document.getElementById("btn-generate-report").addEventListener("click", openReportModal);
+    document.getElementById("btn-close-report").addEventListener("click", closeReportModal);
+    document.getElementById("btn-dismiss-report").addEventListener("click", closeReportModal);
+    document.getElementById("backdrop-report").addEventListener("click", closeReportModal);
+    document.getElementById("btn-print-report").addEventListener("click", generateSeasonReport);
 
     document.getElementById("btn-add-season").addEventListener("click", function(){ openSeasonModal("add"); });
     document.getElementById("btn-season-settings").addEventListener("click", function(){
