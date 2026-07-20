@@ -14,7 +14,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
 <style>
   :root{
     --bg-950:#080d18;
@@ -635,28 +634,6 @@
   <button id="btn-cancel-edizione" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
 </div>
 
-<!-- MODAL: RESOCONTO STAGIONALE -->
-<div id="backdrop-report" class="modal-backdrop"></div>
-<div id="sheet-report" class="sheet px-5 pt-3">
-  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
-  <div class="flex items-center justify-between mb-4">
-    <div>
-      <h3 class="font-display text-2xl leading-none">RESOCONTO STAGIONALE</h3>
-      <p id="report-season-label" class="text-[11.5px] text-[var(--text-mute)] mt-1"></p>
-    </div>
-    <button id="btn-close-report" type="button" class="w-9 h-9 rounded-full flex items-center justify-center" style="background:var(--bg-750);">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"></path></svg>
-    </button>
-  </div>
-
-  <div id="report-content"></div>
-
-  <button id="btn-print-report" type="button" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-5 flex items-center justify-center gap-1.5" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">
-    🖨️ Stampa / Esporta PDF
-  </button>
-  <button id="btn-dismiss-report" type="button" class="w-full py-3 rounded-xl font-bold text-[13.5px] mt-2.5 text-[var(--text-mute)]">Chiudi</button>
-</div>
-
 <!-- MODAL: CATALOGO COMPETIZIONE (add/edit) -->
 <div id="backdrop-catalog-comp" class="modal-backdrop"></div>
 <div id="sheet-catalog-comp" class="sheet px-5 pt-3">
@@ -1084,7 +1061,16 @@
         });
       }
     });
-    return out;
+    // Ordina tutte le partite per data (dalla più vecchia alla più recente), così i grafici di
+    // andamento e il resoconto riflettono la vera cronologia della stagione. Le partite senza
+    // data impostata (campo facoltativo) mantengono l'ordine di inserimento, in coda.
+    return out.map(function(item, idx){ return { item:item, idx:idx }; }).sort(function(a,b){
+      var da = a.item.data, db = b.item.data;
+      if(da && db) return da < db ? -1 : da > db ? 1 : (a.idx - b.idx);
+      if(da && !db) return -1;
+      if(!da && db) return 1;
+      return a.idx - b.idx;
+    }).map(function(w){ return w.item; });
   }
   function computeSeasonVotoStagione(season){
     var timeline = buildSeasonTimeline(season);
@@ -2595,34 +2581,92 @@
     reader.readAsText(file);
   }
 
-  // ---------- RESOCONTO STAGIONALE (dashboard in-app) ----------
-  function computeBestPerformance(timeline){
-    var withVoto = timeline.filter(function(x){ return typeof x.voto === "number"; });
-    if(withVoto.length === 0) return null;
-    return withVoto.reduce(function(best, x){ return (!best || x.voto > best.voto) ? x : best; }, null);
-  }
-  function openReportModal(){
-    var season = getActiveSeason();
-    if(!season){ showToast("⚠️ Nessuna stagione attiva"); return; }
-    document.getElementById("report-season-label").textContent = season.name;
-    renderReportContent(season);
-    toggleSheet("report", true);
-  }
-  function closeReportModal(){ toggleSheet("report", false); }
+  // ---------- RESOCONTO STAGIONALE (apertura in nuova scheda) ----------
 
-  function renderReportContent(season){
-    var timeline = buildSeasonTimeline(season);
+  // Conta i trofei della stagione incrociando due fonti, per evitare che il contatore
+  // resti a 0 quando una competizione è segnata come vinta in Stagioni ma non è ancora
+  // stata aggiunta manualmente alla Sala Trofei (o viceversa) — senza contarla due volte.
+  function countTrofeiStagione(season){
+    var count = 0;
+    var catalogIdsGiaContati = {};
+    state.palmares.trofei.forEach(function(t){
+      t.edizioni.forEach(function(ed){
+        if((ed.anno || "").indexOf(season.name) !== -1){
+          count++;
+          catalogIdsGiaContati[t.catalogId] = true;
+        }
+      });
+    });
+    season.competitions.forEach(function(comp){
+      if(isPosizioneVincitore(comp.posizioneFinale) && !catalogIdsGiaContati[comp.catalogId]){
+        count++;
+      }
+    });
+    return count;
+  }
+
+  function resocontoStatBox(label, value, accent){
+    return '<div style="border:1px solid #e2e8f0;border-radius:12px;padding:14px 10px;text-align:center;background:#fafcff;">' +
+      '<div class="azzurro-accent" style="font-size:22px;font-weight:800;color:' + (accent || "#007fff") + ';">' + value + '</div>' +
+      '<div style="font-size:10.5px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.03em;margin-top:4px;">' + label + '</div>' +
+    '</div>';
+  }
+  function resocontoMatchRow(item){
+    var scarto = item.golNap - item.golOpp;
+    var scartoLabel = (scarto > 0 ? "+" : "") + scarto;
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:8px;background:#fff;">' +
+      '<div style="min-width:0;">' +
+        '<div style="font-weight:700;font-size:13.5px;">' + escapeHtml(item.opponent || "") + '</div>' +
+        '<div style="font-size:11px;color:#64748b;">' + escapeHtml(item.compName) + (item.data ? (" · " + formatDataIt(item.data)) : "") + (item.giornata ? (" · Giornata " + item.giornata) : "") + '</div>' +
+      '</div>' +
+      '<div style="font-weight:800;font-size:16px;white-space:nowrap;">' + item.golNap + '–' + item.golOpp + ' <span style="font-size:11px;color:#64748b;font-weight:600;">(' + scartoLabel + ')</span></div>' +
+    '</div>';
+  }
+
+  function buildResocontoEmptyHtml(season, oggi){
+    return '<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Resoconto Stagionale — ' + escapeHtml(season.name) + '</title>' +
+      '<style>body{margin:0;background:#ffffff;color:#0b2d5c;font-family:"Segoe UI",system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:24px;}' +
+      'button{background:#007fff;color:#fff;border:none;padding:12px 22px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;margin-top:16px;}</style></head>' +
+      '<body><div><h1 style="font-size:20px;">Diario Azzurro — Resoconto Stagionale</h1>' +
+      '<p style="color:#475569;">Nessuna partita registrata per questa stagione (' + escapeHtml(season.name) + '). Inserisci prima i risultati delle partite.</p>' +
+      '<button onclick="window.close()">Chiudi scheda</button></div></body></html>';
+  }
+
+  function buildResocontoHtml(season){
+    var timeline = buildSeasonTimeline(season); // già ordinata cronologicamente per data
+    var oggi = new Date().toLocaleDateString("it-IT", { day:"numeric", month:"long", year:"numeric" });
+    if(timeline.length === 0) return buildResocontoEmptyHtml(season, oggi);
+
     var st = computeMatchesStats(timeline);
     var voto = computeSeasonVotoStagione(season);
-    var oreStima = Math.round(st.pg * 2 * 10) / 10; // stima: ~2 ore per partita (gioco + pre/post)
-    var best = computeBestPerformance(timeline);
+    var trofeiCount = countTrofeiStagione(season);
+
+    var ordinatiPerScarto = timeline.slice().sort(function(a,b){ return (b.golNap-b.golOpp) - (a.golNap-a.golOpp); });
+    var top3 = ordinatiPerScarto.slice(0, 3);
+    var flop3 = ordinatiPerScarto.slice(-3).reverse();
 
     var trofeiStagione = [];
     state.palmares.trofei.forEach(function(t){
       var disp = compDisplay(t);
       t.edizioni.forEach(function(ed){
-        if((ed.anno || "").indexOf(season.name) !== -1){ trofeiStagione.push({ nome: disp.name, anno: ed.anno, posizione: ed.posizione }); }
+        if((ed.anno || "").indexOf(season.name) !== -1){ trofeiStagione.push({ nome: disp.name, anno: ed.anno }); }
       });
+    });
+
+    var compRows = "";
+    season.competitions.forEach(function(comp){
+      var lf;
+      if(comp.tipo === "eliminazione"){ lf = comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, []); }
+      else if(comp.tipo === "misto"){ lf = comp.matches.concat(comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, [])); }
+      else { lf = comp.matches; }
+      var s3 = computeMatchesStats(lf);
+      if(s3.pg === 0) return;
+      var disp = compDisplay(comp);
+      compRows += '<tr><td>' + escapeHtml(disp.name) + (isPosizioneVincitore(comp.posizioneFinale) ? ' <span class="badge-oro">VINCITORE</span>' : (comp.posizioneFinale ? ' <span style="color:#64748b;font-size:11px;">(' + escapeHtml(comp.posizioneFinale) + ')</span>' : '')) + '</td>' +
+        '<td style="text-align:center;">' + s3.pg + '</td>' +
+        '<td style="text-align:center;">' + s3.v + 'V ' + s3.p + 'P ' + s3.s + 'S</td>' +
+        '<td style="text-align:center;">' + s3.gf + '-' + s3.gs + '</td>' +
+        '<td style="text-align:center;">' + (s3.mediaVoti!==null?fmt1(s3.mediaVoti):"—") + '</td></tr>';
     });
 
     var groups = {};
@@ -2635,223 +2679,91 @@
       var g = groups[k]; var s2 = computeMatchesStats(g.items);
       return { name: g.name, st: s2, punti: puntiTotali(g.items) };
     }).sort(function(a,b){ return b.punti - a.punti; }).slice(0, 5);
+    var opponentRowsHtml = opponentRows.map(function(r){
+      return '<tr><td>' + escapeHtml(r.name) + '</td><td style="text-align:center;">' + r.st.pg + '</td><td style="text-align:center;">' + r.st.gf + '-' + r.st.gs + '</td><td style="text-align:center;font-weight:800;color:#007fff;">' + r.punti + 'pt</td></tr>';
+    }).join("");
 
     var html = "";
-    html += '<div class="grid grid-cols-3 gap-2 mb-3">' +
-      statPill("Partite", String(st.pg)) +
-      statPill("Ore di gioco*", st.pg ? fmt1(oreStima) : "—") +
-      statPill("Voto Stagione", voto.finale !== null ? fmt1(voto.finale) : "—") +
-    '</div>';
-    html += '<div class="grid grid-cols-4 gap-2 mb-1">' +
-      statPill("Gol fatti", String(st.gf)) +
-      statPill("Gol subiti", String(st.gs)) +
-      statPill("Media voti", st.mediaVoti !== null ? fmt1(st.mediaVoti) : "—") +
-      statPill("Trofei", String(trofeiStagione.length)) +
-    '</div>';
-    html += '<p class="text-[10px] text-[var(--text-mute)] mb-4 px-0.5">*stima approssimativa (~2 ore a partita)</p>';
+    html += '<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">';
+    html += '<title>Resoconto Stagionale — ' + escapeHtml(season.name) + '</title>';
+    html += '<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"><' + '/script>';
+    html += '<style>';
+    html += ':root{ --azzurro:#007fff; --blu-notte:#0b2d5c; --oro:#ffd700; }';
+    html += '*{box-sizing:border-box;} body{margin:0;background:#ffffff;color:var(--blu-notte);font-family:"Segoe UI",system-ui,sans-serif;}';
+    html += '.toolbar{position:sticky;top:0;background:var(--blu-notte);padding:14px 20px;display:flex;gap:10px;justify-content:flex-end;z-index:10;}';
+    html += '.toolbar button{background:var(--azzurro);color:#fff;border:none;padding:10px 18px;border-radius:10px;font-weight:700;font-size:13.5px;cursor:pointer;}';
+    html += '.toolbar button.secondary{background:#ffffff;color:var(--blu-notte);}';
+    html += '#report-capture{max-width:860px;margin:0 auto;padding:32px 28px;}';
+    html += '.header{border-bottom:4px solid var(--azzurro);padding-bottom:16px;margin-bottom:22px;}';
+    html += '.header h1{margin:0;font-size:24px;color:var(--blu-notte);}';
+    html += '.header p{margin:4px 0 0;font-size:13px;color:#64748b;}';
+    html += '.dashboard{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:24px;}';
+    html += '.badge-oro{background:var(--oro);color:#3a2e00;padding:3px 9px;border-radius:6px;font-weight:800;font-size:10.5px;letter-spacing:0.02em;}';
+    html += 'h2.section{font-size:15px;color:var(--blu-notte);border-bottom:1px solid #e2e8f0;padding-bottom:6px;margin:26px 0 12px;}';
+    html += '.cols2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}';
+    html += 'table{width:100%;border-collapse:collapse;font-size:12.5px;}';
+    html += 'th{background:#f0f6ff;color:var(--blu-notte);text-align:left;padding:8px;font-size:11px;text-transform:uppercase;letter-spacing:0.02em;}';
+    html += 'td{padding:8px;border-bottom:1px solid #eef2f7;}';
+    html += 'textarea{width:100%;min-height:90px;border:1px solid #e2e8f0;border-radius:10px;padding:12px;font-family:inherit;font-size:13px;resize:vertical;}';
+    html += '.footer-note{margin-top:28px;font-size:10.5px;color:#94a3b8;text-align:center;}';
+    html += '@media print{ .toolbar{display:none !important;} body{background:#fff;} .dashboard>div, .cols2>div{box-shadow:none !important;}';
+    html += ' body,p,td,th,h1,h2,h3,li,div{color:#000 !important;}';
+    html += ' .badge-oro{ background:var(--oro) !important; color:#3a2e00 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }';
+    html += ' th{ background:#f0f6ff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } }';
+    html += '</style></head><body>';
 
-    html += '<div class="glass rounded-2xl p-4 mb-4">' +
-      '<p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2">RECORD</p>' +
-      '<div class="flex items-center gap-1.5">' +
-        '<span class="badge badge-V" style="width:auto;padding:0 8px;">' + st.v + 'V</span>' +
-        '<span class="badge badge-P" style="width:auto;padding:0 8px;">' + st.p + 'P</span>' +
-        '<span class="badge badge-S" style="width:auto;padding:0 8px;">' + st.s + 'S</span>' +
-      '</div>' +
-    '</div>';
+    html += '<div class="toolbar"><button onclick="window.print()">🖨️ Stampa / Salva PDF</button><button class="secondary" id="btn-save-png">🖼️ Salva come Immagine PNG</button></div>';
+    html += '<div id="report-capture">';
+    html += '<div class="header"><h1>Diario Azzurro — Resoconto Stagionale ⚽🏆</h1><p>Generato il ' + oggi + ' · Stagione ' + escapeHtml(season.name) + ' · Napoli</p></div>';
 
-    if(best){
-      var r = resultOf(best);
-      html += '<p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-0.5">MIGLIOR PRESTAZIONE DELLA STAGIONE</p>' +
-        '<div class="ticket flex items-center gap-3 pl-8 pr-3 py-3 mb-4">' +
-          '<div class="w-9 h-9 rounded-full flex items-center justify-center font-display text-[13px] flex-shrink-0" style="' + avatarStyleFor(best.opponent) + '">' + (best.opponent||"?").trim().slice(0,3).toUpperCase() + '</div>' +
-          '<div class="flex-1 min-w-0"><p class="font-semibold text-[14px] truncate">' + escapeHtml(best.opponent || "") + '</p><p class="text-[11px] text-[var(--text-mute)]">' + escapeHtml(best.compName) + '</p></div>' +
-          '<span class="font-display text-xl tracking-wider">' + best.golNap + '&nbsp;–&nbsp;' + best.golOpp + '</span>' +
-          '<span class="badge badge-' + r + '">' + r + '</span>' +
-          '<span class="voto-tag">' + fmt1(best.voto) + '</span>' +
-        '</div>' +
-        '<p class="text-[10px] text-[var(--text-mute)] mb-4 px-0.5">Nota: l\'app non traccia ancora le statistiche dei singoli giocatori, quindi qui mostriamo la miglior prestazione di squadra (voto più alto) invece di un "top player".</p>';
-    }
-
-    if(trofeiStagione.length){
-      html += '<p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-0.5">TROFEI VINTI QUESTA STAGIONE</p><div class="space-y-2 mb-4">';
-      trofeiStagione.forEach(function(t){
-        html += '<div class="settings-row">' +
-          '<p class="font-semibold text-[13.5px]">' + escapeHtml(t.nome) + '</p>' +
-          (isPosizioneVincitore(t.posizione) ? vincitoreBadgeHtml() : '') +
-        '</div>';
-      });
-      html += '</div>';
-    }
-
-    html += '<p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-0.5">COMPETIZIONI</p><div class="space-y-2 mb-4">';
-    season.competitions.forEach(function(comp){
-      var lf;
-      if(comp.tipo === "eliminazione"){ lf = comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, []); }
-      else if(comp.tipo === "misto"){ lf = comp.matches.concat(comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, [])); }
-      else { lf = comp.matches; }
-      var s3 = computeMatchesStats(lf);
-      if(s3.pg === 0) return;
-      var disp = compDisplay(comp);
-      html += '<div class="settings-row">' +
-        '<div class="min-w-0"><p class="font-semibold text-[13.5px] truncate">' + escapeHtml(disp.name) + '</p><p class="text-[11px] text-[var(--text-mute)]">' + s3.pg + ' PG · ' + s3.v + 'V ' + s3.p + 'P ' + s3.s + 'S' + '</p></div>' +
-        (isPosizioneVincitore(comp.posizioneFinale) ? vincitoreBadgeHtml() : (s3.mediaVoti!==null ? '<span class="voto-tag">' + fmt1(s3.mediaVoti) + '</span>' : '')) +
-      '</div>';
-    });
+    html += '<div class="dashboard">';
+    html += resocontoStatBox("Gol fatti", st.gf, "#007fff");
+    html += resocontoStatBox("Gol subiti", st.gs, "#0b2d5c");
+    html += resocontoStatBox("Media squadra", st.mediaVoti!==null?fmt1(st.mediaVoti):"—", "#007fff");
+    html += resocontoStatBox("Voto stagione", voto.finale!==null?fmt1(voto.finale):"—", "#0b2d5c");
+    html += resocontoStatBox("Trofei vinti", trofeiCount, "#b8860b");
     html += '</div>';
 
-    if(opponentRows.length){
-      html += '<p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-0.5">TOP 5 AVVERSARI PER PUNTI</p><div class="space-y-2">';
-      opponentRows.forEach(function(row){
-        html += '<div class="settings-row">' +
-          '<div class="min-w-0"><p class="font-semibold text-[13.5px] truncate">' + escapeHtml(row.name) + '</p><p class="text-[11px] text-[var(--text-mute)]">' + row.st.pg + ' partite · gol ' + row.st.gf + '-' + row.st.gs + '</p></div>' +
-          '<span class="font-display text-lg flex-shrink-0" style="color:var(--gold);">' + row.punti + 'pt</span>' +
-        '</div>';
-      });
-      html += '</div>';
-    }
-
-    document.getElementById("report-content").innerHTML = html;
-  }
-
-  // ---------- REPORT PDF FINE STAGIONE ----------
-  function reportSectionTitle(t){ return '<h2 style="font-size:15px;color:#0c5f9e;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin:22px 0 10px;">' + t + '</h2>'; }
-  function reportStatRow(label, value){ return '<tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:6px 8px;color:#555;">' + label + '</td><td style="padding:6px 8px;text-align:right;font-weight:bold;">' + value + '</td></tr>'; }
-
-  function buildReportContainer(season){
-    var timeline = buildSeasonTimeline(season);
-    var st = computeMatchesStats(timeline);
-    var voto = computeSeasonVotoStagione(season);
-
-    var trofeiStagione = [];
-    state.palmares.trofei.forEach(function(t){
-      var disp = compDisplay(t);
-      t.edizioni.forEach(function(ed){
-        if((ed.anno || "").indexOf(season.name) !== -1){ trofeiStagione.push({ nome: disp.name, anno: ed.anno, dettagli: ed.dettagli }); }
-      });
-    });
-
-    var groups = {};
-    timeline.forEach(function(item){
-      var key = (item.opponent || "?").toLowerCase();
-      if(!groups[key]) groups[key] = { name: item.opponent || "?", items: [] };
-      groups[key].items.push(item);
-    });
-    var opponentRows = Object.keys(groups).map(function(k){
-      var g = groups[k]; var s2 = computeMatchesStats(g.items);
-      return { name: g.name, st: s2, punti: puntiTotali(g.items) };
-    }).sort(function(a,b){ return b.punti - a.punti; }).slice(0, 8);
-
-    var div = document.createElement("div");
-    div.style.cssText = "width:750px;padding:40px;background:#ffffff;color:#111827;font-family:Arial,Helvetica,sans-serif;";
-    var html = "";
-    html += '<div style="border-bottom:4px solid #0c5f9e;padding-bottom:16px;margin-bottom:10px;">' +
-      '<h1 style="margin:0;font-size:28px;color:#0c5f9e;">Diario Azzurro</h1>' +
-      '<p style="margin:4px 0 0;font-size:15px;color:#555;">Report di fine stagione — ' + escapeHtml(season.name) + '</p></div>';
-
-    html += reportSectionTitle("Riepilogo generale");
-    html += '<table style="width:100%;border-collapse:collapse;font-size:13px;">' +
-      reportStatRow("Partite giocate", st.pg) +
-      reportStatRow("Gol fatti / subiti", st.gf + " / " + st.gs) +
-      reportStatRow("Media gol fatti / subiti", (st.pg?fmt1(st.gfAvg):"—") + " / " + (st.pg?fmt1(st.gsAvg):"—")) +
-      reportStatRow("Vittorie - Pareggi - Sconfitte", st.v + "V " + st.p + "P " + st.s + "S") +
-      reportStatRow("Media voti", st.mediaVoti!==null?fmt1(st.mediaVoti):"—") +
-      reportStatRow("Voto Stagione", voto.finale!==null?fmt1(voto.finale)+" / 10":"—") +
-    '</table>';
-
-    html += reportSectionTitle("Competizioni");
-    html += '<table style="width:100%;border-collapse:collapse;font-size:12.5px;"><tr style="background:#f3f4f6;"><th style="text-align:left;padding:6px 8px;">Competizione</th><th style="padding:6px 8px;">PG</th><th style="padding:6px 8px;">V-P-S</th><th style="padding:6px 8px;">Voto</th></tr>';
-    season.competitions.forEach(function(comp){
-      var disp = compDisplay(comp);
-      var lf;
-      if(comp.tipo === "eliminazione"){ lf = comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, []); }
-      else if(comp.tipo === "misto"){ lf = comp.matches.concat(comp.turni.reduce(function(acc,t){ return acc.concat(t.legs); }, [])); }
-      else { lf = comp.matches; }
-      var s3 = computeMatchesStats(lf);
-      if(s3.pg === 0) return;
-      html += '<tr style="border-bottom:1px solid #e5e7eb;">' +
-        '<td style="padding:6px 8px;">' + escapeHtml(disp.name) + '</td>' +
-        '<td style="padding:6px 8px;text-align:center;">' + s3.pg + '</td>' +
-        '<td style="padding:6px 8px;text-align:center;">' + s3.v+'-'+s3.p+'-'+s3.s + '</td>' +
-        '<td style="padding:6px 8px;text-align:center;">' + (s3.mediaVoti!==null?fmt1(s3.mediaVoti):"—") + '</td></tr>';
-    });
-    html += '</table>';
+    html += '<h2 class="section">TOP 3 & FLOP 3 PARTITE</h2><div class="cols2">';
+    html += '<div><p style="font-weight:700;font-size:12.5px;color:#16a34a;margin:0 0 8px;">🔝 MIGLIORI</p>' + (top3.length ? top3.map(resocontoMatchRow).join("") : '<p style="color:#94a3b8;font-size:12px;">Nessun dato.</p>') + '</div>';
+    html += '<div><p style="font-weight:700;font-size:12.5px;color:#dc2626;margin:0 0 8px;">🔻 PEGGIORI</p>' + (flop3.length ? flop3.map(resocontoMatchRow).join("") : '<p style="color:#94a3b8;font-size:12px;">Nessun dato.</p>') + '</div>';
+    html += '</div>';
 
     if(trofeiStagione.length){
-      html += reportSectionTitle("Trofei vinti in questa stagione");
-      html += '<ul style="margin:0;padding-left:18px;font-size:13px;">';
-      trofeiStagione.forEach(function(t){ html += '<li style="margin-bottom:4px;">' + escapeHtml(t.nome) + (t.dettagli?' — '+escapeHtml(t.dettagli):'') + '</li>'; });
-      html += '</ul>';
+      html += '<h2 class="section">TROFEI VINTI QUESTA STAGIONE</h2>';
+      html += '<div>' + trofeiStagione.map(function(t){ return '<span class="badge-oro" style="display:inline-block;margin:0 6px 6px 0;">🏆 ' + escapeHtml(t.nome) + '</span>'; }).join("") + '</div>';
     }
 
-    html += reportSectionTitle("Record contro gli avversari (top 8 per punti)");
-    html += '<table style="width:100%;border-collapse:collapse;font-size:12.5px;"><tr style="background:#f3f4f6;"><th style="text-align:left;padding:6px 8px;">Avversario</th><th style="padding:6px 8px;">PG</th><th style="padding:6px 8px;">Gol</th><th style="padding:6px 8px;">Punti</th></tr>';
-    opponentRows.forEach(function(r){
-      html += '<tr style="border-bottom:1px solid #e5e7eb;">' +
-        '<td style="padding:6px 8px;">' + escapeHtml(r.name) + '</td>' +
-        '<td style="padding:6px 8px;text-align:center;">' + r.st.pg + '</td>' +
-        '<td style="padding:6px 8px;text-align:center;">' + r.st.gf+'-'+r.st.gs + '</td>' +
-        '<td style="padding:6px 8px;text-align:center;">' + r.punti + '</td></tr>';
-    });
-    html += '</table>';
+    html += '<h2 class="section">COMPETIZIONI</h2><table><tr><th>Competizione</th><th>PG</th><th>V-P-S</th><th>Gol</th><th>Voto</th></tr>' + compRows + '</table>';
 
-    html += '<p style="margin-top:8px;font-size:10.5px;color:#9ca3af;">Nota: l\'app non traccia ancora le statistiche dei singoli giocatori, quindi questo report non include un "top player".</p>';
-    html += '<p style="margin-top:24px;font-size:11px;color:#9ca3af;text-align:center;">Generato con Diario Azzurro il ' + new Date().toLocaleDateString("it-IT") + '</p>';
+    if(opponentRowsHtml){
+      html += '<h2 class="section">TOP 5 AVVERSARI PER PUNTI</h2><table><tr><th>Avversario</th><th>PG</th><th>Gol</th><th>Punti</th></tr>' + opponentRowsHtml + '</table>';
+    }
 
-    div.innerHTML = html;
-    return div;
+    html += '<h2 class="section">NOTE DELL\'ALLENATORE</h2><textarea placeholder="Scrivi qui le tue note sulla stagione..."></textarea>';
+    html += '<p class="footer-note">Generato con Diario Azzurro</p>';
+    html += '</div>'; // #report-capture
+
+    html += '<script>';
+    html += 'document.getElementById("btn-save-png").addEventListener("click", function(){';
+    html += 'html2canvas(document.getElementById("report-capture"), { scale:2, backgroundColor:"#ffffff" }).then(function(canvas){';
+    html += 'var link = document.createElement("a"); link.download = "resoconto-stagionale-napoli.png"; link.href = canvas.toDataURL("image/png"); link.click();';
+    html += '});});';
+    html += '<' + '/script></body></html>';
+
+    return html;
   }
 
-  function waitForImagesAndFonts(container){
-    var imgs = Array.prototype.slice.call(container.querySelectorAll("img"));
-    var imgPromises = imgs.map(function(img){
-      if(img.complete && img.naturalWidth > 0) return Promise.resolve();
-      return new Promise(function(resolve){
-        img.addEventListener("load", resolve, { once:true });
-        img.addEventListener("error", resolve, { once:true });
-      });
-    });
-    var fontsPromise = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
-    return Promise.all(imgPromises.concat([fontsPromise]));
-  }
-
-  function generateSeasonReport(){
+  function generaResocontoStagionale(){
     var season = getActiveSeason();
     if(!season){ showToast("⚠️ Nessuna stagione attiva"); return; }
-    if(typeof html2pdf === "undefined"){ showToast("⚠️ Libreria PDF non disponibile (verifica la connessione)"); return; }
-    var container = buildReportContainer(season);
-    // Il contenitore resta "dipinto" normalmente dal browser (niente display:none, niente
-    // opacity/visibility ridotte: html2canvas produrrebbe una cattura vuota). Lo teniamo
-    // fuori dalla vista con uno z-index negativo invece di spostarlo fuori schermo a -9999px,
-    // posizionamento che su alcune versioni di html2canvas genera una pagina bianca.
-    container.style.position = "fixed";
-    container.style.top = "0";
-    container.style.left = "0";
-    container.style.zIndex = "-9999";
-    document.body.appendChild(container);
-    showToast("⏳ Generazione PDF...");
-
-    waitForImagesAndFonts(container).then(function(){
-      // due frame per essere certi che il layout sia stato calcolato e dipinto prima dello screenshot
-      return new Promise(function(resolve){
-        requestAnimationFrame(function(){ requestAnimationFrame(resolve); });
-      });
-    }).then(function(){
-      var opt = {
-        margin: 10,
-        filename: "Report-" + season.name.replace("/", "-") + ".pdf",
-        image: { type: "jpeg", quality: 0.95 },
-        html2canvas: { scale: 2, backgroundColor: "#ffffff", useCORS: true, logging: false },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-      };
-      return html2pdf().set(opt).from(container).save();
-    }).then(function(){
-      if(container.parentNode) document.body.removeChild(container);
-      showToast("✓ Report scaricato");
-    }).catch(function(err){
-      console.error(err);
-      if(container.parentNode) document.body.removeChild(container);
-      showToast("⚠️ Generazione PDF non riuscita");
-    });
+    // La finestra va aperta SUBITO, in risposta diretta al click, per non farla bloccare dal popup blocker.
+    var reportWindow = window.open("", "_blank");
+    if(!reportWindow){ showToast("⚠️ Il browser ha bloccato l'apertura della scheda: consenti i popup per questo sito."); return; }
+    var html = buildResocontoHtml(season);
+    reportWindow.document.open();
+    reportWindow.document.write(html);
+    reportWindow.document.close();
   }
 
   // ---------- EVENT WIRING ----------
@@ -2899,11 +2811,7 @@
       e.target.value = "";
     });
 
-    document.getElementById("btn-generate-report").addEventListener("click", openReportModal);
-    document.getElementById("btn-close-report").addEventListener("click", closeReportModal);
-    document.getElementById("btn-dismiss-report").addEventListener("click", closeReportModal);
-    document.getElementById("backdrop-report").addEventListener("click", closeReportModal);
-    document.getElementById("btn-print-report").addEventListener("click", generateSeasonReport);
+    document.getElementById("btn-generate-report").addEventListener("click", generaResocontoStagionale);
 
     document.getElementById("btn-add-season").addEventListener("click", function(){ openSeasonModal("add"); });
     document.getElementById("btn-season-settings").addEventListener("click", function(){
