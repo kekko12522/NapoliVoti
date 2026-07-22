@@ -98,7 +98,7 @@
   .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; background:var(--bg-900); border:1px solid var(--line); border-radius:14px; }
   .settings-btn{ padding:10px 18px; border-radius:10px; font-weight:700; font-size:13.5px; white-space:nowrap; }
 
-  .comp-chip{ font-size:13px; font-weight:600; padding:8px 14px; border-radius:999px; border:1px solid var(--line); color:var(--text-mute); background:var(--bg-900); white-space:nowrap; transition: all .15s ease; }
+  .comp-chip{ display:inline-flex; align-items:center; gap:5px; font-size:13px; font-weight:600; padding:8px 14px; border-radius:999px; border:1px solid var(--line); color:var(--text-mute); background:var(--bg-900); white-space:nowrap; transition: all .15s ease; }
   .comp-chip.active{ color:#eef8ff; background: rgba(38,160,224,0.16); border-color: rgba(38,160,224,0.55); }
 
   .badge{ display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:8px; font-family:'Bebas Neue', sans-serif; font-size:15px; letter-spacing:0.03em; flex-shrink:0; }
@@ -106,7 +106,7 @@
   .badge-P{ background:var(--draw-bg); color:var(--draw); }
   .badge-S{ background:var(--loss-bg); color:var(--loss); }
 
-  .voto-tag{ font-family:'Bebas Neue', sans-serif; font-size:14px; letter-spacing:0.02em; padding:2px 8px; border-radius:6px; background:var(--bg-750); color:var(--gold); border:1px solid rgba(224,176,79,0.25); flex-shrink:0; }
+  .voto-tag{ display:inline-flex; align-items:center; justify-content:center; min-height:32px; font-family:'Bebas Neue', sans-serif; font-size:14px; letter-spacing:0.02em; padding:2px 10px; border-radius:6px; background:var(--bg-750); color:var(--gold); border:1px solid rgba(224,176,79,0.25); flex-shrink:0; }
 
   .ticket{ position:relative; background: var(--bg-900); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
   .ticket::before{ content:""; position:absolute; left:-9px; top:50%; transform:translateY(-50%); width:18px; height:18px; border-radius:50%; background: var(--bg-950); border:1px solid var(--line); }
@@ -179,7 +179,7 @@
   .theme-bg-europa{ background-image: repeating-linear-gradient(45deg, rgba(255,106,0,0.08) 0 8px, rgba(0,0,0,0.10) 8px 16px); }
   .theme-bg-conference{ background-image: repeating-linear-gradient(45deg, rgba(13,122,63,0.10) 0 8px, transparent 8px 16px); }
 
-  .theme-badge{ font-size:9.5px; font-weight:800; letter-spacing:0.04em; padding:2px 7px; border-radius:6px; flex-shrink:0; }
+  .theme-badge{ display:inline-flex; align-items:center; font-size:9.5px; font-weight:800; letter-spacing:0.04em; padding:2px 7px; border-radius:6px; flex-shrink:0; }
   .theme-badge.theme-default{ background:rgba(38,160,224,0.16); color:var(--azzurro); }
   .theme-badge.theme-tricolore{ background:rgba(206,43,55,0.16); color:#ff8b8b; }
   .theme-badge.theme-champions{ background:rgba(79,127,224,0.20); color:#9db6f5; }
@@ -290,6 +290,11 @@
           <div class="flex-1 progress-track"><div id="progress-voto" class="progress-fill" style="width:0%"></div></div>
         </div>
         <p id="stat-voto-breakdown" class="text-[11px] text-[var(--text-mute)] mt-1.5"></p>
+      </div>
+
+      <div class="mt-5 pt-4" style="border-top:1px solid var(--line)">
+        <p class="text-xs font-semibold text-[var(--text-mute)] mb-2.5">🏆 ULTIMI TROFEI</p>
+        <div id="recent-trofei-strip" class="flex gap-3 overflow-x-auto scrollbar-hide pb-1"></div>
       </div>
 
       <button id="btn-generate-report" type="button" class="w-full mt-4 py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(224,176,79,0.14); color:var(--gold); border:1px solid rgba(224,176,79,0.3);">
@@ -410,7 +415,7 @@
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
   <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
-    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v1.9.0</span></p>
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v2.0.0</span></p>
     <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
   </div>
 </div>
@@ -459,14 +464,9 @@
 
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">SEDE</label>
   <div class="flex gap-2 mb-4">
-    <button type="button" data-home="1" class="seg-btn home-toggle active">🏠 Casa</button>
-    <button type="button" data-home="0" class="seg-btn home-toggle">✈️ Trasferta</button>
-  </div>
-
-  <div id="field-campo-neutro" class="hidden mb-4">
-    <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">CAMPO NEUTRO</label>
-    <button type="button" id="btn-toggle-neutro-modal" class="seg-btn" style="width:100%;">Campo neutro: No</button>
-    <p class="text-[10.5px] text-[var(--text-mute)] mt-1.5">Se attivo, questa partita non conta nelle statistiche Casa/Trasferta.</p>
+    <button type="button" data-sede="casa" class="seg-btn sede-toggle active">🏠 Casa</button>
+    <button type="button" data-sede="trasferta" class="seg-btn sede-toggle">✈️ Trasferta</button>
+    <button type="button" data-sede="neutro" class="seg-btn sede-toggle">🏟️ Neutro</button>
   </div>
 
   <div class="grid grid-cols-2 gap-4 mb-4">
@@ -696,12 +696,26 @@
   <button id="btn-cancel-league" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
 </div>
 
-<!-- MODAL: TEAM COLORS -->
+<!-- MODAL: MODIFICA SQUADRA -->
 <div id="backdrop-team-colors" class="modal-backdrop"></div>
 <div id="sheet-team-colors" class="sheet px-5 pt-3">
   <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
-  <h3 class="font-display text-2xl mb-1">COLORI SQUADRA</h3>
-  <p id="team-colors-name" class="text-[13px] text-[var(--text-dim)] mb-4"></p>
+  <h3 class="font-display text-2xl mb-4">MODIFICA SQUADRA</h3>
+
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">NOME</label>
+  <input id="input-team-edit-name" type="text" class="field-input mt-1.5 mb-4">
+
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">LOGO (facoltativo)</label>
+  <div class="flex items-center gap-3 mb-4">
+    <div id="team-logo-preview" class="img-picker-preview"><span style="font-size:20px;">🛡️</span></div>
+    <div class="flex-1 flex flex-col gap-2">
+      <label for="input-team-logo-file" class="settings-btn text-center" style="background:var(--bg-750); color:var(--text); cursor:pointer;">Scegli immagine</label>
+      <input id="input-team-logo-file" type="file" accept="image/*" class="hidden">
+      <button type="button" id="btn-team-logo-remove" class="hidden text-[12px] font-semibold text-left" style="color:var(--loss);">Rimuovi logo</button>
+    </div>
+  </div>
+
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">COLORI SOCIALI</label>
   <div id="team-colors-rows" class="space-y-2.5 mb-3"></div>
   <button id="btn-add-team-color" type="button" class="w-full py-3 rounded-xl font-bold text-[13.5px] mb-5" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">+ Aggiungi colore</button>
   <button id="btn-save-team-colors" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
@@ -752,7 +766,7 @@
   // ---------- COPPE A ELIMINAZIONE DIRETTA ----------
   function buildTurni(startIndex){
     return ROUND_NAMES.slice(startIndex).map(function(nome, i){
-      return { id: uid(), nome: nome, ritorno:false, campoNeutro: nome === "Finale", sbloccato: i===0, opponent:"", legs: [], esitoManuale: null };
+      return { id: uid(), nome: nome, ritorno:false, sbloccato: i===0, opponent:"", legs: [], esitoManuale: null };
     });
   }
   function computeTurnoEsito(turno){
@@ -850,6 +864,10 @@
     var found = findTeamByName(name);
     return found ? found.team.colors : [];
   }
+  function getOpponentLogo(name){
+    var found = findTeamByName(name);
+    return found ? found.team.logo : null;
+  }
   function buildAvatarGradient(colors){
     if(!colors || colors.length === 0) return null;
     if(colors.length === 1) return colors[0];
@@ -860,6 +878,15 @@
     var colors = getOpponentColors(name);
     if(colors.length) return 'background:' + buildAvatarGradient(colors) + '; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.55);';
     return 'background:var(--bg-750); color:var(--text-dim);';
+  }
+  // Ritorna l'HTML dell'avatar squadra: il logo caricato, se presente, altrimenti le iniziali colorate.
+  function avatarHtml(name, sizeClass, textSizeClass, initialsLen){
+    var logo = getOpponentLogo(name);
+    if(logo){
+      return '<div class="' + sizeClass + ' rounded-full flex-shrink-0 overflow-hidden" style="background:transparent;"><img src="' + logo + '" style="width:100%;height:100%;object-fit:cover;background:transparent;"></div>';
+    }
+    var initials = (name || "?").trim().slice(0, initialsLen || 3).toUpperCase() || "AVV";
+    return '<div class="' + sizeClass + ' rounded-full flex items-center justify-center font-display ' + textSizeClass + ' flex-shrink-0" style="' + avatarStyleFor(name) + '">' + initials + '</div>';
   }
   function renderOpponentsDatalist(){
     var dl = document.getElementById("opponents-datalist");
@@ -896,7 +923,7 @@
     s.leagues.forEach(function(lg){
       if(!Array.isArray(lg.teams)) lg.teams = [];
       if(typeof lg.nazionale !== "boolean") lg.nazionale = false;
-      lg.teams.forEach(function(t){ if(!Array.isArray(t.colors)) t.colors = []; });
+      lg.teams.forEach(function(t){ if(!Array.isArray(t.colors)) t.colors = []; if(typeof t.logo !== "string") t.logo = null; });
     });
 
     // migrazione squadre v1.4.x (knownOpponents flat) -> campionati
@@ -921,6 +948,9 @@
         comp.matches.forEach(function(m){
           if(typeof m.data !== "string") m.data = null;
           if(typeof m.giornata !== "number") m.giornata = null;
+          if(m.sede !== "casa" && m.sede !== "trasferta" && m.sede !== "neutro"){
+            m.sede = m.home ? "casa" : "trasferta"; // migrazione dal vecchio flag booleano
+          }
         });
         if(typeof comp.obiettivoVoto !== "number") comp.obiettivoVoto = null;
         if(typeof comp.posizioneFinale !== "string") comp.posizioneFinale = null;
@@ -949,11 +979,17 @@
         comp.turni.forEach(function(t){
           if(!Array.isArray(t.legs)) t.legs = [];
           if(typeof t.ritorno !== "boolean") t.ritorno = false;
-          if(typeof t.campoNeutro !== "boolean") t.campoNeutro = (t.nome === "Finale");
           if(typeof t.sbloccato !== "boolean") t.sbloccato = false;
           if(typeof t.opponent !== "string") t.opponent = "";
           if(!("esitoManuale" in t)) t.esitoManuale = null;
-          t.legs.forEach(function(leg){ if(typeof leg.data !== "string") leg.data = null; });
+          t.legs.forEach(function(leg){
+            if(typeof leg.data !== "string") leg.data = null;
+            if(leg.sede !== "casa" && leg.sede !== "trasferta" && leg.sede !== "neutro"){
+              // migrazione dal vecchio modello: home booleano + eventuale "campo neutro" a livello di turno
+              leg.sede = t.campoNeutro ? "neutro" : (leg.home ? "casa" : "trasferta");
+            }
+          });
+          delete t.campoNeutro;
         });
         computeSbloccato(comp);
       });
@@ -1049,14 +1085,14 @@
       // fase a girone: presente per competizioni "girone" pure, o per la fase iniziale di una "misto"
       if(comp.tipo === "girone" || comp.tipo === "misto"){
         comp.matches.forEach(function(m){
-          out.push({ golNap: m.golNap, golOpp: m.golOpp, voto: m.voto, opponent: m.opponent, home: m.home, campoNeutro: false, tipo: "girone", compName: disp.name, categoria: disp.categoria, data: m.data || null, giornata: m.giornata || null });
+          out.push({ golNap: m.golNap, golOpp: m.golOpp, voto: m.voto, opponent: m.opponent, sede: m.sede, tipo: "girone", compName: disp.name, categoria: disp.categoria, data: m.data || null, giornata: m.giornata || null });
         });
       }
       // fase a eliminazione diretta: presente per competizioni "eliminazione" pure, o per la fase avanzata di una "misto"
       if(comp.tipo === "eliminazione" || comp.tipo === "misto"){
         comp.turni.forEach(function(turno){
           turno.legs.forEach(function(leg){
-            out.push({ golNap: leg.golNap, golOpp: leg.golOpp, voto: leg.voto, opponent: turno.opponent, home: leg.home, campoNeutro: turno.campoNeutro, tipo: "eliminazione", compName: disp.name, categoria: disp.categoria, data: leg.data || null, giornata: null });
+            out.push({ golNap: leg.golNap, golOpp: leg.golOpp, voto: leg.voto, opponent: turno.opponent, sede: leg.sede, tipo: "eliminazione", compName: disp.name, categoria: disp.categoria, data: leg.data || null, giornata: null });
           });
         });
       }
@@ -1094,6 +1130,7 @@
     var contentEl = document.getElementById("season-content");
     if(!season){ emptyEl.classList.remove("hidden"); contentEl.classList.add("hidden"); return; }
     emptyEl.classList.add("hidden"); contentEl.classList.remove("hidden");
+    renderRecentTrofei();
 
     document.getElementById("season-title").textContent = season.name;
     var activeCompetitions = season.competitions.filter(function(c){ return c.active; });
@@ -1143,7 +1180,6 @@
       var disp = compDisplay(c);
       var chip = document.createElement("button");
       chip.className = "comp-chip" + (c.active ? " active" : "");
-      chip.style.display = "inline-flex"; chip.style.alignItems = "center"; chip.style.gap = "5px";
       chip.innerHTML = (disp.trofeoImg ? '<img src="' + disp.trofeoImg + '" style="width:16px;height:16px;border-radius:4px;object-fit:contain;background:transparent;">' : '') + escapeHtml(disp.name);
       chip.addEventListener("click", function(){ c.active = !c.active; save(); render(); });
       row.appendChild(chip);
@@ -1311,14 +1347,6 @@
         turno.ritorno = !turno.ritorno; computeSbloccato(comp); save(); render();
       });
     });
-    list.querySelectorAll("[data-toggle-neutro]").forEach(function(btn){
-      btn.addEventListener("click", function(){
-        var parts = btn.getAttribute("data-toggle-neutro").split("|");
-        var comp = findComp(parts[0]); if(!comp) return;
-        var turno = comp.turni.find(function(t){ return t.id === parts[1]; }); if(!turno) return;
-        turno.campoNeutro = !turno.campoNeutro; save(); render();
-      });
-    });
     list.querySelectorAll("[data-leg-action]").forEach(function(btn){
       btn.addEventListener("click", function(){
         var parts = btn.getAttribute("data-leg-action").split("|");
@@ -1376,7 +1404,6 @@
         (turno.opponent ? '<p class="text-[11.5px] text-[var(--text-mute)] truncate">vs ' + escapeHtml(turno.opponent) + '</p>' : '') + '</div>' + esitoBadgeHtml(esito) + '</div>';
       html += '<div class="flex gap-2 mb-2.5">' +
         '<button type="button" data-toggle-ritorno="' + comp.id + '|' + turno.id + '" class="seg-btn' + (turno.ritorno?' active':'') + '" style="flex:none; padding:7px 12px; font-size:11.5px;">↩︎ Ritorno: ' + (turno.ritorno ? 'Sì' : 'No') + '</button>' +
-        '<button type="button" data-toggle-neutro="' + comp.id + '|' + turno.id + '" class="seg-btn' + (turno.campoNeutro?' active':'') + '" style="flex:none; padding:7px 12px; font-size:11.5px;">⚪ Neutro: ' + (turno.campoNeutro ? 'Sì' : 'No') + '</button>' +
       '</div>';
       var legTypes = turno.ritorno ? ["andata","ritorno"] : ["unica"];
       legTypes.forEach(function(legTipo){
@@ -1385,8 +1412,8 @@
         if(leg){
           var r = resultOf(leg);
           html += '<button type="button" data-leg-action="' + comp.id + '|' + turno.id + '|' + legTipo + '|' + leg.id + '" class="ticket w-full flex items-center gap-3 pl-8 pr-3 py-2.5 text-left mb-1.5">' +
-            '<div class="w-7 h-7 rounded-full flex items-center justify-center font-display text-[11px] flex-shrink-0" style="' + avatarStyleFor(turno.opponent) + '">' + (turno.opponent||"?").trim().slice(0,2).toUpperCase() + '</div>' +
-            '<div class="flex-1 min-w-0"><p class="text-[10.5px] font-bold text-[var(--text-mute)] tracking-wide">' + label.toUpperCase() + (leg.home ? ' · CASA' : ' · TRASFERTA') + (leg.data ? ' · ' + formatDataIt(leg.data) : '') + '</p></div>' +
+            avatarHtml(turno.opponent, "w-7 h-7", "text-[11px]", 2) +
+            '<div class="flex-1 min-w-0"><p class="text-[10.5px] font-bold text-[var(--text-mute)] tracking-wide">' + label.toUpperCase() + ' · ' + matchMetaLine(leg) + '</p></div>' +
             '<span class="font-display text-lg tracking-wider">' + leg.golNap + '&nbsp;–&nbsp;' + leg.golOpp + '</span>' +
             '<span class="badge badge-' + r + '" style="width:22px;height:22px;font-size:12px;">' + r + '</span>' +
             (typeof leg.voto === "number" ? '<span class="voto-tag">' + fmt1(leg.voto) + '</span>' : '') + '</button>';
@@ -1409,17 +1436,32 @@
     if(parts.length !== 3) return iso;
     return parts[2] + "/" + parts[1] + "/" + parts[0];
   }
+  function formatDataCompact(iso){
+    if(!iso) return null;
+    var parts = iso.split("-");
+    if(parts.length !== 3) return iso;
+    return parts[2] + "/" + parts[1] + "/" + parts[0].slice(2);
+  }
+  function sedeIcon(sede){
+    if(sede === "trasferta") return "✈️";
+    if(sede === "neutro") return "🏟️";
+    return "🏠";
+  }
+  function sedeLabel(sede){
+    if(sede === "trasferta") return "Trasferta";
+    if(sede === "neutro") return "Campo neutro";
+    return "Casa";
+  }
   function matchMetaLine(m){
-    var bits = [m.home ? "Casa" : "Trasferta"];
-    if(m.giornata) bits.push("Giornata " + m.giornata);
-    if(m.data) bits.push(formatDataIt(m.data));
-    return bits.join(" · ");
+    var bits = [sedeIcon(m.sede)];
+    if(m.giornata) bits.push(String(m.giornata));
+    if(m.data) bits.push(formatDataCompact(m.data));
+    return bits.join(" • ");
   }
   function matchTicketHtml(m, compId){
     var r = resultOf(m);
-    var initials = m.opponent.trim().slice(0,3).toUpperCase() || "AVV";
     return '<button data-edit-match="' + compId + '|' + m.id + '" class="ticket w-full flex items-center gap-3 pl-8 pr-3 py-3 text-left">' +
-      '<div class="w-9 h-9 rounded-full flex items-center justify-center font-display text-[13px] flex-shrink-0" style="' + avatarStyleFor(m.opponent) + '">' + initials + '</div>' +
+      avatarHtml(m.opponent, "w-9 h-9", "text-[13px]", 3) +
       '<div class="flex-1 min-w-0"><p class="font-semibold text-[14px] truncate">' + escapeHtml(m.opponent) + '</p><p class="text-[11px] text-[var(--text-mute)] font-medium truncate">' + matchMetaLine(m) + '</p></div>' +
       '<span class="font-display text-xl tracking-wider">' + m.golNap + '&nbsp;–&nbsp;' + m.golOpp + '</span>' +
       '<span class="badge badge-' + r + '">' + r + '</span>' +
@@ -1436,8 +1478,8 @@
     var timeline = buildSeasonTimeline(season);
     renderStatsChart(timeline);
 
-    var homeSt = computeMatchesStats(timeline.filter(function(x){ return x.home && !x.campoNeutro; }));
-    var awaySt = computeMatchesStats(timeline.filter(function(x){ return !x.home && !x.campoNeutro; }));
+    var homeSt = computeMatchesStats(timeline.filter(function(x){ return x.sede === "casa"; }));
+    var awaySt = computeMatchesStats(timeline.filter(function(x){ return x.sede === "trasferta"; }));
     document.getElementById("stats-home-summary").textContent = homeSt.pg ? (homeSt.gf + ' fatti (' + fmt1(homeSt.gfAvg) + ') · ' + homeSt.gs + ' subiti (' + fmt1(homeSt.gsAvg) + ')') : '—';
     document.getElementById("stats-away-summary").textContent = awaySt.pg ? (awaySt.gf + ' fatti (' + fmt1(awaySt.gfAvg) + ') · ' + awaySt.gs + ' subiti (' + fmt1(awaySt.gsAvg) + ')') : '—';
 
@@ -1478,7 +1520,7 @@
       el.className = "settings-row";
       el.innerHTML =
         '<div class="flex items-center gap-2.5 min-w-0">' +
-          '<div class="w-8 h-8 rounded-full flex items-center justify-center font-display text-[11px] flex-shrink-0" style="' + avatarStyleFor(row.name) + '">' + row.name.trim().slice(0,2).toUpperCase() + '</div>' +
+          avatarHtml(row.name, "w-8 h-8", "text-[11px]", 2) +
           '<div class="min-w-0"><p class="font-semibold text-[14px] truncate">' + escapeHtml(row.name) + '</p><p class="text-[11px] text-[var(--text-mute)]">' + row.st.pg + ' partite · ' + row.st.v + 'V ' + row.st.p + 'P ' + row.st.s + 'S · gol ' + row.st.gf + '-' + row.st.gs + '</p></div>' +
         '</div>' +
         (row.hasGirone ? '<span class="font-display text-xl flex-shrink-0" style="color:var(--gold);">' + row.punti + 'pt</span>' : '<span class="text-[10px] font-bold px-2 py-1 rounded-md flex-shrink-0" style="background:var(--bg-750);color:var(--text-mute);">SOLO COPPA</span>');
@@ -1542,8 +1584,37 @@
   function countAllTrofei(){ return state.palmares.trofei.reduce(function(sum,t){ return sum + t.edizioni.length; }, 0); }
   function updateHeaderTrophyCount(){ document.getElementById("header-trophy-count").textContent = countAllTrofei(); }
 
+  // Ultimi trofei vinti (per la dashboard principale), ordinati per anno più recente.
+  function getRecentTrofei(limit){
+    var all = [];
+    state.palmares.trofei.forEach(function(t){
+      var disp = compDisplay(t);
+      t.edizioni.forEach(function(ed){
+        all.push({ nome: disp.name, img: disp.trofeoImg, anno: ed.anno, year: parseAnnoToYear(ed.anno) || 0 });
+      });
+    });
+    all.sort(function(a,b){ return b.year - a.year; });
+    return all.slice(0, limit || 3);
+  }
+  function renderRecentTrofei(){
+    var wrap = document.getElementById("recent-trofei-strip");
+    if(!wrap) return;
+    var recenti = getRecentTrofei(3);
+    if(recenti.length === 0){
+      wrap.innerHTML = '<p class="text-[11px] text-[var(--text-mute)]">Nessun trofeo ancora. Aggiungine uno nella Sala Trofei.</p>';
+      return;
+    }
+    wrap.innerHTML = recenti.map(function(t){
+      return '<div class="flex flex-col items-center flex-shrink-0" style="width:66px;">' +
+        '<div class="trofeo-plinth" style="width:48px;height:48px;">' + (t.img ? '<img src="'+t.img+'" style="width:100%;height:100%;object-fit:contain;">' : '<span style="font-size:20px;">🏆</span>') + '</div>' +
+        '<p class="text-[9.5px] font-semibold text-center mt-1.5 truncate" style="width:100%;color:var(--text-dim);">' + escapeHtml(t.nome) + '</p>' +
+      '</div>';
+    }).join("");
+  }
+
   function renderPalmares(){
     updateHeaderTrophyCount();
+    renderRecentTrofei();
     var list = document.getElementById("trofei-list");
     var emptyEl = document.getElementById("trofei-empty");
     list.innerHTML = "";
@@ -2136,11 +2207,13 @@
         lg.teams.slice().sort(function(a,b){ return a.name.localeCompare(b.name,'it'); }).forEach(function(team){
           teamsHtml += '<div class="settings-row mb-2">' +
             '<div class="flex items-center gap-2.5 min-w-0">' +
-              '<div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;'+(team.colors.length?'background:'+buildAvatarGradient(team.colors)+';':'background:var(--bg-750);')+'"></div>' +
+              (team.logo
+                ? '<img src="'+team.logo+'" style="width:24px;height:24px;border-radius:50%;flex-shrink:0;object-fit:contain;background:transparent;">'
+                : '<div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;'+(team.colors.length?'background:'+buildAvatarGradient(team.colors)+';':'background:var(--bg-750);')+'"></div>') +
               '<p class="font-medium text-[13.5px] truncate">'+escapeHtml(team.name)+'</p>' +
             '</div>' +
             '<div class="flex items-center gap-1.5">' +
-              '<button type="button" data-edit-team-color="'+lg.id+'|'+team.id+'" class="settings-btn" style="background:var(--bg-750);color:var(--text);padding:7px 12px;font-size:12px;">Colori</button>' +
+              '<button type="button" data-edit-team-color="'+lg.id+'|'+team.id+'" class="settings-btn" style="background:var(--bg-750);color:var(--text);padding:7px 12px;font-size:12px;">Modifica</button>' +
               '<button type="button" data-delete-team="'+lg.id+'|'+team.id+'" class="trophy-step" style="color:var(--loss);width:30px;height:30px;" aria-label="Elimina squadra">✕</button>' +
             '</div></div>';
         });
@@ -2176,7 +2249,7 @@
         if(!name) return;
         if(findTeamByName(name)){ showToast("⚠️ Squadra già esistente"); return; }
         var lg = state.leagues.find(function(l){ return l.id===id; });
-        lg.teams.push({ id: uid(), name: name, colors: [] });
+        lg.teams.push({ id: uid(), name: name, colors: [], logo: null });
         save(); renderLeaguesList(); renderOpponentsDatalist();
         showToast("✓ Squadra aggiunta");
       });
@@ -2223,7 +2296,11 @@
     var team = lg.teams.find(function(t){ return t.id===teamId; });
     if(!team) return;
     teamColorsCtx = { leagueId:leagueId, teamId:teamId, colors: team.colors.slice() };
-    document.getElementById("team-colors-name").textContent = team.name;
+    document.getElementById("input-team-edit-name").value = team.name;
+    pendingImageDataUrl = team.logo || null;
+    updateImgPreview("team-logo-preview", pendingImageDataUrl);
+    document.getElementById("btn-team-logo-remove").classList.toggle("hidden", !pendingImageDataUrl);
+    document.getElementById("input-team-logo-file").value = "";
     renderTeamColorRows();
     toggleSheet("team-colors", true);
   }
@@ -2263,13 +2340,27 @@
     if(!lg) return;
     var team = lg.teams.find(function(t){ return t.id===teamColorsCtx.teamId; });
     if(!team) return;
+    var newName = document.getElementById("input-team-edit-name").value.trim();
+    if(!newName){ showToast("⚠️ Inserisci un nome"); return; }
+    var oldName = team.name;
+    team.name = newName;
+    team.logo = pendingImageDataUrl;
     team.colors = teamColorsCtx.colors.slice();
-    save(); renderLeaguesList(); render(); closeTeamColorsModal();
-    showToast("✓ Colori aggiornati");
+    // Se il nome cambia, aggiorna anche i riferimenti testuali già salvati nelle partite passate.
+    if(newName !== oldName){
+      state.seasons.forEach(function(season){
+        season.competitions.forEach(function(comp){
+          comp.matches.forEach(function(m){ if(m.opponent === oldName) m.opponent = newName; });
+          comp.turni.forEach(function(t){ if(t.opponent === oldName) t.opponent = newName; });
+        });
+      });
+    }
+    save(); renderLeaguesList(); render(); renderOpponentsDatalist(); closeTeamColorsModal();
+    showToast("✓ Squadra aggiornata");
   }
 
   // ---------- MODAL: MATCH (girone e gare/andata/ritorno coppe) ----------
-  var matchCtx = { mode:"girone", compId: null, matchId: null, home: true, campoNeutro:false };
+  var matchCtx = { mode:"girone", compId: null, matchId: null, sede: "casa" };
   var legCtx = { compId: null, turnoId: null, legTipo: null, legId: null };
   var VOTO_PRESETS = [5,5.5,6,6.5,7,7.5,8,8.5,9];
 
@@ -2296,19 +2387,14 @@
     var b = document.getElementById("live-result-badge");
     b.textContent = r; b.className = "badge badge-" + r;
   }
-  function setHomeToggle(isHome){
-    matchCtx.home = isHome;
-    document.querySelectorAll(".home-toggle").forEach(function(btn){
-      var v = btn.getAttribute("data-home") === "1";
-      btn.classList.toggle("active", v === isHome);
+  // Casa / Trasferta / Campo Neutro sono mutuamente esclusive: una sola può essere attiva alla volta.
+  function setSedeToggle(sede){
+    matchCtx.sede = sede;
+    document.querySelectorAll(".sede-toggle").forEach(function(btn){
+      btn.classList.toggle("active", btn.getAttribute("data-sede") === sede);
     });
   }
-  function setNeutroToggle(val){
-    matchCtx.campoNeutro = val;
-    var btn = document.getElementById("btn-toggle-neutro-modal");
-    btn.classList.toggle("active", val);
-    btn.textContent = "Campo neutro: " + (val ? "Sì" : "No");
-  }
+
 
   function openMatchModal(compId, matchId){
     var season = getActiveSeason();
@@ -2318,7 +2404,6 @@
     matchCtx.mode = "girone"; matchCtx.compId = compId; matchCtx.matchId = matchId;
     document.getElementById("match-comp-label").textContent = compDisplay(comp).name;
     document.getElementById("match-leg-badge").classList.add("hidden");
-    document.getElementById("field-campo-neutro").classList.add("hidden");
     document.getElementById("field-giornata").classList.remove("hidden");
     var delBtn = document.getElementById("btn-delete-match");
     if(matchId){
@@ -2330,7 +2415,7 @@
       document.getElementById("input-voto").value = (typeof m.voto === "number") ? m.voto : "";
       document.getElementById("input-match-data").value = m.data || "";
       document.getElementById("input-match-giornata").value = m.giornata != null ? m.giornata : "";
-      setHomeToggle(!!m.home);
+      setSedeToggle(m.sede || "casa");
       buildVotoChips(m.voto);
       delBtn.classList.remove("hidden");
     } else {
@@ -2341,7 +2426,7 @@
       document.getElementById("input-voto").value = "";
       document.getElementById("input-match-data").value = "";
       document.getElementById("input-match-giornata").value = "";
-      setHomeToggle(true);
+      setSedeToggle("casa");
       buildVotoChips(null);
       delBtn.classList.add("hidden");
     }
@@ -2361,7 +2446,6 @@
     var legBadge = document.getElementById("match-leg-badge");
     if(legTipo === "unica"){ legBadge.classList.add("hidden"); }
     else { legBadge.textContent = legTipo === "andata" ? "ANDATA" : "RITORNO"; legBadge.classList.remove("hidden"); }
-    document.getElementById("field-campo-neutro").classList.remove("hidden");
     document.getElementById("field-giornata").classList.add("hidden");
     var delBtn = document.getElementById("btn-delete-match");
     var existingLeg = legCtx.legId ? turno.legs.find(function(l){ return l.id === legCtx.legId; }) : null;
@@ -2372,7 +2456,7 @@
       document.getElementById("input-golopp").value = existingLeg.golOpp;
       document.getElementById("input-voto").value = (typeof existingLeg.voto === "number") ? existingLeg.voto : "";
       document.getElementById("input-match-data").value = existingLeg.data || "";
-      setHomeToggle(!!existingLeg.home);
+      setSedeToggle(existingLeg.sede || "casa");
       buildVotoChips(existingLeg.voto);
       delBtn.classList.remove("hidden");
     } else {
@@ -2382,11 +2466,11 @@
       document.getElementById("input-golopp").value = 0;
       document.getElementById("input-voto").value = "";
       document.getElementById("input-match-data").value = "";
-      setHomeToggle(true);
+      // Le finali si giocano tipicamente in campo neutro: comodo default, comunque modificabile.
+      setSedeToggle(turno.nome === "Finale" ? "neutro" : "casa");
       buildVotoChips(null);
       delBtn.classList.add("hidden");
     }
-    setNeutroToggle(!!turno.campoNeutro);
     updateLiveResultBadge();
     toggleSheet("match", true);
     setTimeout(function(){ document.getElementById("input-opponent").focus(); }, 300);
@@ -2425,7 +2509,7 @@
     var leagueId = document.getElementById("input-new-team-league").value;
     var league = state.leagues.find(function(l){ return l.id === leagueId; });
     if(!league) return;
-    var team = { id: uid(), name: name, colors: [] };
+    var team = { id: uid(), name: name, colors: [], logo: null };
     league.teams.push(team);
     save(); renderOpponentsDatalist();
     toggleSheet("new-team", false);
@@ -2471,10 +2555,9 @@
       var turno = comp.turni.find(function(t){ return t.id === legCtx.turnoId; });
       if(!turno) return;
       turno.opponent = opponent;
-      turno.campoNeutro = matchCtx.campoNeutro;
       var leg = legCtx.legId ? turno.legs.find(function(l){ return l.id === legCtx.legId; }) : null;
-      if(leg){ leg.home = matchCtx.home; leg.golNap = golNap; leg.golOpp = golOpp; leg.voto = voto; leg.data = dataVal; showToast("✓ Partita aggiornata"); }
-      else { turno.legs.push({ id: uid(), tipo: legCtx.legTipo, home: matchCtx.home, golNap: golNap, golOpp: golOpp, voto: voto, data: dataVal }); showToast("✓ Partita salvata"); }
+      if(leg){ leg.sede = matchCtx.sede; leg.golNap = golNap; leg.golOpp = golOpp; leg.voto = voto; leg.data = dataVal; showToast("✓ Partita aggiornata"); }
+      else { turno.legs.push({ id: uid(), tipo: legCtx.legTipo, sede: matchCtx.sede, golNap: golNap, golOpp: golOpp, voto: voto, data: dataVal }); showToast("✓ Partita salvata"); }
       computeSbloccato(comp);
       save(); render(); closeMatchModal();
       return;
@@ -2483,10 +2566,10 @@
     if(!seasonComp) return;
     if(matchCtx.matchId){
       var m = seasonComp.matches.find(function(x){ return x.id === matchCtx.matchId; });
-      m.opponent = opponent; m.home = matchCtx.home; m.golNap = golNap; m.golOpp = golOpp; m.voto = voto; m.data = dataVal; m.giornata = giornataVal;
+      m.opponent = opponent; m.sede = matchCtx.sede; m.golNap = golNap; m.golOpp = golOpp; m.voto = voto; m.data = dataVal; m.giornata = giornataVal;
       showToast("✓ Partita aggiornata");
     } else {
-      seasonComp.matches.push({ id: uid(), opponent: opponent, home: matchCtx.home, golNap: golNap, golOpp: golOpp, voto: voto, data: dataVal, giornata: giornataVal });
+      seasonComp.matches.push({ id: uid(), opponent: opponent, sede: matchCtx.sede, golNap: golNap, golOpp: golOpp, voto: voto, data: dataVal, giornata: giornataVal });
       showToast("✓ Partita salvata");
     }
     save(); render(); closeMatchModal();
@@ -2631,9 +2714,12 @@
       '<div style="font-weight:800;font-size:16px;white-space:nowrap;background:#fff6d8;color:#8a6d00;border:1px solid #ffd700;border-radius:8px;padding:3px 10px;">' + fmt1(item.voto) + '</div>' +
     '</div>';
   }
-  function resocontoTrofeoCard(nome){
+  function resocontoTrofeoCard(nome, img){
+    var iconHtml = img
+      ? '<img src="' + img + '" style="width:100%;height:100%;object-fit:contain;background:transparent;">'
+      : '<span style="font-size:30px;">🏆</span>';
     return '<div style="display:inline-flex;flex-direction:column;align-items:center;width:112px;margin:0 10px 14px 0;text-align:center;vertical-align:top;">' +
-      '<div style="width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 50% 30%, #fff6d8, #ffd700 72%);border:2px solid #d9ae00;display:flex;align-items:center;justify-content:center;font-size:30px;">🏆</div>' +
+      '<div style="width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 50% 30%, #fff6d8, #ffd700 72%);border:2px solid #d9ae00;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:' + (img?'10px':'0') + ';box-sizing:border-box;">' + iconHtml + '</div>' +
       '<p style="font-size:11.5px;font-weight:700;margin-top:8px;color:#0b2d5c;">' + escapeHtml(nome) + '</p>' +
     '</div>';
   }
@@ -2682,15 +2768,15 @@
     state.palmares.trofei.forEach(function(t){
       var disp = compDisplay(t);
       t.edizioni.forEach(function(ed){
-        if((ed.anno || "").indexOf(season.name) !== -1){ trofeiStagione.push({ nome: disp.name, anno: ed.anno }); }
+        if((ed.anno || "").indexOf(season.name) !== -1){ trofeiStagione.push({ nome: disp.name, anno: ed.anno, img: disp.trofeoImg }); }
       });
     });
     // includi anche le competizioni segnate "1° Posto" non ancora archiviate in Sala Trofei
     var nomiGiaInclusi = trofeiStagione.map(function(t){ return t.nome; });
     season.competitions.forEach(function(comp){
       if(isPosizioneVincitore(comp.posizioneFinale)){
-        var nome = compDisplay(comp).name;
-        if(nomiGiaInclusi.indexOf(nome) === -1){ trofeiStagione.push({ nome: nome, anno: season.name }); nomiGiaInclusi.push(nome); }
+        var dispComp = compDisplay(comp);
+        if(nomiGiaInclusi.indexOf(dispComp.name) === -1){ trofeiStagione.push({ nome: dispComp.name, anno: season.name, img: dispComp.trofeoImg }); nomiGiaInclusi.push(dispComp.name); }
       }
     });
 
@@ -2750,8 +2836,16 @@
     html += 'textarea{width:100%;min-height:90px;border:1px solid #e2e8f0;border-radius:10px;padding:12px;font-family:inherit;font-size:13px;resize:vertical;}';
     html += '.chart-box{margin-bottom:18px;} .chart-wrap{position:relative;height:220px;border:1px solid #e2e8f0;border-radius:12px;padding:10px;}';
     html += '.footer-note{margin-top:28px;font-size:10.5px;color:#94a3b8;text-align:center;}';
+    html += '.a4-capture{ width:794px !important; max-width:794px !important; }';
+    html += '@page{ size:A4; margin:10mm; }';
     html += '@media print{ .toolbar{display:none !important;} body{background:#fff;} .dashboard>div, .cols2>div, .chart-wrap{box-shadow:none !important;}';
     html += ' body,p,td,th,h1,h2,h3,li,div{color:#000 !important;}';
+    html += ' #report-capture{ width:190mm !important; max-width:190mm !important; margin:0 !important; padding:0 !important; }';
+    html += ' .header h1{font-size:19px;} .header p{font-size:11.5px;} h2.section{font-size:13px;margin:14px 0 8px;} h3.subsection{font-size:11.5px;}';
+    html += ' .dashboard{grid-template-columns:repeat(5,1fr);gap:6px;} table{font-size:10.5px;} th,td{padding:5px 6px;} textarea{min-height:55px;}';
+    html += ' .chart-wrap{height:150px !important;padding:6px;} .badge-oro{font-size:9.5px;}';
+    html += ' h2.section, .dashboard, .cols2, table, .chart-box{ page-break-inside:avoid; break-inside:avoid; }';
+    html += ' h2.section{ page-break-after:avoid; break-after:avoid; }';
     html += ' .badge-oro{ background:var(--oro) !important; color:#3a2e00 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }';
     html += ' th{ background:#f0f6ff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } }';
     html += '</style></head><body>';
@@ -2770,7 +2864,7 @@
 
     if(trofeiStagione.length){
       html += '<h2 class="section">🏆 TITOLI CONQUISTATI QUESTA STAGIONE</h2>';
-      html += '<div>' + trofeiStagione.map(function(t){ return resocontoTrofeoCard(t.nome); }).join("") + '</div>';
+      html += '<div>' + trofeiStagione.map(function(t){ return resocontoTrofeoCard(t.nome, t.img); }).join("") + '</div>';
     }
 
     html += '<h2 class="section">TOP 3 & FLOP 3 PER RISULTATO</h2><div class="cols2">';
@@ -2814,10 +2908,12 @@
     html += 'ensureLib("https://cdn.jsdelivr.net/npm/chart.js@4.4.9/dist/chart.umd.min.js", function(){ return typeof Chart !== "undefined"; }, initCharts);';
     html += 'document.getElementById("btn-save-png").addEventListener("click", function(){';
     html += 'var btn = this; var originalLabel = btn.textContent; btn.disabled = true; btn.textContent = "\\u23F3 Generazione...";';
+    html += 'var capture = document.getElementById("report-capture"); capture.classList.add("a4-capture");';
     html += 'ensureLib("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", function(){ return typeof html2canvas !== "undefined"; }, function(){';
-    html += 'html2canvas(document.getElementById("report-capture"), { scale:2, backgroundColor:"#ffffff", useCORS:true, logging:false }).then(function(canvas){';
+    html += 'html2canvas(capture, { scale:2, backgroundColor:"#ffffff", useCORS:true, logging:false, windowWidth:capture.scrollWidth }).then(function(canvas){';
+    html += 'capture.classList.remove("a4-capture");';
     html += 'canvas.toBlob(function(blob){ var url = URL.createObjectURL(blob); var link = document.createElement("a"); link.download = "resoconto-stagionale-napoli.png"; link.href = url; document.body.appendChild(link); link.click(); document.body.removeChild(link); URL.revokeObjectURL(url); btn.disabled = false; btn.textContent = originalLabel; }, "image/png");';
-    html += '}).catch(function(err){ console.error(err); alert("Errore nella generazione della immagine PNG."); btn.disabled = false; btn.textContent = originalLabel; });';
+    html += '}).catch(function(err){ console.error(err); capture.classList.remove("a4-capture"); alert("Errore nella generazione della immagine PNG."); btn.disabled = false; btn.textContent = originalLabel; });';
     html += '});';
     html += '});';
     html += '<' + '/script></body></html>';
@@ -2873,6 +2969,7 @@
     });
 
     wireImagePicker("input-catalog-trofeo-file", "catalog-trofeo-preview", "btn-catalog-trofeo-remove");
+    wireImagePicker("input-team-logo-file", "team-logo-preview", "btn-team-logo-remove");
 
     document.getElementById("btn-export-backup").addEventListener("click", exportBackup);
     document.getElementById("btn-import-backup").addEventListener("click", function(){ document.getElementById("input-import-file").click(); });
@@ -2977,10 +3074,9 @@
     document.getElementById("btn-cancel-team-colors").addEventListener("click", closeTeamColorsModal);
     document.getElementById("backdrop-team-colors").addEventListener("click", closeTeamColorsModal);
 
-    document.querySelectorAll(".home-toggle").forEach(function(btn){
-      btn.addEventListener("click", function(){ setHomeToggle(btn.getAttribute("data-home") === "1"); });
+    document.querySelectorAll(".sede-toggle").forEach(function(btn){
+      btn.addEventListener("click", function(){ setSedeToggle(btn.getAttribute("data-sede")); });
     });
-    document.getElementById("btn-toggle-neutro-modal").addEventListener("click", function(){ setNeutroToggle(!matchCtx.campoNeutro); });
 
     document.querySelectorAll("[data-step]").forEach(function(btn){
       btn.addEventListener("click", function(){
