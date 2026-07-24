@@ -52,6 +52,9 @@
   .font-display{ font-family:'Bebas Neue', 'Inter', sans-serif; letter-spacing:0.02em; }
   .scrollbar-hide::-webkit-scrollbar{ display:none; }
   .scrollbar-hide{ -ms-overflow-style:none; scrollbar-width:none; }
+  /* Righe a scorrimento orizzontale "a sanguinare": il padding viaggia col contenuto durante
+     lo scroll, così nessuna pillola tocca mai il bordo dello schermo. */
+  .chip-row-bleed{ padding:0 16px; margin:0 -20px; -webkit-overflow-scrolling:touch; }
 
   .bg-horizon{
     position:fixed; inset:0; z-index:0; pointer-events:none;
@@ -225,7 +228,7 @@
   </div>
   <div class="flex items-center gap-2 flex-shrink-0">
     <div class="header-trophy-badge" aria-label="Totale trofei vinti">
-      <span style="font-size:13px;">🏆</span>
+      <div id="header-trofei-mini" class="flex items-center" style="gap:3px;"><span style="font-size:13px;">🏆</span></div>
       <span id="header-trophy-count" class="font-display text-sm" style="color:var(--gold);">0</span>
     </div>
     <button id="btn-season-settings" class="w-10 h-10 rounded-xl glass flex items-center justify-center text-[var(--text-dim)]" aria-label="Impostazioni stagione">
@@ -292,11 +295,6 @@
         <p id="stat-voto-breakdown" class="text-[11px] text-[var(--text-mute)] mt-1.5"></p>
       </div>
 
-      <div class="mt-5 pt-4" style="border-top:1px solid var(--line)">
-        <p class="text-xs font-semibold text-[var(--text-mute)] mb-2.5">🏆 ULTIMI TROFEI</p>
-        <div id="recent-trofei-strip" class="flex gap-3 overflow-x-auto scrollbar-hide pb-1"></div>
-      </div>
-
       <button id="btn-generate-report" type="button" class="w-full mt-4 py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(224,176,79,0.14); color:var(--gold); border:1px solid rgba(224,176,79,0.3);">
         📊 Resoconto Stagionale
       </button>
@@ -304,7 +302,7 @@
 
     <section class="mt-6">
       <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">COMPETIZIONI ATTIVE</p>
-      <div id="comp-chip-row" class="flex gap-2 overflow-x-auto scrollbar-hide pb-1"></div>
+      <div id="comp-chip-row" class="flex gap-2 overflow-x-auto scrollbar-hide chip-row-bleed pb-1"></div>
     </section>
 
     <section id="competitions-list" class="mt-5 space-y-3"></section>
@@ -415,7 +413,7 @@
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
   <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
-    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v2.0.0</span></p>
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v2.1.0</span></p>
     <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
   </div>
 </div>
@@ -680,13 +678,24 @@
   <button id="btn-cancel-catalog" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
 </div>
 
-<!-- MODAL: NUOVO CAMPIONATO -->
+<!-- MODAL: CAMPIONATO (nuovo/modifica) -->
 <div id="backdrop-league" class="modal-backdrop"></div>
 <div id="sheet-league" class="sheet px-5 pt-3">
   <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
-  <h3 class="font-display text-2xl mb-4">NUOVO CAMPIONATO</h3>
+  <h3 id="league-modal-title" class="font-display text-2xl mb-4">NUOVO CAMPIONATO</h3>
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">NOME</label>
   <input id="input-league-name" type="text" placeholder="es. Eredivisie" class="field-input mt-1.5 mb-4">
+
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">ICONA / STEMMA (facoltativa)</label>
+  <div class="flex items-center gap-3 mb-4">
+    <div id="league-icon-preview" class="img-picker-preview"><span style="font-size:20px;">🌍</span></div>
+    <div class="flex-1 flex flex-col gap-2">
+      <label for="input-league-icon-file" class="settings-btn text-center" style="background:var(--bg-750); color:var(--text); cursor:pointer;">Scegli immagine</label>
+      <input id="input-league-icon-file" type="file" accept="image/*" class="hidden">
+      <button type="button" id="btn-league-icon-remove" class="hidden text-[12px] font-semibold text-left" style="color:var(--loss);">Rimuovi icona</button>
+    </div>
+  </div>
+
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">TIPO</label>
   <div class="flex gap-2 mb-5">
     <button type="button" data-naz="1" class="seg-btn league-naz-toggle">🇮🇹 Italiano</button>
@@ -844,7 +853,7 @@
 
   // ---------- CAMPIONATI E SQUADRE ----------
   function defaultLeagues(){
-    return DEFAULT_LEAGUES.map(function(l){ return { id:l.id, name:l.name, nazionale:l.nazionale, teams: [] }; });
+    return DEFAULT_LEAGUES.map(function(l){ return { id:l.id, name:l.name, nazionale:l.nazionale, icon: null, teams: [] }; });
   }
   function findTeamByName(name){
     var n = (name || "").trim().toLowerCase();
@@ -923,6 +932,7 @@
     s.leagues.forEach(function(lg){
       if(!Array.isArray(lg.teams)) lg.teams = [];
       if(typeof lg.nazionale !== "boolean") lg.nazionale = false;
+      if(typeof lg.icon !== "string") lg.icon = null;
       lg.teams.forEach(function(t){ if(!Array.isArray(t.colors)) t.colors = []; if(typeof t.logo !== "string") t.logo = null; });
     });
 
@@ -1130,7 +1140,7 @@
     var contentEl = document.getElementById("season-content");
     if(!season){ emptyEl.classList.remove("hidden"); contentEl.classList.add("hidden"); return; }
     emptyEl.classList.add("hidden"); contentEl.classList.remove("hidden");
-    renderRecentTrofei();
+    renderHeaderTrofei();
 
     document.getElementById("season-title").textContent = season.name;
     var activeCompetitions = season.competitions.filter(function(c){ return c.active; });
@@ -1584,7 +1594,7 @@
   function countAllTrofei(){ return state.palmares.trofei.reduce(function(sum,t){ return sum + t.edizioni.length; }, 0); }
   function updateHeaderTrophyCount(){ document.getElementById("header-trophy-count").textContent = countAllTrofei(); }
 
-  // Ultimi trofei vinti (per la dashboard principale), ordinati per anno più recente.
+  // Ultimi trofei vinti, ordinati per anno più recente.
   function getRecentTrofei(limit){
     var all = [];
     state.palmares.trofei.forEach(function(t){
@@ -1596,25 +1606,26 @@
     all.sort(function(a,b){ return b.year - a.year; });
     return all.slice(0, limit || 3);
   }
-  function renderRecentTrofei(){
-    var wrap = document.getElementById("recent-trofei-strip");
+  // Badge nell'header: miniature PNG trasparenti degli ultimi 3 trofei vinti, o l'icona
+  // predefinita se non ce n'è ancora nessuno.
+  function renderHeaderTrofei(){
+    var wrap = document.getElementById("header-trofei-mini");
     if(!wrap) return;
     var recenti = getRecentTrofei(3);
     if(recenti.length === 0){
-      wrap.innerHTML = '<p class="text-[11px] text-[var(--text-mute)]">Nessun trofeo ancora. Aggiungine uno nella Sala Trofei.</p>';
+      wrap.innerHTML = '<span style="font-size:13px;">🏆</span>';
       return;
     }
     wrap.innerHTML = recenti.map(function(t){
-      return '<div class="flex flex-col items-center flex-shrink-0" style="width:66px;">' +
-        '<div class="trofeo-plinth" style="width:48px;height:48px;">' + (t.img ? '<img src="'+t.img+'" style="width:100%;height:100%;object-fit:contain;">' : '<span style="font-size:20px;">🏆</span>') + '</div>' +
-        '<p class="text-[9.5px] font-semibold text-center mt-1.5 truncate" style="width:100%;color:var(--text-dim);">' + escapeHtml(t.nome) + '</p>' +
-      '</div>';
+      return t.img
+        ? '<img src="' + t.img + '" style="height:22px;max-height:22px;width:auto;max-width:24px;object-fit:contain;border-radius:4px;background:transparent;">'
+        : '<span style="font-size:15px;">🏆</span>';
     }).join("");
   }
 
   function renderPalmares(){
     updateHeaderTrophyCount();
-    renderRecentTrofei();
+    renderHeaderTrofei();
     var list = document.getElementById("trofei-list");
     var emptyEl = document.getElementById("trofei-empty");
     list.innerHTML = "";
@@ -2189,10 +2200,14 @@
       header.className = "w-full flex items-center justify-between px-4 py-3.5 gap-2";
       header.innerHTML =
         '<button type="button" data-toggle-league="'+lg.id+'" class="flex items-center gap-3 text-left flex-1 min-w-0">' +
+          (lg.icon ? '<img src="'+lg.icon+'" style="width:24px;height:24px;border-radius:6px;flex-shrink:0;object-fit:contain;background:transparent;">' : '') +
           '<span class="text-[10px] font-bold px-2 py-1 rounded-md flex-shrink-0" style="background:'+(lg.nazionale?'rgba(0,146,70,0.16);color:#5fd996':'rgba(38,160,224,0.16);color:var(--azzurro)')+';">'+(lg.nazionale?'ITA':'ESTERO')+'</span>' +
           '<div class="min-w-0"><p class="font-bold text-[14.5px] truncate">'+escapeHtml(lg.name)+'</p><p class="text-[11px] text-[var(--text-mute)]">'+lg.teams.length+' squadre</p></div>' +
         '</button>' +
         '<div class="flex items-center gap-1.5 flex-shrink-0">' +
+          '<button type="button" data-edit-league="'+lg.id+'" class="trophy-step" aria-label="Modifica campionato">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>' +
+          '</button>' +
           '<button type="button" data-delete-league="'+lg.id+'" class="trophy-step" style="color:var(--loss);" aria-label="Elimina campionato">✕</button>' +
           '<svg data-toggle-league="'+lg.id+'" class="chevron'+(isOpen?' open':'')+'" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>' +
         '</div>';
@@ -2227,6 +2242,9 @@
 
     wrap.querySelectorAll("[data-toggle-league]").forEach(function(el){
       el.addEventListener("click", function(){ var id = el.getAttribute("data-toggle-league"); openLeagueAccordions[id] = !openLeagueAccordions[id]; renderLeaguesList(); });
+    });
+    wrap.querySelectorAll("[data-edit-league]").forEach(function(btn){
+      btn.addEventListener("click", function(){ openLeagueModal(btn.getAttribute("data-edit-league")); });
     });
     wrap.querySelectorAll("[data-delete-league]").forEach(function(btn){
       btn.addEventListener("click", function(){
@@ -2274,19 +2292,44 @@
   }
 
   var leagueModalNaz = false;
-  function openLeagueModal(){
-    document.getElementById("input-league-name").value = "";
-    leagueModalNaz = false;
-    document.querySelectorAll(".league-naz-toggle").forEach(function(b){ b.classList.toggle("active", b.getAttribute("data-naz")==="0"); });
+  var leagueEditCtx = { id: null };
+  function openLeagueModal(leagueId){
+    leagueEditCtx.id = leagueId || null;
+    pendingImageDataUrl = null;
+    if(leagueId){
+      var lg = state.leagues.find(function(l){ return l.id === leagueId; });
+      if(!lg) return;
+      document.getElementById("league-modal-title").textContent = "MODIFICA CAMPIONATO";
+      document.getElementById("input-league-name").value = lg.name;
+      leagueModalNaz = lg.nazionale;
+      pendingImageDataUrl = lg.icon || null;
+      document.getElementById("btn-save-league").textContent = "Salva";
+    } else {
+      document.getElementById("league-modal-title").textContent = "NUOVO CAMPIONATO";
+      document.getElementById("input-league-name").value = "";
+      leagueModalNaz = false;
+      document.getElementById("btn-save-league").textContent = "Crea";
+    }
+    document.querySelectorAll(".league-naz-toggle").forEach(function(b){ b.classList.toggle("active", (b.getAttribute("data-naz")==="1") === leagueModalNaz); });
+    updateImgPreview("league-icon-preview", pendingImageDataUrl);
+    document.getElementById("btn-league-icon-remove").classList.toggle("hidden", !pendingImageDataUrl);
+    document.getElementById("input-league-icon-file").value = "";
     toggleSheet("league", true);
   }
   function closeLeagueModal(){ toggleSheet("league", false); }
   function saveLeagueModal(){
     var name = document.getElementById("input-league-name").value.trim();
     if(!name){ showToast("⚠️ Inserisci un nome"); return; }
-    state.leagues.push({ id: uid(), name:name, nazionale: leagueModalNaz, teams: [] });
+    if(leagueEditCtx.id){
+      var lg = state.leagues.find(function(l){ return l.id === leagueEditCtx.id; });
+      if(!lg) return;
+      lg.name = name; lg.nazionale = leagueModalNaz; lg.icon = pendingImageDataUrl;
+      showToast("✓ Campionato aggiornato");
+    } else {
+      state.leagues.push({ id: uid(), name:name, nazionale: leagueModalNaz, icon: pendingImageDataUrl, teams: [] });
+      showToast("✓ Campionato creato");
+    }
     save(); renderLeaguesList(); closeLeagueModal();
-    showToast("✓ Campionato creato");
   }
 
   var teamColorsCtx = { leagueId:null, teamId:null, colors: [] };
@@ -2970,6 +3013,7 @@
 
     wireImagePicker("input-catalog-trofeo-file", "catalog-trofeo-preview", "btn-catalog-trofeo-remove");
     wireImagePicker("input-team-logo-file", "team-logo-preview", "btn-team-logo-remove");
+    wireImagePicker("input-league-icon-file", "league-icon-preview", "btn-league-icon-remove");
 
     document.getElementById("btn-export-backup").addEventListener("click", exportBackup);
     document.getElementById("btn-import-backup").addEventListener("click", function(){ document.getElementById("input-import-file").click(); });
@@ -3060,7 +3104,7 @@
     document.getElementById("btn-cancel-new-team").addEventListener("click", cancelNewTeamModal);
     document.getElementById("backdrop-new-team").addEventListener("click", cancelNewTeamModal);
 
-    document.getElementById("btn-add-league").addEventListener("click", openLeagueModal);
+    document.getElementById("btn-add-league").addEventListener("click", function(){ openLeagueModal(); });
     document.getElementById("btn-save-league").addEventListener("click", saveLeagueModal);
     document.getElementById("btn-cancel-league").addEventListener("click", closeLeagueModal);
     document.getElementById("backdrop-league").addEventListener("click", closeLeagueModal);
