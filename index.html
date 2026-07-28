@@ -55,6 +55,11 @@
   /* Righe a scorrimento orizzontale "a sanguinare": il padding viaggia col contenuto durante
      lo scroll, così nessuna pillola tocca mai il bordo dello schermo. */
   .chip-row-bleed{ padding:0 16px; margin:0 -20px; -webkit-overflow-scrolling:touch; }
+  #comp-chip-row{
+    display:flex; flex-wrap:nowrap; align-items:center; justify-content:flex-start;
+    gap:10px; overflow-x:auto; -webkit-overflow-scrolling:touch;
+    padding:4px 16px; margin:0 -20px;
+  }
 
   .bg-horizon{
     position:fixed; inset:0; z-index:0; pointer-events:none;
@@ -101,7 +106,7 @@
   .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; background:var(--bg-900); border:1px solid var(--line); border-radius:14px; }
   .settings-btn{ padding:10px 18px; border-radius:10px; font-weight:700; font-size:13.5px; white-space:nowrap; }
 
-  .comp-chip{ display:inline-flex; align-items:center; gap:5px; font-size:13px; font-weight:600; padding:8px 14px; border-radius:999px; border:1px solid var(--line); color:var(--text-mute); background:var(--bg-900); white-space:nowrap; transition: all .15s ease; }
+  .comp-chip{ display:flex; flex:0 0 auto; width:auto; align-items:center; gap:5px; font-size:13px; font-weight:600; padding:8px 14px; border-radius:999px; border:1px solid var(--line); color:var(--text-mute); background:var(--bg-900); white-space:nowrap; transition: all .15s ease; }
   .comp-chip.active{ color:#eef8ff; background: rgba(38,160,224,0.16); border-color: rgba(38,160,224,0.55); }
 
   .badge{ display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:8px; font-family:'Bebas Neue', sans-serif; font-size:15px; letter-spacing:0.03em; flex-shrink:0; }
@@ -259,7 +264,10 @@
   <div id="season-content" class="hidden">
     <section class="glass-elevated rounded-2xl p-5 mt-2">
       <div class="flex items-baseline justify-between">
-        <h2 id="season-title" class="font-display text-4xl tracking-wide">2025/2026</h2>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h2 id="season-title" class="font-display text-4xl tracking-wide">2025/2026</h2>
+          <div id="season-trofei-mini" class="flex items-center gap-1"></div>
+        </div>
         <span id="season-competitions-count" class="text-[11px] text-[var(--text-mute)] font-medium"></span>
       </div>
 
@@ -302,7 +310,7 @@
 
     <section class="mt-6">
       <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">COMPETIZIONI ATTIVE</p>
-      <div id="comp-chip-row" class="flex gap-2 overflow-x-auto scrollbar-hide chip-row-bleed pb-1"></div>
+      <div id="comp-chip-row" class="scrollbar-hide"></div>
     </section>
 
     <section id="competitions-list" class="mt-5 space-y-3"></section>
@@ -381,6 +389,15 @@
 
 <!-- TAB: IMPOSTAZIONI -->
 <div id="tab-content-impostazioni" class="hidden">
+  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">PREFERENZE</p>
+  <div class="settings-row mb-6">
+    <div>
+      <p class="font-semibold text-[14px]">Ordine stagioni</p>
+      <p class="text-[11.5px] text-[var(--text-mute)]">Ordine delle pillole nella barra in basso.</p>
+    </div>
+    <button id="btn-toggle-season-order" type="button" class="settings-btn" style="background:var(--bg-750); color:var(--text);">↓ Recenti prima</button>
+  </div>
+
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">BACKUP DATI</p>
   <div class="space-y-2.5">
     <div class="settings-row">
@@ -413,7 +430,7 @@
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
   <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
-    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v2.1.0</span></p>
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v2.3.0</span></p>
     <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
   </div>
 </div>
@@ -768,7 +785,7 @@
     "champions": "champions", "europa": "europa", "conference": "conference"
   };
 
-  var state = { competitionsCatalog: [], leagues: [], seasons: [], activeSeasonId: null, palmares: { trofei: [] } };
+  var state = { competitionsCatalog: [], leagues: [], seasons: [], activeSeasonId: null, palmares: { trofei: [] }, seasonSortOrder: "desc" };
 
   function uid(){ return 'id-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,9); }
 
@@ -924,6 +941,8 @@
     if(!s || typeof s !== "object") return null;
     if(!Array.isArray(s.seasons)) return null;
 
+    if(s.seasonSortOrder !== "asc" && s.seasonSortOrder !== "desc") s.seasonSortOrder = "desc";
+
     if(!Array.isArray(s.competitionsCatalog)) s.competitionsCatalog = defaultCompetitionsCatalog();
     s.competitionsCatalog.forEach(function(c){
       if(typeof c.gironiPartiteDefault !== "number") c.gironiPartiteDefault = 8;
@@ -1041,7 +1060,7 @@
       }
     }catch(e){ console.warn("Impossibile leggere i dati salvati, avvio con dati predefiniti.", e); }
     var s = defaultSeason(guessSeasonLabel());
-    state = { competitionsCatalog: defaultCompetitionsCatalog(), leagues: defaultLeagues(), seasons:[s], activeSeasonId: s.id, palmares: defaultPalmares() };
+    state = { competitionsCatalog: defaultCompetitionsCatalog(), leagues: defaultLeagues(), seasons:[s], activeSeasonId: s.id, palmares: defaultPalmares(), seasonSortOrder: "desc" };
     save();
   }
   function save(){
@@ -1143,6 +1162,12 @@
     renderHeaderTrofei();
 
     document.getElementById("season-title").textContent = season.name;
+    var trofeiQuestaStagione = getTrofeiDellaStagione(season);
+    document.getElementById("season-trofei-mini").innerHTML = trofeiQuestaStagione.map(function(t){
+      return t.img
+        ? '<img src="' + t.img + '" style="height:24px;max-height:24px;width:auto;max-width:26px;object-fit:contain;background:transparent;border-radius:4px;">'
+        : '<span style="font-size:18px;">🏆</span>';
+    }).join("");
     var activeCompetitions = season.competitions.filter(function(c){ return c.active; });
     document.getElementById("season-competitions-count").textContent = activeCompetitions.length + (activeCompetitions.length === 1 ? " competizione" : " competizioni");
 
@@ -1171,10 +1196,23 @@
     renderCompetitionsList(season);
   }
 
+  function seasonSortKey(name){
+    var m = /(\d{4})/.exec(name || "");
+    return m ? parseInt(m[1], 10) : 0;
+  }
+  function updateSeasonOrderButtonLabel(){
+    var btn = document.getElementById("btn-toggle-season-order");
+    if(!btn) return;
+    btn.textContent = state.seasonSortOrder === "asc" ? "↑ Vecchie prima" : "↓ Recenti prima";
+  }
   function renderSeasonNav(){
     var wrap = document.getElementById("season-nav-scroll");
     wrap.innerHTML = "";
-    state.seasons.forEach(function(s){
+    var sorted = state.seasons.slice().sort(function(a,b){
+      var ka = seasonSortKey(a.name), kb = seasonSortKey(b.name);
+      return state.seasonSortOrder === "asc" ? (ka - kb) : (kb - ka);
+    });
+    sorted.forEach(function(s){
       var btn = document.createElement("button");
       btn.className = "season-pill" + (s.id === state.activeSeasonId ? " active" : "");
       btn.textContent = s.name;
@@ -2712,23 +2750,29 @@
   // Conta i trofei della stagione incrociando due fonti, per evitare che il contatore
   // resti a 0 quando una competizione è segnata come vinta in Stagioni ma non è ancora
   // stata aggiunta manualmente alla Sala Trofei (o viceversa) — senza contarla due volte.
-  function countTrofeiStagione(season){
-    var count = 0;
-    var catalogIdsGiaContati = {};
+  function getTrofeiDellaStagione(season){
+    var trofei = [];
+    var catalogIdsGiaInclusi = {};
     state.palmares.trofei.forEach(function(t){
+      var disp = compDisplay(t);
       t.edizioni.forEach(function(ed){
         if((ed.anno || "").indexOf(season.name) !== -1){
-          count++;
-          catalogIdsGiaContati[t.catalogId] = true;
+          trofei.push({ nome: disp.name, img: disp.trofeoImg, anno: ed.anno });
+          catalogIdsGiaInclusi[t.catalogId] = true;
         }
       });
     });
     season.competitions.forEach(function(comp){
-      if(isPosizioneVincitore(comp.posizioneFinale) && !catalogIdsGiaContati[comp.catalogId]){
-        count++;
+      if(isPosizioneVincitore(comp.posizioneFinale) && !catalogIdsGiaInclusi[comp.catalogId]){
+        var dispComp = compDisplay(comp);
+        trofei.push({ nome: dispComp.name, img: dispComp.trofeoImg, anno: season.name });
+        catalogIdsGiaInclusi[comp.catalogId] = true;
       }
     });
-    return count;
+    return trofei;
+  }
+  function countTrofeiStagione(season){
+    return getTrofeiDellaStagione(season).length;
   }
 
   function resocontoStatBox(label, value, accent){
@@ -2807,21 +2851,7 @@
     var votiData = conVoto.map(function(x){ return x.voto; });
     var votiLabels = conVoto.map(function(_,i){ return String(i+1); });
 
-    var trofeiStagione = [];
-    state.palmares.trofei.forEach(function(t){
-      var disp = compDisplay(t);
-      t.edizioni.forEach(function(ed){
-        if((ed.anno || "").indexOf(season.name) !== -1){ trofeiStagione.push({ nome: disp.name, anno: ed.anno, img: disp.trofeoImg }); }
-      });
-    });
-    // includi anche le competizioni segnate "1° Posto" non ancora archiviate in Sala Trofei
-    var nomiGiaInclusi = trofeiStagione.map(function(t){ return t.nome; });
-    season.competitions.forEach(function(comp){
-      if(isPosizioneVincitore(comp.posizioneFinale)){
-        var dispComp = compDisplay(comp);
-        if(nomiGiaInclusi.indexOf(dispComp.name) === -1){ trofeiStagione.push({ nome: dispComp.name, anno: season.name, img: dispComp.trofeoImg }); nomiGiaInclusi.push(dispComp.name); }
-      }
-    });
+    var trofeiStagione = getTrofeiDellaStagione(season);
 
     var compRows = "";
     season.competitions.forEach(function(comp){
@@ -2998,7 +3028,15 @@
     renderOpponentsDatalist();
     renderCatalogList();
     renderLeaguesList();
+    updateSeasonOrderButtonLabel();
     setTab("stagioni");
+
+    document.getElementById("btn-toggle-season-order").addEventListener("click", function(){
+      state.seasonSortOrder = state.seasonSortOrder === "asc" ? "desc" : "asc";
+      save();
+      updateSeasonOrderButtonLabel();
+      renderSeasonNav();
+    });
 
     document.querySelectorAll(".tab-switcher .tab-btn[data-tab]").forEach(function(btn){
       btn.addEventListener("click", function(){ setTab(btn.getAttribute("data-tab")); });
