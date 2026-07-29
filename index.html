@@ -86,6 +86,9 @@
     color:var(--text-dim); background: var(--bg-900); white-space:nowrap; transition: all .18s ease;
   }
   .season-pill.active{ color:#04141f; background: linear-gradient(135deg, #4bc4f2, var(--azzurro-deep)); border-color: transparent; box-shadow: 0 4px 16px -4px var(--azzurro-glow); }
+  .season-pill{ display:inline-flex; align-items:center; }
+  .season-pill-trofeo{ max-height:14px; height:14px; width:auto; max-width:16px; object-fit:contain; margin-left:4px; vertical-align:middle; background:transparent; border-radius:3px; flex-shrink:0; }
+  .season-pill-trofeo-emoji{ font-size:11px; margin-left:4px; vertical-align:middle; flex-shrink:0; }
 
   .header-trophy-badge{
     display:flex; align-items:center; gap:5px; padding:6px 11px; border-radius:999px;
@@ -266,7 +269,6 @@
       <div class="flex items-baseline justify-between">
         <div class="flex items-center gap-2 flex-wrap">
           <h2 id="season-title" class="font-display text-4xl tracking-wide">2025/2026</h2>
-          <div id="season-trofei-mini" class="flex items-center gap-1"></div>
         </div>
         <span id="season-competitions-count" class="text-[11px] text-[var(--text-mute)] font-medium"></span>
       </div>
@@ -1162,12 +1164,6 @@
     renderHeaderTrofei();
 
     document.getElementById("season-title").textContent = season.name;
-    var trofeiQuestaStagione = getTrofeiDellaStagione(season);
-    document.getElementById("season-trofei-mini").innerHTML = trofeiQuestaStagione.map(function(t){
-      return t.img
-        ? '<img src="' + t.img + '" style="height:24px;max-height:24px;width:auto;max-width:26px;object-fit:contain;background:transparent;border-radius:4px;">'
-        : '<span style="font-size:18px;">🏆</span>';
-    }).join("");
     var activeCompetitions = season.competitions.filter(function(c){ return c.active; });
     document.getElementById("season-competitions-count").textContent = activeCompetitions.length + (activeCompetitions.length === 1 ? " competizione" : " competizioni");
 
@@ -1215,7 +1211,13 @@
     sorted.forEach(function(s){
       var btn = document.createElement("button");
       btn.className = "season-pill" + (s.id === state.activeSeasonId ? " active" : "");
-      btn.textContent = s.name;
+      var trofeiStagione = getTrofeiDellaStagione(s);
+      var trofeiHtml = trofeiStagione.map(function(t){
+        return t.img
+          ? '<img src="' + t.img + '" class="season-pill-trofeo" alt="">'
+          : '<span class="season-pill-trofeo-emoji">🏆</span>';
+      }).join("");
+      btn.innerHTML = '<span>' + escapeHtml(s.name) + '</span>' + trofeiHtml;
       btn.addEventListener("click", function(){ state.activeSeasonId = s.id; save(); render(); });
       wrap.appendChild(btn);
     });
