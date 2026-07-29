@@ -670,6 +670,22 @@
   </div>
 </div>
 
+<!-- MODAL: DETTAGLIO TROFEO (cronologia vittorie) -->
+<div id="backdrop-trofeo-dettaglio" class="modal-backdrop"></div>
+<div id="sheet-trofeo-dettaglio" class="sheet px-5 pt-3" style="max-height:92vh;">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <div class="flex items-center gap-3 mb-4">
+    <div id="trofeo-dettaglio-plinth" class="trofeo-plinth"></div>
+    <div class="min-w-0 flex-1">
+      <h3 id="trofeo-dettaglio-name" class="font-display text-2xl leading-none truncate"></h3>
+      <p id="trofeo-dettaglio-count" class="text-[11px] text-[var(--gold)] font-bold mt-1"></p>
+    </div>
+    <button id="btn-close-trofeo-dettaglio" type="button" class="text-[var(--text-mute)] text-sm font-semibold flex-shrink-0">Chiudi</button>
+  </div>
+  <div id="trofeo-dettaglio-list" class="space-y-2.5 pb-4"></div>
+</div>
+
+
 <!-- MODAL: TRANSIZIONE FASE (competizioni Miste) -->
 <div id="backdrop-misto-transition" class="modal-backdrop"></div>
 
@@ -1869,9 +1885,11 @@
       var header = document.createElement("div");
       header.className = "w-full flex items-center justify-between px-4 py-3.5 gap-2";
       header.innerHTML =
-        '<button type="button" data-toggle-trofeo="' + trofeo.id + '" class="flex items-center gap-3 text-left flex-1 min-w-0">' +
+        '<button type="button" data-view-trofeo-dettaglio="' + trofeo.id + '" class="flex-shrink-0" aria-label="Vedi dettaglio trofeo">' +
           '<div class="trofeo-plinth">' + (disp.trofeoImg ? '<img src="' + disp.trofeoImg + '" style="width:100%;height:100%;object-fit:contain;background:transparent;">' : '<span style="font-size:26px;">🏆</span>') + '</div>' +
-          '<div class="min-w-0"><div class="flex items-center gap-1.5 flex-wrap"><p class="font-bold text-[15px] truncate">' + escapeHtml(disp.name) + '</p>' +
+        '</button>' +
+        '<button type="button" data-toggle-trofeo="' + trofeo.id + '" class="flex items-center gap-3 text-left flex-1 min-w-0">' +
+          '<div class="min-w-0"><div class="flex items-center gap-1.5 flex-wrap"><span class="theme-badge" style="background:rgba(224,176,79,0.18);color:var(--gold);">' + trofeo.edizioni.length + 'x</span><p class="font-bold text-[15px] truncate">' + escapeHtml(disp.name) + '</p>' +
           (disp.tipoDefault === "misto" ? '<span class="theme-badge" style="background:rgba(224,176,79,0.18);color:var(--gold);">🔀 MISTO</span>' : '') + '</div>' +
           '<p class="text-[11px] text-[var(--text-mute)] font-medium">' + trofeo.edizioni.length + (trofeo.edizioni.length === 1 ? ' edizione vinta' : ' edizioni vinte') + (lastYear ? ' · ultima: ' + escapeHtml(lastYear) : '') + '</p></div>' +
         '</button>' +
@@ -1906,6 +1924,9 @@
       list.appendChild(card);
     });
 
+    list.querySelectorAll("[data-view-trofeo-dettaglio]").forEach(function(btn){
+      btn.addEventListener("click", function(){ openTrofeoDettagliModal(btn.getAttribute("data-view-trofeo-dettaglio")); });
+    });
     list.querySelectorAll("[data-toggle-trofeo]").forEach(function(el){
       el.addEventListener("click", function(){ var id = el.getAttribute("data-toggle-trofeo"); openTrofeiAccordions[id] = !openTrofeiAccordions[id]; renderPalmares(); });
     });
@@ -1927,6 +1948,55 @@
       btn.addEventListener("click", function(){ openEdizioneModal(parts[0], parts[1]); });
     });
     renderTrophyHistoryChart();
+  }
+
+  function findSeasonForEdizione(anno){
+    return state.seasons.find(function(s){ return (anno || "").indexOf(s.name) !== -1; }) || null;
+  }
+  function openTrofeoDettagliModal(trofeoId){
+    var trofeo = state.palmares.trofei.find(function(t){ return t.id === trofeoId; });
+    if(!trofeo) return;
+    var disp = compDisplay(trofeo);
+    document.getElementById("trofeo-dettaglio-plinth").innerHTML = disp.trofeoImg ? '<img src="' + disp.trofeoImg + '" style="width:100%;height:100%;object-fit:contain;background:transparent;">' : '<span style="font-size:26px;">🏆</span>';
+    document.getElementById("trofeo-dettaglio-name").textContent = disp.name;
+    document.getElementById("trofeo-dettaglio-count").textContent = trofeo.edizioni.length + (trofeo.edizioni.length === 1 ? "x vinto" : "x vinti");
+
+    var edizioniOrdinate = trofeo.edizioni.slice().sort(function(a,b){ return (b.anno||"").localeCompare(a.anno||""); });
+    var wrap = document.getElementById("trofeo-dettaglio-list");
+    if(edizioniOrdinate.length === 0){
+      wrap.innerHTML = '<p class="text-xs text-[var(--text-mute)] text-center py-4">Nessuna edizione registrata.</p>';
+    } else {
+      wrap.innerHTML = edizioniOrdinate.map(function(ed){
+        var season = findSeasonForEdizione(ed.anno);
+        var statsHtml = '<p class="text-[11.5px] text-[var(--text-mute)] mt-1">Nessuna stagione collegata per questo anno.</p>';
+        if(season){
+          var timeline = buildSeasonTimeline(season);
+          var st = computeMatchesStats(timeline);
+          var girone = timeline.filter(function(x){ return x.tipo === "girone" && x.categoria === "nazionale"; });
+          var punti = girone.length ? puntiTotali(girone) : null;
+          var voto = computeSeasonVotoStagione(season);
+          statsHtml = '<div class="flex items-center flex-wrap gap-1.5 mt-2">' +
+            (punti !== null ? '<span class="theme-badge" style="background:var(--bg-750);color:var(--text);">' + punti + ' PUNTI</span>' : '') +
+            '<span class="badge badge-V" style="width:auto;padding:0 8px;">' + st.v + 'V</span>' +
+            '<span class="badge badge-P" style="width:auto;padding:0 8px;">' + st.p + 'P</span>' +
+            '<span class="badge badge-S" style="width:auto;padding:0 8px;">' + st.s + 'S</span>' +
+            (voto.finale !== null ? '<span class="voto-tag">⭐ ' + fmt1(voto.finale) + '</span>' : '') +
+            '</div>';
+        }
+        return '<div class="ticket pl-8 pr-3 py-3">' +
+          '<div class="flex items-center gap-1.5 flex-wrap"><p class="font-display text-lg tracking-wide">' + escapeHtml(ed.anno || "Anno non specificato") + '</p>' +
+          (isPosizioneVincitore(ed.posizione) ? vincitoreBadgeHtml() : (ed.posizione ? '<span class="theme-badge" style="background:var(--bg-750);color:var(--text-dim);">' + escapeHtml(ed.posizione) + '</span>' : '')) + '</div>' +
+          (ed.dettagli ? '<p class="text-[11.5px] text-[var(--text-mute)] mt-0.5">' + escapeHtml(ed.dettagli) + '</p>' : '') +
+          statsHtml + '</div>';
+      }).join("");
+    }
+
+    document.getElementById("backdrop-trofeo-dettaglio").classList.add("show");
+    document.getElementById("sheet-trofeo-dettaglio").classList.add("show");
+  }
+  function closeTrofeoDettagliModal(){
+    document.getElementById("backdrop-trofeo-dettaglio").classList.remove("show");
+    document.getElementById("sheet-trofeo-dettaglio").classList.remove("show");
   }
 
   function parseAnnoToYear(anno){ var m = /(\d{4})/.exec(anno || ""); return m ? parseInt(m[1], 10) : null; }
@@ -3241,6 +3311,8 @@
     wireImagePicker("input-league-icon-file", "league-icon-preview", "btn-league-icon-remove");
 
     document.getElementById("btn-open-h2h").addEventListener("click", openH2HModal);
+    document.getElementById("btn-close-trofeo-dettaglio").addEventListener("click", closeTrofeoDettagliModal);
+    document.getElementById("backdrop-trofeo-dettaglio").addEventListener("click", closeTrofeoDettagliModal);
     document.getElementById("btn-close-h2h-picker").addEventListener("click", closeH2HModal);
     document.getElementById("backdrop-h2h").addEventListener("click", closeH2HModal);
     document.getElementById("btn-h2h-back").addEventListener("click", function(){
