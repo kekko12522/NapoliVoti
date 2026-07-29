@@ -391,6 +391,10 @@
       <canvas id="trophy-history-chart"></canvas>
     </div>
   </div>
+
+  <button id="btn-open-hof" type="button" class="w-full py-3.5 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-2 mt-6" style="background:rgba(224,176,79,0.14); color:var(--gold); border:1px solid rgba(224,176,79,0.3);">
+    👑 Record Storici
+  </button>
 </div>
 
 <!-- TAB: IMPOSTAZIONI -->
@@ -684,6 +688,19 @@
   </div>
   <div id="trofeo-dettaglio-list" class="space-y-2.5 pb-4"></div>
 </div>
+
+<!-- MODAL: RECORD STORICI (HALL OF FAME) -->
+<div id="backdrop-hof" class="modal-backdrop"></div>
+<div id="sheet-hof" class="sheet px-5 pt-3" style="max-height:92vh;">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-display text-2xl">RECORD STORICI</h3>
+    <button id="btn-close-hof" type="button" class="text-[var(--text-mute)] text-sm font-semibold">Chiudi</button>
+  </div>
+  <div id="hof-empty" class="hidden text-center text-sm text-[var(--text-mute)] py-6">Registra almeno una stagione con delle partite per vedere i record storici.</div>
+  <div id="hof-content" class="space-y-3 pb-4"></div>
+</div>
+
 
 
 <!-- MODAL: TRANSIZIONE FASE (competizioni Miste) -->
@@ -1997,6 +2014,81 @@
   function closeTrofeoDettagliModal(){
     document.getElementById("backdrop-trofeo-dettaglio").classList.remove("show");
     document.getElementById("sheet-trofeo-dettaglio").classList.remove("show");
+  }
+
+  // ---------- HALL OF FAME / RECORD STORICI ----------
+  function computeRecordStorici(){
+    var attacco = null, difesa = null, puntiRecord = null, votoRecord = null;
+    state.seasons.forEach(function(season){
+      var timeline = buildSeasonTimeline(season);
+      var st = computeMatchesStats(timeline);
+      if(st.pg === 0) return;
+      if(!attacco || st.gf > attacco.gf) attacco = { season: season, gf: st.gf, pg: st.pg, avg: st.gfAvg };
+      if(st.pg >= 10 && (!difesa || st.gs < difesa.gs)) difesa = { season: season, gs: st.gs, pg: st.pg, avg: st.gsAvg };
+      var girone = timeline.filter(function(x){ return x.tipo === "girone" && x.categoria === "nazionale"; });
+      if(girone.length){
+        var punti = puntiTotali(girone);
+        if(!puntiRecord || punti > puntiRecord.punti) puntiRecord = { season: season, punti: punti };
+      }
+      var voto = computeSeasonVotoStagione(season).finale;
+      if(voto !== null && (!votoRecord || voto > votoRecord.voto)) votoRecord = { season: season, voto: voto };
+    });
+
+    var all = buildAllTimeTimeline();
+    var bestStreak = 0, curStreak = 0, curSeasons = [], bestSeasons = [];
+    all.forEach(function(m){
+      if(resultOf(m) === "V"){
+        curStreak++;
+        curSeasons.push(m.seasonName);
+        if(curStreak > bestStreak){ bestStreak = curStreak; bestSeasons = curSeasons.slice(); }
+      } else {
+        curStreak = 0; curSeasons = [];
+      }
+    });
+    var bestSeasonsUnique = bestSeasons.filter(function(v, i, a){ return a.indexOf(v) === i; });
+
+    return { attacco: attacco, difesa: difesa, puntiRecord: puntiRecord, votoRecord: votoRecord, streak: { count: bestStreak, seasons: bestSeasonsUnique } };
+  }
+
+  function hofCardHtml(emoji, label, valueHtml, subHtml){
+    return '<div class="glass rounded-2xl p-4 flex items-center gap-3.5">' +
+      '<div class="trofeo-plinth" style="flex-shrink:0;"><span style="font-size:24px;">' + emoji + '</span></div>' +
+      '<div class="min-w-0 flex-1"><p class="text-[10.5px] font-bold text-[var(--text-mute)] tracking-wide">' + label + '</p>' +
+      '<p class="font-display text-xl leading-tight mt-0.5">' + valueHtml + '</p>' +
+      (subHtml ? '<p class="text-[11.5px] text-[var(--text-dim)] font-medium mt-0.5">' + subHtml + '</p>' : '') +
+      '</div></div>';
+  }
+  function renderHallOfFame(){
+    var rec = computeRecordStorici();
+    var hasAny = rec.attacco || rec.difesa || rec.puntiRecord || rec.votoRecord || rec.streak.count > 0;
+    document.getElementById("hof-empty").classList.toggle("hidden", hasAny);
+    var wrap = document.getElementById("hof-content");
+    var html = "";
+    if(rec.attacco){
+      html += hofCardHtml("💣", "MIGLIOR ATTACCO DI SEMPRE", rec.attacco.gf + " gol fatti", escapeHtml(rec.attacco.season.name) + " · media " + fmt1(rec.attacco.avg) + " gol/partita");
+    }
+    if(rec.difesa){
+      html += hofCardHtml("🛡️", "MIGLIOR DIFESA DI SEMPRE", rec.difesa.gs + " gol subiti", escapeHtml(rec.difesa.season.name) + " · media " + fmt1(rec.difesa.avg) + " gol/partita (min. 10 gare)");
+    }
+    if(rec.streak.count > 0){
+      html += hofCardHtml("🔥", "STRISCIA RECORD DI VITTORIE", rec.streak.count + (rec.streak.count === 1 ? " vittoria" : " vittorie") + " consecutive", escapeHtml(rec.streak.seasons.join(", ")));
+    }
+    if(rec.puntiRecord){
+      html += hofCardHtml("👑", "STAGIONE RECORD PUNTI", rec.puntiRecord.punti + " punti", escapeHtml(rec.puntiRecord.season.name) + " · girone nazionale");
+    }
+    if(rec.votoRecord){
+      html += hofCardHtml("⭐", "STAGIONE RECORD VOTO SQUADRA", fmt1(rec.votoRecord.voto), escapeHtml(rec.votoRecord.season.name));
+    }
+    wrap.innerHTML = html;
+  }
+  function openHofModal(){
+    renderHallOfFame();
+    document.getElementById("backdrop-hof").classList.add("show");
+    document.getElementById("sheet-hof").classList.add("show");
+  }
+  function closeHofModal(){
+    document.getElementById("backdrop-hof").classList.remove("show");
+    document.getElementById("sheet-hof").classList.remove("show");
   }
 
   function parseAnnoToYear(anno){ var m = /(\d{4})/.exec(anno || ""); return m ? parseInt(m[1], 10) : null; }
@@ -3313,6 +3405,9 @@
     document.getElementById("btn-open-h2h").addEventListener("click", openH2HModal);
     document.getElementById("btn-close-trofeo-dettaglio").addEventListener("click", closeTrofeoDettagliModal);
     document.getElementById("backdrop-trofeo-dettaglio").addEventListener("click", closeTrofeoDettagliModal);
+    document.getElementById("btn-open-hof").addEventListener("click", openHofModal);
+    document.getElementById("btn-close-hof").addEventListener("click", closeHofModal);
+    document.getElementById("backdrop-hof").addEventListener("click", closeHofModal);
     document.getElementById("btn-close-h2h-picker").addEventListener("click", closeH2HModal);
     document.getElementById("backdrop-h2h").addEventListener("click", closeH2HModal);
     document.getElementById("btn-h2h-back").addEventListener("click", function(){
