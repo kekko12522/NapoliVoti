@@ -362,6 +362,10 @@
   <p class="text-[10.5px] text-[var(--text-mute)] mb-2 px-1">I punti classifica valgono solo per le competizioni a girone: le fasi a eliminazione diretta non ne assegnano.</p>
   <div id="stats-opponents-list" class="space-y-2"></div>
   <div id="stats-opponents-empty" class="hidden text-center text-sm text-[var(--text-mute)] py-4">Nessun dato ancora per questa stagione.</div>
+
+  <button id="btn-open-h2h" type="button" class="w-full py-3.5 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-2 mt-6" style="background:rgba(224,176,79,0.14); color:var(--gold); border:1px solid rgba(224,176,79,0.3);">
+    ⚔️ Scontri Diretti (H2H) — tutte le stagioni
+  </button>
 </div>
 
 <!-- TAB: PALMARÈS -->
@@ -608,8 +612,67 @@
   <button id="btn-cancel-obiettivo" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
 </div>
 
+<!-- MODAL: SCONTRI DIRETTI (H2H) -->
+<div id="backdrop-h2h" class="modal-backdrop"></div>
+<div id="sheet-h2h" class="sheet px-5 pt-3" style="max-height:92vh;">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+
+  <div id="h2h-view-picker">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-display text-2xl">SCONTRI DIRETTI</h3>
+      <button id="btn-close-h2h-picker" type="button" class="text-[var(--text-mute)] text-sm font-semibold">Chiudi</button>
+    </div>
+    <p class="text-[12.5px] text-[var(--text-dim)] mb-4">Scegli un'avversaria per vedere il bilancio storico su tutte le stagioni salvate.</p>
+    <input id="input-h2h-search" type="text" placeholder="Cerca squadra…" class="field-input mb-4">
+    <div id="h2h-team-list" class="space-y-1.5 pb-4"></div>
+    <div id="h2h-team-list-empty" class="hidden text-center text-sm text-[var(--text-mute)] py-6">Nessuna squadra trovata. Le squadre si aggiungono automaticamente registrando le partite.</div>
+  </div>
+
+  <div id="h2h-view-detail" class="hidden pb-4">
+    <div class="flex items-center gap-2 mb-4">
+      <button id="btn-h2h-back" type="button" class="w-9 h-9 rounded-xl glass flex items-center justify-center text-[var(--text-dim)] flex-shrink-0" aria-label="Indietro">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <div id="h2h-detail-avatar" class="flex-shrink-0"></div>
+      <div class="min-w-0">
+        <h3 id="h2h-detail-name" class="font-display text-2xl leading-none truncate"></h3>
+        <p id="h2h-detail-sub" class="text-[11px] text-[var(--text-mute)] font-medium mt-0.5"></p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-4 gap-2 mb-3">
+      <div class="glass rounded-xl p-2.5 text-center"><p class="text-[10px] font-bold text-[var(--text-mute)] tracking-wide">PG</p><p id="h2h-stat-pg" class="font-display text-xl mt-0.5">0</p></div>
+      <div class="glass rounded-xl p-2.5 text-center"><p class="text-[10px] font-bold text-[var(--text-mute)] tracking-wide">V</p><p id="h2h-stat-v" class="font-display text-xl mt-0.5" style="color:var(--win);">0</p></div>
+      <div class="glass rounded-xl p-2.5 text-center"><p class="text-[10px] font-bold text-[var(--text-mute)] tracking-wide">P</p><p id="h2h-stat-p" class="font-display text-xl mt-0.5" style="color:var(--draw);">0</p></div>
+      <div class="glass rounded-xl p-2.5 text-center"><p class="text-[10px] font-bold text-[var(--text-mute)] tracking-wide">S</p><p id="h2h-stat-s" class="font-display text-xl mt-0.5" style="color:var(--loss);">0</p></div>
+    </div>
+
+    <div class="glass-elevated rounded-2xl p-4 mb-3">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-[11px] font-bold text-[var(--text-mute)] tracking-wide">% VITTORIE</p>
+        <p id="h2h-stat-winpct" class="font-display text-lg" style="color:var(--azzurro);">0%</p>
+      </div>
+      <div class="progress-track mb-3"><div id="h2h-winpct-fill" class="progress-fill" style="width:0%;"></div></div>
+      <div class="flex items-center justify-between text-[13px] font-semibold">
+        <span>⚽ Gol fatti: <span id="h2h-stat-gf" style="color:var(--win);">0</span></span>
+        <span>🥅 Gol subiti: <span id="h2h-stat-gs" style="color:var(--loss);">0</span></span>
+      </div>
+    </div>
+
+    <div id="h2h-best-result-card" class="glass rounded-2xl p-4 mb-4 hidden">
+      <p class="text-[11px] font-bold text-[var(--text-mute)] tracking-wide mb-1.5">🏆 MIGLIOR RISULTATO DI SEMPRE</p>
+      <p id="h2h-best-result-line" class="text-[15px] font-bold"></p>
+      <p id="h2h-best-result-meta" class="text-[11.5px] text-[var(--text-mute)] font-medium mt-0.5"></p>
+    </div>
+
+    <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">STORICO PARTITE</p>
+    <div id="h2h-match-history" class="space-y-2"></div>
+  </div>
+</div>
+
 <!-- MODAL: TRANSIZIONE FASE (competizioni Miste) -->
 <div id="backdrop-misto-transition" class="modal-backdrop"></div>
+
 <div id="sheet-misto-transition" class="sheet px-5 pt-3">
   <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
   <h3 class="font-display text-2xl mb-2">FASE A GIRONI CONCLUSA</h3>
@@ -1543,6 +1606,128 @@
       legend.innerHTML = '<span style="color:var(--win);">'+Math.round(pv)+'% V</span><span style="color:var(--draw);">'+Math.round(pp)+'% P</span><span style="color:var(--loss);">'+Math.round(ps)+'% S</span>';
     }
     renderOpponentRecords(timeline);
+  }
+
+  // ---------- H2H: SCONTRI DIRETTI ----------
+  var h2hCurrentOpponent = null;
+
+  function buildAllTimeTimeline(){
+    var out = [];
+    state.seasons.forEach(function(season){
+      buildSeasonTimeline(season).forEach(function(item){
+        out.push({ golNap: item.golNap, golOpp: item.golOpp, voto: item.voto, opponent: item.opponent, sede: item.sede,
+          tipo: item.tipo, compName: item.compName, categoria: item.categoria, data: item.data, giornata: item.giornata,
+          seasonName: season.name });
+      });
+    });
+    return out.sort(function(a,b){
+      if(a.data && b.data) return a.data < b.data ? -1 : a.data > b.data ? 1 : 0;
+      if(a.data && !b.data) return -1;
+      if(!a.data && b.data) return 1;
+      return 0;
+    });
+  }
+
+  function getH2HOpponentNames(){
+    var all = buildAllTimeTimeline();
+    var seen = {}; var names = [];
+    all.forEach(function(item){
+      var key = (item.opponent || "").trim();
+      if(!key) return;
+      var lk = key.toLowerCase();
+      if(!seen[lk]){ seen[lk] = true; names.push(key); }
+    });
+    // Include anche squadre già in catalogo senza ancora scontri diretti, escluse dalla lista H2H (nessun dato da mostrare).
+    return names.sort(function(a,b){ return a.localeCompare(b); });
+  }
+
+  function computeH2HStats(opponentName){
+    var lk = opponentName.trim().toLowerCase();
+    var matches = buildAllTimeTimeline().filter(function(m){ return (m.opponent || "").trim().toLowerCase() === lk; });
+    var st = computeMatchesStats(matches);
+    var best = null;
+    matches.forEach(function(m){
+      var diff = m.golNap - m.golOpp;
+      if(!best || diff > best.diff){ best = { diff: diff, match: m }; }
+    });
+    return {
+      matches: matches,
+      pg: st.pg, v: st.v, p: st.p, s: st.s, gf: st.gf, gs: st.gs,
+      winPct: st.pg ? Math.round((st.v / st.pg) * 100) : 0,
+      best: best
+    };
+  }
+
+  function openH2HModal(){
+    h2hCurrentOpponent = null;
+    document.getElementById("h2h-view-picker").classList.remove("hidden");
+    document.getElementById("h2h-view-detail").classList.add("hidden");
+    document.getElementById("input-h2h-search").value = "";
+    renderH2HTeamList("");
+    document.getElementById("backdrop-h2h").classList.add("show");
+    document.getElementById("sheet-h2h").classList.add("show");
+  }
+  function closeH2HModal(){
+    document.getElementById("backdrop-h2h").classList.remove("show");
+    document.getElementById("sheet-h2h").classList.remove("show");
+  }
+  function renderH2HTeamList(filterText){
+    var names = getH2HOpponentNames();
+    var f = (filterText || "").trim().toLowerCase();
+    if(f) names = names.filter(function(n){ return n.toLowerCase().indexOf(f) !== -1; });
+    var wrap = document.getElementById("h2h-team-list");
+    var emptyEl = document.getElementById("h2h-team-list-empty");
+    wrap.innerHTML = "";
+    emptyEl.classList.toggle("hidden", names.length > 0);
+    names.forEach(function(name){
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl glass text-left";
+      btn.innerHTML = avatarHtml(name, "w-9 h-9", "text-[12px]", 3) + '<span class="font-semibold text-[14px] truncate">' + escapeHtml(name) + '</span>';
+      btn.addEventListener("click", function(){ selectH2HOpponent(name); });
+      wrap.appendChild(btn);
+    });
+  }
+  function selectH2HOpponent(name){
+    h2hCurrentOpponent = name;
+    document.getElementById("h2h-view-picker").classList.add("hidden");
+    document.getElementById("h2h-view-detail").classList.remove("hidden");
+    renderH2HDetail(name);
+  }
+  function renderH2HDetail(name){
+    var stats = computeH2HStats(name);
+    document.getElementById("h2h-detail-avatar").innerHTML = avatarHtml(name, "w-11 h-11", "text-[14px]", 3);
+    document.getElementById("h2h-detail-name").textContent = name;
+    document.getElementById("h2h-detail-sub").textContent = stats.pg + (stats.pg === 1 ? " precedente storico" : " precedenti storici");
+    document.getElementById("h2h-stat-pg").textContent = stats.pg;
+    document.getElementById("h2h-stat-v").textContent = stats.v;
+    document.getElementById("h2h-stat-p").textContent = stats.p;
+    document.getElementById("h2h-stat-s").textContent = stats.s;
+    document.getElementById("h2h-stat-winpct").textContent = stats.winPct + "%";
+    document.getElementById("h2h-winpct-fill").style.width = stats.winPct + "%";
+    document.getElementById("h2h-stat-gf").textContent = stats.gf;
+    document.getElementById("h2h-stat-gs").textContent = stats.gs;
+
+    var bestCard = document.getElementById("h2h-best-result-card");
+    if(stats.best){
+      bestCard.classList.remove("hidden");
+      var bm = stats.best.match;
+      document.getElementById("h2h-best-result-line").textContent = "Napoli " + bm.golNap + " – " + bm.golOpp + " " + name;
+      document.getElementById("h2h-best-result-meta").textContent =
+        [bm.compName, bm.seasonName, bm.data ? formatDataIt(bm.data) : null].filter(Boolean).join(" · ");
+    } else {
+      bestCard.classList.add("hidden");
+    }
+
+    var histWrap = document.getElementById("h2h-match-history");
+    histWrap.innerHTML = stats.matches.slice().reverse().map(function(m){
+      var r = resultOf(m);
+      return '<div class="ticket flex items-center gap-3 pl-8 pr-3 py-3">' +
+        '<div class="flex-1 min-w-0"><p class="font-semibold text-[13.5px] truncate">' + escapeHtml(m.compName) + '</p>' +
+        '<p class="text-[11px] text-[var(--text-mute)] font-medium truncate">' + escapeHtml(m.seasonName) + ' · ' + matchMetaLine(m) + '</p></div>' +
+        '<span class="font-display text-lg tracking-wider">' + m.golNap + '&nbsp;–&nbsp;' + m.golOpp + '</span>' +
+        '<span class="badge badge-' + r + '">' + r + '</span></div>';
+    }).join("") || '<p class="text-center text-sm text-[var(--text-mute)] py-4">Nessuna partita registrata.</p>';
   }
 
   function renderOpponentRecords(timeline){
@@ -3054,6 +3239,17 @@
     wireImagePicker("input-catalog-trofeo-file", "catalog-trofeo-preview", "btn-catalog-trofeo-remove");
     wireImagePicker("input-team-logo-file", "team-logo-preview", "btn-team-logo-remove");
     wireImagePicker("input-league-icon-file", "league-icon-preview", "btn-league-icon-remove");
+
+    document.getElementById("btn-open-h2h").addEventListener("click", openH2HModal);
+    document.getElementById("btn-close-h2h-picker").addEventListener("click", closeH2HModal);
+    document.getElementById("backdrop-h2h").addEventListener("click", closeH2HModal);
+    document.getElementById("btn-h2h-back").addEventListener("click", function(){
+      document.getElementById("h2h-view-detail").classList.add("hidden");
+      document.getElementById("h2h-view-picker").classList.remove("hidden");
+    });
+    document.getElementById("input-h2h-search").addEventListener("input", function(){
+      renderH2HTeamList(this.value);
+    });
 
     document.getElementById("btn-export-backup").addEventListener("click", exportBackup);
     document.getElementById("btn-import-backup").addEventListener("click", function(){ document.getElementById("input-import-file").click(); });
