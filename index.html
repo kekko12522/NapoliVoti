@@ -6,9 +6,11 @@
 <meta name="theme-color" content="#0A0F1C">
 <!-- PWA iOS: consente il salvataggio in Home e l'avvio "standalone" senza barra Safari -->
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Napoli Tracker">
-<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-title" content="FantaNapoli">
+<link rel="icon" type="image/png" id="app-favicon" href="logo.png">
+<link rel="apple-touch-icon" id="apple-touch-icon" href="logo.png">
 <title>Diario Azzurro — Le Stagioni del Napoli</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -228,7 +230,7 @@
 <!-- HEADER -->
 <header class="relative z-10 px-5 pt-6 pb-3 flex items-center justify-between">
   <div class="flex items-center gap-3 min-w-0">
-    <div class="w-10 h-10 rounded-xl flex items-center justify-center font-display text-lg flex-shrink-0" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">N</div>
+    <div id="app-logo-box" class="w-10 h-10 rounded-xl flex items-center justify-center font-display text-lg flex-shrink-0 overflow-hidden" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;"><span id="app-logo-fallback">N</span></div>
     <div class="min-w-0">
       <h1 class="font-display text-2xl leading-none tracking-wide truncate">DIARIO AZZURRO</h1>
       <p class="text-[11px] text-[var(--text-mute)] font-medium tracking-wide">Le stagioni del Napoli</p>
@@ -408,6 +410,35 @@
     <button id="btn-toggle-season-order" type="button" class="settings-btn" style="background:var(--bg-750); color:var(--text);">↓ Recenti prima</button>
   </div>
 
+  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">SINCRONIZZAZIONE CLOUD</p>
+  <div class="glass rounded-2xl p-4 mb-2.5">
+    <div class="flex items-center justify-between mb-3">
+      <p class="font-semibold text-[14px]">Stato</p>
+      <span id="sync-status-badge" class="text-[12px] font-bold">⚠️ Offline</span>
+    </div>
+    <label class="block text-[11.5px] text-[var(--text-mute)] mb-1.5">URL Cloudflare Worker</label>
+    <input id="input-cloud-worker-url" type="text" placeholder="https://tuo-worker.tuo-subdomain.workers.dev/api/data" class="field-input mb-2.5">
+    <div class="flex gap-2">
+      <button id="btn-save-worker-url" type="button" class="settings-btn flex-1" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva URL</button>
+      <button id="btn-manual-sync" type="button" class="settings-btn flex-1" style="background:var(--bg-750); color:var(--text);">🔄 Sincronizza ora</button>
+    </div>
+    <p class="text-[10.5px] text-[var(--text-mute)] mt-2.5">I dati restano sempre salvati anche in locale sul dispositivo: il cloud è un backup/sync aggiuntivo.</p>
+  </div>
+
+  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">LOGO APP</p>
+  <div class="glass rounded-2xl p-4 mb-2.5 flex items-center gap-3.5">
+    <div id="logo-preview-box" class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden" style="background:var(--bg-750);"><span style="font-size:22px;">🖼️</span></div>
+    <div class="flex-1 min-w-0">
+      <p class="font-semibold text-[14px]">Logo personalizzato</p>
+      <p class="text-[11.5px] text-[var(--text-mute)] mb-2">Sostituisce l'icona nell'header e la favicon dell'app.</p>
+      <div class="flex gap-2">
+        <button id="btn-upload-logo" type="button" class="settings-btn" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">Carica logo</button>
+        <button id="btn-remove-logo" type="button" class="settings-btn hidden" style="background:var(--bg-750); color:var(--text);">Rimuovi</button>
+      </div>
+      <input id="input-logo-uploader" type="file" accept="image/*" class="hidden">
+    </div>
+  </div>
+
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">BACKUP DATI</p>
   <div class="space-y-2.5">
     <div class="settings-row">
@@ -440,7 +471,7 @@
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
   <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
-    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v2.3.0</span></p>
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v3.1.0</span></p>
     <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
   </div>
 </div>
@@ -851,6 +882,9 @@
   "use strict";
 
   var STORAGE_KEY = "diarioAzzurroData_v1";
+  var CLOUD_URL_STORAGE_KEY = "diarioAzzurroCloudWorkerUrl";
+  var CUSTOM_LOGO_STORAGE_KEY = "diarioAzzurroCustomLogo";
+  const CLOUDFLARE_CONFIG = { workerUrl: 'https://fantanapoli-api.w8hmc5b6rw.workers.dev' };
   var ROUND_NAMES = ["Trentaduesimi di finale","Sedicesimi di finale","Ottavi di finale","Quarti di finale","Semifinale","Finale"];
   var POSIZIONE_OPTIONS = ["1° Posto","2° Posto","3° Posto","4° Posto","Semifinalista","Quarti di finale","Ottavi di finale","Fase a gironi","Altro"];
   function isPosizioneVincitore(pos){ return pos === "1° Posto"; }
@@ -1164,6 +1198,69 @@
   function save(){
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     catch(e){ console.error("Salvataggio non riuscito", e); showToast("⚠️ Salvataggio non riuscito"); }
+    saveDataToCloud();
+  }
+
+  // ---------- SINCRONIZZAZIONE CLOUD (Cloudflare Workers / KV) ----------
+  function getCloudWorkerUrl(){
+    try{ return (localStorage.getItem(CLOUD_URL_STORAGE_KEY) || "").trim() || null; }
+    catch(e){ return null; }
+  }
+  function setCloudWorkerUrl(url){
+    try{
+      if(url && url.trim()) localStorage.setItem(CLOUD_URL_STORAGE_KEY, url.trim());
+      else localStorage.removeItem(CLOUD_URL_STORAGE_KEY);
+    }catch(e){}
+  }
+  function setSyncStatus(status){
+    var el = document.getElementById("sync-status-badge");
+    if(!el) return;
+    if(status === "syncing"){ el.textContent = "🔄 Sincronizzazione in corso…"; el.style.color = "var(--gold)"; }
+    else if(status === "synced"){ el.textContent = "☁️ Sincronizzato"; el.style.color = "var(--win)"; }
+    else if(status === "nourl"){ el.textContent = "💾 Solo locale"; el.style.color = "var(--text-mute)"; }
+    else { el.textContent = "⚠️ Offline"; el.style.color = "var(--loss)"; }
+  }
+  async function loadDataFromCloud(){
+    var url = getCloudWorkerUrl() || (CLOUDFLARE_CONFIG.workerUrl.indexOf("TUO-WORKER") === -1 ? CLOUDFLARE_CONFIG.workerUrl : null);
+    if(!url){ setSyncStatus("nourl"); return false; }
+    setSyncStatus("syncing");
+    try{
+      var res = await fetch(url);
+      if(!res.ok) throw new Error("Risposta non valida dal Worker");
+      var data = await res.json();
+      var parsed = normalizeState(data);
+      if(parsed){
+        state = parsed;
+        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+        setSyncStatus("synced");
+        return true;
+      }
+      setSyncStatus("offline");
+      return false;
+    }catch(e){
+      console.warn("Sync cloud (caricamento) non riuscita, uso i dati locali.", e);
+      setSyncStatus("offline");
+      return false;
+    }
+  }
+  async function saveDataToCloud(){
+    var url = getCloudWorkerUrl() || (CLOUDFLARE_CONFIG.workerUrl.indexOf("TUO-WORKER") === -1 ? CLOUDFLARE_CONFIG.workerUrl : null);
+    if(!url){ setSyncStatus("nourl"); return false; }
+    setSyncStatus("syncing");
+    try{
+      var res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(state)
+      });
+      if(!res.ok) throw new Error("Risposta non valida dal Worker");
+      setSyncStatus("synced");
+      return true;
+    }catch(e){
+      console.warn("Sync cloud (salvataggio) non riuscita, i dati restano comunque salvati in locale.", e);
+      setSyncStatus("offline");
+      return false;
+    }
   }
 
   function guessSeasonLabel(){
@@ -2016,6 +2113,38 @@
     document.getElementById("sheet-trofeo-dettaglio").classList.remove("show");
   }
 
+  // ---------- LOGO APP PERSONALIZZATO ----------
+  function applyCustomLogo(dataUrl){
+    var box = document.getElementById("app-logo-box");
+    if(box) box.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;">';
+    var preview = document.getElementById("logo-preview-box");
+    if(preview) preview.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;">';
+    var favicon = document.getElementById("app-favicon");
+    if(favicon) favicon.setAttribute("href", dataUrl);
+    var touchIcon = document.getElementById("apple-touch-icon");
+    if(touchIcon) touchIcon.setAttribute("href", dataUrl);
+    var removeBtn = document.getElementById("btn-remove-logo");
+    if(removeBtn) removeBtn.classList.remove("hidden");
+  }
+  function removeCustomLogo(){
+    try{ localStorage.removeItem(CUSTOM_LOGO_STORAGE_KEY); }catch(e){}
+    var box = document.getElementById("app-logo-box");
+    if(box) box.innerHTML = '<span id="app-logo-fallback">N</span>';
+    var preview = document.getElementById("logo-preview-box");
+    if(preview) preview.innerHTML = '<span style="font-size:22px;">🖼️</span>';
+    var favicon = document.getElementById("app-favicon");
+    if(favicon) favicon.setAttribute("href", "logo.png");
+    var touchIcon = document.getElementById("apple-touch-icon");
+    if(touchIcon) touchIcon.setAttribute("href", "logo.png");
+    var removeBtn = document.getElementById("btn-remove-logo");
+    if(removeBtn) removeBtn.classList.add("hidden");
+  }
+  function loadCustomLogoFromStorage(){
+    try{
+      var saved = localStorage.getItem(CUSTOM_LOGO_STORAGE_KEY);
+      if(saved) applyCustomLogo(saved);
+    }catch(e){}
+  }
   // ---------- HALL OF FAME / RECORD STORICI ----------
   function computeRecordStorici(){
     var attacco = null, difesa = null, puntiRecord = null, votoRecord = null;
@@ -3370,6 +3499,11 @@
 
   function init(){
     load();
+    loadCustomLogoFromStorage();
+    var savedUrl = getCloudWorkerUrl() || (CLOUDFLARE_CONFIG.workerUrl.indexOf("TUO-WORKER") === -1 ? CLOUDFLARE_CONFIG.workerUrl : null);
+    var urlInput = document.getElementById("input-cloud-worker-url");
+    if(urlInput && savedUrl) urlInput.value = savedUrl;
+    setSyncStatus(savedUrl ? "offline" : "nourl");
     populateTurnoSelects();
     populatePosizioneSelects();
     render();
@@ -3379,6 +3513,9 @@
     renderLeaguesList();
     updateSeasonOrderButtonLabel();
     setTab("stagioni");
+    loadDataFromCloud().then(function(ok){
+      if(ok){ render(); renderPalmares(); renderOpponentsDatalist(); renderCatalogList(); renderLeaguesList(); updateSeasonOrderButtonLabel(); }
+    });
 
     document.getElementById("btn-toggle-season-order").addEventListener("click", function(){
       state.seasonSortOrder = state.seasonSortOrder === "asc" ? "desc" : "asc";
@@ -3417,6 +3554,34 @@
     document.getElementById("input-h2h-search").addEventListener("input", function(){
       renderH2HTeamList(this.value);
     });
+
+    document.getElementById("btn-save-worker-url").addEventListener("click", function(){
+      var val = document.getElementById("input-cloud-worker-url").value;
+      setCloudWorkerUrl(val);
+      showToast("URL Worker salvato");
+      saveDataToCloud();
+    });
+    document.getElementById("btn-manual-sync").addEventListener("click", async function(){
+      var ok = await loadDataFromCloud();
+      if(ok){ render(); renderPalmares(); renderOpponentsDatalist(); renderCatalogList(); renderLeaguesList(); updateSeasonOrderButtonLabel(); showToast("☁️ Dati sincronizzati dal cloud"); }
+      else { await saveDataToCloud(); }
+    });
+    document.getElementById("btn-upload-logo").addEventListener("click", function(){
+      document.getElementById("input-logo-uploader").click();
+    });
+    document.getElementById("input-logo-uploader").addEventListener("change", function(e){
+      var file = e.target.files && e.target.files[0];
+      if(!file) return;
+      var reader = new FileReader();
+      reader.onload = function(ev){
+        var dataUrl = ev.target.result;
+        try{ localStorage.setItem(CUSTOM_LOGO_STORAGE_KEY, dataUrl); }catch(err){ showToast("⚠️ Logo troppo grande per essere salvato"); return; }
+        applyCustomLogo(dataUrl);
+        showToast("Logo aggiornato");
+      };
+      reader.readAsDataURL(file);
+    });
+    document.getElementById("btn-remove-logo").addEventListener("click", removeCustomLogo);
 
     document.getElementById("btn-export-backup").addEventListener("click", exportBackup);
     document.getElementById("btn-import-backup").addEventListener("click", function(){ document.getElementById("input-import-file").click(); });
