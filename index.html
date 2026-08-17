@@ -230,7 +230,7 @@
 <!-- HEADER -->
 <header class="relative z-10 px-5 pt-6 pb-3 flex items-center justify-between">
   <div class="flex items-center gap-3 min-w-0">
-    <div id="app-logo-box" class="w-10 h-10 rounded-xl flex items-center justify-center font-display text-lg flex-shrink-0 overflow-hidden" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;"><span id="app-logo-fallback">N</span></div>
+    <div id="app-logo-box" class="w-10 h-10 rounded-xl flex items-center justify-center font-display text-lg flex-shrink-0 overflow-hidden" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;"><img src="logo.png" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="window.__appLogoFallback && window.__appLogoFallback(this);"></div>
     <div class="min-w-0">
       <h1 class="font-display text-2xl leading-none tracking-wide truncate">DIARIO AZZURRO</h1>
       <p class="text-[11px] text-[var(--text-mute)] font-medium tracking-wide">Le stagioni del Napoli</p>
@@ -412,17 +412,13 @@
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">SINCRONIZZAZIONE CLOUD</p>
   <div class="glass rounded-2xl p-4 mb-2.5">
-    <div class="flex items-center justify-between mb-3">
+    <div class="flex items-center justify-between mb-1">
       <p class="font-semibold text-[14px]">Stato</p>
       <span id="sync-status-badge" class="text-[12px] font-bold">⚠️ Offline</span>
     </div>
-    <label class="block text-[11.5px] text-[var(--text-mute)] mb-1.5">URL Cloudflare Worker</label>
-    <input id="input-cloud-worker-url" type="text" placeholder="https://tuo-worker.tuo-subdomain.workers.dev/api/data" class="field-input mb-2.5">
-    <div class="flex gap-2">
-      <button id="btn-save-worker-url" type="button" class="settings-btn flex-1" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva URL</button>
-      <button id="btn-manual-sync" type="button" class="settings-btn flex-1" style="background:var(--bg-750); color:var(--text);">🔄 Sincronizza ora</button>
-    </div>
-    <p class="text-[10.5px] text-[var(--text-mute)] mt-2.5">I dati restano sempre salvati anche in locale sul dispositivo: il cloud è un backup/sync aggiuntivo.</p>
+    <p id="sync-worker-url-display" class="text-[10.5px] text-[var(--text-mute)] mb-2.5 truncate"></p>
+    <button id="btn-manual-sync" type="button" class="settings-btn w-full" style="background:var(--bg-750); color:var(--text);">🔄 Sincronizza ora</button>
+    <p class="text-[10.5px] text-[var(--text-mute)] mt-2.5">Il collegamento al cloud è configurato automaticamente. I dati restano sempre salvati anche in locale sul dispositivo: il cloud è un backup/sync aggiuntivo.</p>
   </div>
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">LOGO APP</p>
@@ -882,7 +878,6 @@
   "use strict";
 
   var STORAGE_KEY = "diarioAzzurroData_v1";
-  var CLOUD_URL_STORAGE_KEY = "diarioAzzurroCloudWorkerUrl";
   var CUSTOM_LOGO_STORAGE_KEY = "diarioAzzurroCustomLogo";
   const CLOUDFLARE_CONFIG = { workerUrl: 'https://fantanapoli-api.w8hmc5b6rw.workers.dev' };
   var ROUND_NAMES = ["Trentaduesimi di finale","Sedicesimi di finale","Ottavi di finale","Quarti di finale","Semifinale","Finale"];
@@ -1203,14 +1198,7 @@
 
   // ---------- SINCRONIZZAZIONE CLOUD (Cloudflare Workers / KV) ----------
   function getCloudWorkerUrl(){
-    try{ return (localStorage.getItem(CLOUD_URL_STORAGE_KEY) || "").trim() || null; }
-    catch(e){ return null; }
-  }
-  function setCloudWorkerUrl(url){
-    try{
-      if(url && url.trim()) localStorage.setItem(CLOUD_URL_STORAGE_KEY, url.trim());
-      else localStorage.removeItem(CLOUD_URL_STORAGE_KEY);
-    }catch(e){}
+    return CLOUDFLARE_CONFIG.workerUrl && CLOUDFLARE_CONFIG.workerUrl.indexOf("TUO-WORKER") === -1 ? CLOUDFLARE_CONFIG.workerUrl : null;
   }
   function setSyncStatus(status){
     var el = document.getElementById("sync-status-badge");
@@ -1221,7 +1209,7 @@
     else { el.textContent = "⚠️ Offline"; el.style.color = "var(--loss)"; }
   }
   async function loadDataFromCloud(){
-    var url = getCloudWorkerUrl() || (CLOUDFLARE_CONFIG.workerUrl.indexOf("TUO-WORKER") === -1 ? CLOUDFLARE_CONFIG.workerUrl : null);
+    var url = getCloudWorkerUrl();
     if(!url){ setSyncStatus("nourl"); return false; }
     setSyncStatus("syncing");
     try{
@@ -1244,7 +1232,7 @@
     }
   }
   async function saveDataToCloud(){
-    var url = getCloudWorkerUrl() || (CLOUDFLARE_CONFIG.workerUrl.indexOf("TUO-WORKER") === -1 ? CLOUDFLARE_CONFIG.workerUrl : null);
+    var url = getCloudWorkerUrl();
     if(!url){ setSyncStatus("nourl"); return false; }
     setSyncStatus("syncing");
     try{
@@ -2114,6 +2102,10 @@
   }
 
   // ---------- LOGO APP PERSONALIZZATO ----------
+  window.__appLogoFallback = function(imgEl){
+    if(!imgEl || !imgEl.parentNode) return;
+    imgEl.parentNode.innerHTML = '<span id="app-logo-fallback">N</span>';
+  };
   function applyCustomLogo(dataUrl){
     var box = document.getElementById("app-logo-box");
     if(box) box.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;">';
@@ -2129,7 +2121,7 @@
   function removeCustomLogo(){
     try{ localStorage.removeItem(CUSTOM_LOGO_STORAGE_KEY); }catch(e){}
     var box = document.getElementById("app-logo-box");
-    if(box) box.innerHTML = '<span id="app-logo-fallback">N</span>';
+    if(box) box.innerHTML = '<img src="logo.png" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="window.__appLogoFallback && window.__appLogoFallback(this);">';
     var preview = document.getElementById("logo-preview-box");
     if(preview) preview.innerHTML = '<span style="font-size:22px;">🖼️</span>';
     var favicon = document.getElementById("app-favicon");
@@ -3500,9 +3492,9 @@
   function init(){
     load();
     loadCustomLogoFromStorage();
-    var savedUrl = getCloudWorkerUrl() || (CLOUDFLARE_CONFIG.workerUrl.indexOf("TUO-WORKER") === -1 ? CLOUDFLARE_CONFIG.workerUrl : null);
-    var urlInput = document.getElementById("input-cloud-worker-url");
-    if(urlInput && savedUrl) urlInput.value = savedUrl;
+    var savedUrl = getCloudWorkerUrl();
+    var urlDisplay = document.getElementById("sync-worker-url-display");
+    if(urlDisplay) urlDisplay.textContent = savedUrl ? savedUrl : "Nessun Worker configurato";
     setSyncStatus(savedUrl ? "offline" : "nourl");
     populateTurnoSelects();
     populatePosizioneSelects();
@@ -3555,12 +3547,6 @@
       renderH2HTeamList(this.value);
     });
 
-    document.getElementById("btn-save-worker-url").addEventListener("click", function(){
-      var val = document.getElementById("input-cloud-worker-url").value;
-      setCloudWorkerUrl(val);
-      showToast("URL Worker salvato");
-      saveDataToCloud();
-    });
     document.getElementById("btn-manual-sync").addEventListener("click", async function(){
       var ok = await loadDataFromCloud();
       if(ok){ render(); renderPalmares(); renderOpponentsDatalist(); renderCatalogList(); renderLeaguesList(); updateSeasonOrderButtonLabel(); showToast("☁️ Dati sincronizzati dal cloud"); }
