@@ -9,8 +9,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FantaNapoli">
-<link rel="icon" type="image/png" id="app-favicon" href="logo.png">
-<link rel="apple-touch-icon" id="apple-touch-icon" href="logo.png">
+<link rel="icon" type="image/png" id="app-favicon" href="icon.png">
+<link rel="apple-touch-icon" id="apple-touch-icon" href="icon.png">
 <title>Diario Azzurro — Le Stagioni del Napoli</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -230,7 +230,7 @@
 <!-- HEADER -->
 <header class="relative z-10 px-5 pt-6 pb-3 flex items-center justify-between">
   <div class="flex items-center gap-3 min-w-0">
-    <div id="app-logo-box" class="w-10 h-10 rounded-xl flex items-center justify-center font-display text-lg flex-shrink-0 overflow-hidden" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;"><img src="logo.png" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="window.__appLogoFallback && window.__appLogoFallback(this);"></div>
+    <div id="app-logo-box" class="w-10 h-10 rounded-xl flex items-center justify-center font-display text-lg flex-shrink-0 overflow-hidden" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;"><img src="icon.png" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="window.__appLogoFallback && window.__appLogoFallback(this);"></div>
     <div class="min-w-0">
       <h1 class="font-display text-2xl leading-none tracking-wide truncate">DIARIO AZZURRO</h1>
       <p class="text-[11px] text-[var(--text-mute)] font-medium tracking-wide">Le stagioni del Napoli</p>
@@ -2121,13 +2121,13 @@
   function removeCustomLogo(){
     try{ localStorage.removeItem(CUSTOM_LOGO_STORAGE_KEY); }catch(e){}
     var box = document.getElementById("app-logo-box");
-    if(box) box.innerHTML = '<img src="logo.png" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="window.__appLogoFallback && window.__appLogoFallback(this);">';
+    if(box) box.innerHTML = '<img src="icon.png" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="window.__appLogoFallback && window.__appLogoFallback(this);">';
     var preview = document.getElementById("logo-preview-box");
     if(preview) preview.innerHTML = '<span style="font-size:22px;">🖼️</span>';
     var favicon = document.getElementById("app-favicon");
-    if(favicon) favicon.setAttribute("href", "logo.png");
+    if(favicon) favicon.setAttribute("href", "icon.png");
     var touchIcon = document.getElementById("apple-touch-icon");
-    if(touchIcon) touchIcon.setAttribute("href", "logo.png");
+    if(touchIcon) touchIcon.setAttribute("href", "icon.png");
     var removeBtn = document.getElementById("btn-remove-logo");
     if(removeBtn) removeBtn.classList.add("hidden");
   }
