@@ -421,19 +421,6 @@
     <p class="text-[10.5px] text-[var(--text-mute)] mt-2.5">Il collegamento al cloud è configurato automaticamente. I dati restano sempre salvati anche in locale sul dispositivo: il cloud è un backup/sync aggiuntivo.</p>
   </div>
 
-  <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">LOGO APP</p>
-  <div class="glass rounded-2xl p-4 mb-2.5 flex items-center gap-3.5">
-    <div id="logo-preview-box" class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden" style="background:var(--bg-750);"><span style="font-size:22px;">🖼️</span></div>
-    <div class="flex-1 min-w-0">
-      <p class="font-semibold text-[14px]">Logo personalizzato</p>
-      <p class="text-[11.5px] text-[var(--text-mute)] mb-2">Sostituisce l'icona nell'header e la favicon dell'app.</p>
-      <div class="flex gap-2">
-        <button id="btn-upload-logo" type="button" class="settings-btn" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">Carica logo</button>
-        <button id="btn-remove-logo" type="button" class="settings-btn hidden" style="background:var(--bg-750); color:var(--text);">Rimuovi</button>
-      </div>
-      <input id="input-logo-uploader" type="file" accept="image/*" class="hidden">
-    </div>
-  </div>
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">BACKUP DATI</p>
   <div class="space-y-2.5">
@@ -467,7 +454,7 @@
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
   <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
-    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v3.1.0</span></p>
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v3.2.0</span></p>
     <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
   </div>
 </div>
@@ -558,7 +545,7 @@
 
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">VOTO PRESTAZIONE (1–10)</label>
   <div id="voto-chip-row" class="grid grid-cols-5 gap-1.5 mb-2.5"></div>
-  <input id="input-voto" type="number" step="0.5" min="1" max="10" placeholder="Voto personalizzato" class="field-input mb-5">
+  <input id="input-voto" type="text" inputmode="decimal" placeholder="Voto (es. 6.5, 7-, 6+)" class="field-input mb-5">
 
   <button id="btn-save-match" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva partita</button>
   <button id="btn-delete-match" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Elimina partita</button>
@@ -728,6 +715,21 @@
   <div id="hof-content" class="space-y-3 pb-4"></div>
 </div>
 
+<!-- MODAL: CONFERMA SICUREZZA DATI (generica, per operazioni distruttive) -->
+<div id="backdrop-confirm-danger" class="modal-backdrop"></div>
+<div id="sheet-confirm-danger" class="sheet px-5 pt-3" style="max-height:60vh;">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <div class="flex items-center gap-2.5 mb-2">
+    <span style="font-size:22px;">⚠️</span>
+    <h3 id="confirm-danger-title" class="font-display text-xl leading-none">ATTENZIONE</h3>
+  </div>
+  <p id="confirm-danger-message" class="text-[13.5px] text-[var(--text-dim)] leading-snug mb-5">Questa operazione sovrascriverà o cancellerà definitivamente i dati attuali. Vuoi procedere?</p>
+  <div class="flex gap-2.5 pb-2">
+    <button id="btn-confirm-danger-cancel" type="button" class="settings-btn flex-1" style="background:var(--bg-750); color:var(--text);">Annulla</button>
+    <button id="btn-confirm-danger-ok" type="button" class="settings-btn flex-1" style="background:var(--loss-bg); color:var(--loss);">Conferma</button>
+  </div>
+</div>
+
 
 
 <!-- MODAL: TRANSIZIONE FASE (competizioni Miste) -->
@@ -856,6 +858,9 @@
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide">NOME</label>
   <input id="input-team-edit-name" type="text" class="field-input mt-1.5 mb-4">
 
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">CAMPIONATO / CATEGORIA</label>
+  <select id="select-team-edit-league" class="field-input mb-4"></select>
+
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">LOGO (facoltativo)</label>
   <div class="flex items-center gap-3 mb-4">
     <div id="team-logo-preview" class="img-picker-preview"><span style="font-size:20px;">🛡️</span></div>
@@ -878,10 +883,17 @@
   "use strict";
 
   var STORAGE_KEY = "diarioAzzurroData_v1";
-  var CUSTOM_LOGO_STORAGE_KEY = "diarioAzzurroCustomLogo";
   const CLOUDFLARE_CONFIG = { workerUrl: 'https://fantanapoli-api.w8hmc5b6rw.workers.dev' };
   var ROUND_NAMES = ["Trentaduesimi di finale","Sedicesimi di finale","Ottavi di finale","Quarti di finale","Semifinale","Finale"];
   var POSIZIONE_OPTIONS = ["1° Posto","2° Posto","3° Posto","4° Posto","Semifinalista","Quarti di finale","Ottavi di finale","Fase a gironi","Altro"];
+  var SERIE_A_POSIZIONE_OPTIONS = (function(){
+    var out = [];
+    for(var i = 1; i <= 20; i++) out.push(i + "° Posto");
+    return out;
+  })();
+  function isSerieAPrimaria(disp){
+    return !!(disp && disp.name && /serie\s*a\b/i.test(disp.name.trim()));
+  }
   function isPosizioneVincitore(pos){ return pos === "1° Posto"; }
   function vincitoreBadgeHtml(){
     return '<span class="theme-badge" style="background:linear-gradient(135deg,#e8c473,var(--gold));color:#241a05;">🏆 VINCITORE</span>';
@@ -1208,28 +1220,32 @@
     else if(status === "nourl"){ el.textContent = "💾 Solo locale"; el.style.color = "var(--text-mute)"; }
     else { el.textContent = "⚠️ Offline"; el.style.color = "var(--loss)"; }
   }
-  async function loadDataFromCloud(){
+  async function fetchCloudState(){
     var url = getCloudWorkerUrl();
-    if(!url){ setSyncStatus("nourl"); return false; }
+    if(!url){ setSyncStatus("nourl"); return { ok:false }; }
     setSyncStatus("syncing");
     try{
       var res = await fetch(url);
       if(!res.ok) throw new Error("Risposta non valida dal Worker");
       var data = await res.json();
       var parsed = normalizeState(data);
-      if(parsed){
-        state = parsed;
-        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
-        setSyncStatus("synced");
-        return true;
-      }
+      if(parsed){ setSyncStatus("synced"); return { ok:true, state: parsed }; }
       setSyncStatus("offline");
-      return false;
+      return { ok:false };
     }catch(e){
-      console.warn("Sync cloud (caricamento) non riuscita, uso i dati locali.", e);
+      console.warn("Sync cloud (caricamento) non riuscita.", e);
       setSyncStatus("offline");
-      return false;
+      return { ok:false };
     }
+  }
+  async function loadDataFromCloud(){
+    var res = await fetchCloudState();
+    if(res.ok){
+      state = res.state;
+      try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+      return true;
+    }
+    return false;
   }
   async function saveDataToCloud(){
     var url = getCloudWorkerUrl();
@@ -1288,6 +1304,20 @@
     return "P";
   }
   function fmt1(n){ return (Math.round(n*10)/10).toFixed(1); }
+  // Converte un voto inserito come testo: numeri decimali normali (6.5) oppure con simbolo
+  // "+"/"-" finale (es. 5- -> 4.85, 6+ -> 6.15, 5.5+ -> 5.65). Ritorna null se non valido.
+  function parseVotoInput(raw){
+    if(raw === null || raw === undefined) return null;
+    var s = String(raw).trim().replace(",", ".");
+    if(s === "") return null;
+    var m = /^(\d+(?:\.\d+)?)\s*([+-])?$/.exec(s);
+    if(!m) return null;
+    var base = parseFloat(m[1]);
+    if(isNaN(base)) return null;
+    if(m[2] === "-") base -= 0.15;
+    else if(m[2] === "+") base += 0.15;
+    return Math.round(base * 100) / 100;
+  }
 
   function buildSeasonTimeline(season){
     var out = [];
@@ -2035,11 +2065,12 @@
     list.querySelectorAll("[data-remove-trofeo]").forEach(function(btn){
       btn.addEventListener("click", function(){
         var id = btn.getAttribute("data-remove-trofeo");
-        if(!confirm("Rimuovere questo trofeo dalla Sala Trofei? Le edizioni registrate andranno perse.")) return;
-        state.palmares.trofei = state.palmares.trofei.filter(function(t){ return t.id !== id; });
-        delete openTrofeiAccordions[id];
-        save(); renderPalmares();
-        showToast("🗑️ Trofeo rimosso");
+        confirmDangerousAction("Rimuovere questo trofeo dalla Sala Trofei? Le edizioni registrate andranno perse.", function(){
+          state.palmares.trofei = state.palmares.trofei.filter(function(t){ return t.id !== id; });
+          delete openTrofeiAccordions[id];
+          save(); renderPalmares();
+          showToast("🗑️ Trofeo rimosso");
+        });
       });
     });
     list.querySelectorAll("[data-add-edizione]").forEach(function(btn){
@@ -2101,42 +2132,11 @@
     document.getElementById("sheet-trofeo-dettaglio").classList.remove("show");
   }
 
-  // ---------- LOGO APP PERSONALIZZATO ----------
+  // ---------- LOGO APP (statico, da repository: icon.png) ----------
   window.__appLogoFallback = function(imgEl){
     if(!imgEl || !imgEl.parentNode) return;
     imgEl.parentNode.innerHTML = '<span id="app-logo-fallback">N</span>';
   };
-  function applyCustomLogo(dataUrl){
-    var box = document.getElementById("app-logo-box");
-    if(box) box.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;">';
-    var preview = document.getElementById("logo-preview-box");
-    if(preview) preview.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;object-fit:cover;">';
-    var favicon = document.getElementById("app-favicon");
-    if(favicon) favicon.setAttribute("href", dataUrl);
-    var touchIcon = document.getElementById("apple-touch-icon");
-    if(touchIcon) touchIcon.setAttribute("href", dataUrl);
-    var removeBtn = document.getElementById("btn-remove-logo");
-    if(removeBtn) removeBtn.classList.remove("hidden");
-  }
-  function removeCustomLogo(){
-    try{ localStorage.removeItem(CUSTOM_LOGO_STORAGE_KEY); }catch(e){}
-    var box = document.getElementById("app-logo-box");
-    if(box) box.innerHTML = '<img src="icon.png" alt="" style="width:100%;height:100%;object-fit:cover;" onerror="window.__appLogoFallback && window.__appLogoFallback(this);">';
-    var preview = document.getElementById("logo-preview-box");
-    if(preview) preview.innerHTML = '<span style="font-size:22px;">🖼️</span>';
-    var favicon = document.getElementById("app-favicon");
-    if(favicon) favicon.setAttribute("href", "icon.png");
-    var touchIcon = document.getElementById("apple-touch-icon");
-    if(touchIcon) touchIcon.setAttribute("href", "icon.png");
-    var removeBtn = document.getElementById("btn-remove-logo");
-    if(removeBtn) removeBtn.classList.add("hidden");
-  }
-  function loadCustomLogoFromStorage(){
-    try{
-      var saved = localStorage.getItem(CUSTOM_LOGO_STORAGE_KEY);
-      if(saved) applyCustomLogo(saved);
-    }catch(e){}
-  }
   // ---------- HALL OF FAME / RECORD STORICI ----------
   function computeRecordStorici(){
     var attacco = null, difesa = null, puntiRecord = null, votoRecord = null;
@@ -2212,6 +2212,21 @@
     document.getElementById("sheet-hof").classList.remove("show");
   }
 
+  // ---------- CONFERMA SICUREZZA DATI (dialog generico per operazioni distruttive) ----------
+  var confirmDangerCallback = null;
+  function confirmDangerousAction(message, onConfirm, title){
+    document.getElementById("confirm-danger-title").textContent = title || "ATTENZIONE";
+    document.getElementById("confirm-danger-message").textContent = message || "Attenzione: questa operazione sovrascriverà o cancellerà definitivamente i dati attuali. Vuoi procedere?";
+    confirmDangerCallback = onConfirm;
+    document.getElementById("backdrop-confirm-danger").classList.add("show");
+    document.getElementById("sheet-confirm-danger").classList.add("show");
+  }
+  function closeConfirmDangerModal(){
+    document.getElementById("backdrop-confirm-danger").classList.remove("show");
+    document.getElementById("sheet-confirm-danger").classList.remove("show");
+    confirmDangerCallback = null;
+  }
+
   function parseAnnoToYear(anno){ var m = /(\d{4})/.exec(anno || ""); return m ? parseInt(m[1], 10) : null; }
   function renderTrophyHistoryChart(){
     var canvas = document.getElementById("trophy-history-chart");
@@ -2280,10 +2295,11 @@
   function deleteEdizioneModal(){
     var trofeo = state.palmares.trofei.find(function(t){ return t.id === edizioneCtx.trofeoId; });
     if(!trofeo) return;
-    if(!confirm("Eliminare questa edizione?")) return;
-    trofeo.edizioni = trofeo.edizioni.filter(function(e){ return e.id !== edizioneCtx.edizioneId; });
-    save(); renderPalmares(); closeEdizioneModal();
-    showToast("🗑️ Edizione eliminata");
+    confirmDangerousAction("Eliminare questa edizione?", function(){
+      trofeo.edizioni = trofeo.edizioni.filter(function(e){ return e.id !== edizioneCtx.edizioneId; });
+      save(); renderPalmares(); closeEdizioneModal();
+      showToast("🗑️ Edizione eliminata");
+    });
   }
 
   // ---------- IMMAGINI TROFEO (catalogo) ----------
@@ -2381,11 +2397,12 @@
   function deleteSeasonModal(){
     var season = getActiveSeason();
     if(!season) return;
-    if(!confirm('Eliminare definitivamente la stagione "' + season.name + '" e tutti i suoi dati?')) return;
-    state.seasons = state.seasons.filter(function(s){ return s.id !== season.id; });
-    state.activeSeasonId = state.seasons.length ? state.seasons[state.seasons.length-1].id : null;
-    save(); render(); closeSeasonModal();
-    showToast("🗑️ Stagione eliminata");
+    confirmDangerousAction('Eliminare definitivamente la stagione "' + season.name + '" e tutti i suoi dati? Questa operazione non può essere annullata.', function(){
+      state.seasons = state.seasons.filter(function(s){ return s.id !== season.id; });
+      state.activeSeasonId = state.seasons.length ? state.seasons[state.seasons.length-1].id : null;
+      save(); render(); closeSeasonModal();
+      showToast("🗑️ Stagione eliminata");
+    });
   }
 
   // ---------- MODAL: SCEGLI COMPETIZIONE (picker generico) ----------
@@ -2467,7 +2484,10 @@
     var gironiInput = document.getElementById("input-compedit-gironi");
     gironiInput.value = comp.misto ? comp.misto.gironiTarget : (getCatalogEntry(comp.catalogId) ? getCatalogEntry(comp.catalogId).gironiPartiteDefault : 8);
     gironiInput.disabled = hasData;
-    document.getElementById("input-compedit-posizione").value = comp.posizioneFinale || "";
+    var posizioneSelect = document.getElementById("input-compedit-posizione");
+    var posOpts = (isSerieAPrimaria(disp) ? SERIE_A_POSIZIONE_OPTIONS : POSIZIONE_OPTIONS).map(function(p){ return '<option value="' + p + '">' + p + '</option>'; }).join("");
+    posizioneSelect.innerHTML = '<option value="">Nessuna</option>' + posOpts;
+    posizioneSelect.value = comp.posizioneFinale || "";
     toggleSheet("comp-edit", true);
   }
   function closeCompEditModal(){ toggleSheet("comp-edit", false); }
@@ -2500,12 +2520,13 @@
   function deleteCompEditModal(){
     var comp = findComp(compEditCtx.compId);
     if(!comp) return;
-    if(!confirm("Rimuovere questa competizione dalla stagione? I dati delle partite andranno persi.")) return;
-    var season = getActiveSeason();
-    season.competitions = season.competitions.filter(function(c){ return c.id !== comp.id; });
-    delete openAccordions[comp.id];
-    save(); render(); closeCompEditModal();
-    showToast("🗑️ Rimossa dalla stagione");
+    confirmDangerousAction("Rimuovere questa competizione dalla stagione? I dati delle partite andranno persi definitivamente.", function(){
+      var season = getActiveSeason();
+      season.competitions = season.competitions.filter(function(c){ return c.id !== comp.id; });
+      delete openAccordions[comp.id];
+      save(); render(); closeCompEditModal();
+      showToast("🗑️ Rimossa dalla stagione");
+    });
   }
 
   // ---------- MODAL: VOTO OBIETTIVO ----------
@@ -2688,10 +2709,11 @@
   function deleteCatalogModal(){
     var c = getCatalogEntry(catalogEditCtx.id);
     if(!c) return;
-    if(!confirm('Eliminare "'+c.name+'" dal catalogo? Le stagioni o i trofei che la usano già mostreranno un segnaposto generico.')) return;
-    state.competitionsCatalog = state.competitionsCatalog.filter(function(x){ return x.id !== c.id; });
-    save(); renderCatalogList(); render(); closeCatalogModal();
-    showToast("🗑️ Competizione eliminata dal catalogo");
+    confirmDangerousAction('Eliminare "'+c.name+'" dal catalogo? Le stagioni o i trofei che la usano già mostreranno un segnaposto generico.', function(){
+      state.competitionsCatalog = state.competitionsCatalog.filter(function(x){ return x.id !== c.id; });
+      save(); renderCatalogList(); render(); closeCatalogModal();
+      showToast("🗑️ Competizione eliminata dal catalogo");
+    });
   }
 
   // ---------- IMPOSTAZIONI: campionati e squadre ----------
@@ -2760,10 +2782,11 @@
         var lg = state.leagues.find(function(l){ return l.id===id; });
         if(!lg) return;
         if(lg.teams.length > 0){ showToast("⚠️ Rimuovi prima tutte le squadre"); return; }
-        if(!confirm('Eliminare il campionato "'+lg.name+'"?')) return;
-        state.leagues = state.leagues.filter(function(l){ return l.id!==id; });
-        save(); renderLeaguesList();
-        showToast("🗑️ Campionato eliminato");
+        confirmDangerousAction('Eliminare il campionato "'+lg.name+'"?', function(){
+          state.leagues = state.leagues.filter(function(l){ return l.id!==id; });
+          save(); renderLeaguesList();
+          showToast("🗑️ Campionato eliminato");
+        });
       });
     });
     wrap.querySelectorAll("[data-add-team-to-league]").forEach(function(btn){
@@ -2785,10 +2808,11 @@
         var parts = btn.getAttribute("data-delete-team").split("|");
         var lg = state.leagues.find(function(l){ return l.id===parts[0]; });
         if(!lg) return;
-        if(!confirm("Eliminare questa squadra?")) return;
-        lg.teams = lg.teams.filter(function(t){ return t.id!==parts[1]; });
-        save(); renderLeaguesList(); renderOpponentsDatalist();
-        showToast("🗑️ Squadra eliminata");
+        confirmDangerousAction("Eliminare questa squadra?", function(){
+          lg.teams = lg.teams.filter(function(t){ return t.id!==parts[1]; });
+          save(); renderLeaguesList(); renderOpponentsDatalist();
+          showToast("🗑️ Squadra eliminata");
+        });
       });
     });
     wrap.querySelectorAll("[data-edit-team-color]").forEach(function(btn){
@@ -2848,6 +2872,10 @@
     if(!team) return;
     teamColorsCtx = { leagueId:leagueId, teamId:teamId, colors: team.colors.slice() };
     document.getElementById("input-team-edit-name").value = team.name;
+    var leagueSelect = document.getElementById("select-team-edit-league");
+    leagueSelect.innerHTML = state.leagues.map(function(l){
+      return '<option value="' + l.id + '"' + (l.id === leagueId ? " selected" : "") + '>' + escapeHtml(l.name) + '</option>';
+    }).join("");
     pendingImageDataUrl = team.logo || null;
     updateImgPreview("team-logo-preview", pendingImageDataUrl);
     document.getElementById("btn-team-logo-remove").classList.toggle("hidden", !pendingImageDataUrl);
@@ -2897,6 +2925,16 @@
     team.name = newName;
     team.logo = pendingImageDataUrl;
     team.colors = teamColorsCtx.colors.slice();
+
+    var targetLeagueId = document.getElementById("select-team-edit-league").value;
+    if(targetLeagueId && targetLeagueId !== lg.id){
+      var targetLg = state.leagues.find(function(l){ return l.id === targetLeagueId; });
+      if(targetLg){
+        lg.teams = lg.teams.filter(function(t){ return t.id !== team.id; });
+        targetLg.teams.push(team);
+      }
+    }
+
     // Se il nome cambia, aggiorna anche i riferimenti testuali già salvati nelle partite passate.
     if(newName !== oldName){
       state.seasons.forEach(function(season){
@@ -3076,8 +3114,11 @@
     if(isNaN(golNap) || golNap < 0) golNap = 0;
     if(isNaN(golOpp) || golOpp < 0) golOpp = 0;
     var votoRaw = document.getElementById("input-voto").value;
-    var voto = votoRaw === "" ? null : parseFloat(votoRaw);
-    if(voto !== null && (isNaN(voto) || voto < 1 || voto > 10)) voto = null;
+    var voto = votoRaw === "" ? null : parseVotoInput(votoRaw);
+    if(voto !== null){
+      if(isNaN(voto)) voto = null;
+      else voto = Math.max(0, Math.min(10, voto));
+    }
     var dataVal = document.getElementById("input-match-data").value || null;
     var giornataRaw = document.getElementById("input-match-giornata").value;
     var giornataVal = giornataRaw === "" ? null : parseInt(giornataRaw, 10);
@@ -3133,19 +3174,21 @@
       if(!comp) return;
       var turno = comp.turni.find(function(t){ return t.id === legCtx.turnoId; });
       if(!turno) return;
-      if(!confirm("Eliminare questa partita?")) return;
-      turno.legs = turno.legs.filter(function(l){ return l.id !== legCtx.legId; });
-      computeSbloccato(comp);
-      save(); render(); closeMatchModal();
-      showToast("🗑️ Partita eliminata");
+      confirmDangerousAction("Eliminare questa partita?", function(){
+        turno.legs = turno.legs.filter(function(l){ return l.id !== legCtx.legId; });
+        computeSbloccato(comp);
+        save(); render(); closeMatchModal();
+        showToast("🗑️ Partita eliminata");
+      });
       return;
     }
     var seasonComp = findComp(matchCtx.compId);
     if(!seasonComp) return;
-    if(!confirm("Eliminare questa partita?")) return;
-    seasonComp.matches = seasonComp.matches.filter(function(m){ return m.id !== matchCtx.matchId; });
-    save(); render(); closeMatchModal();
-    showToast("🗑️ Partita eliminata");
+    confirmDangerousAction("Eliminare questa partita?", function(){
+      seasonComp.matches = seasonComp.matches.filter(function(m){ return m.id !== matchCtx.matchId; });
+      save(); render(); closeMatchModal();
+      showToast("🗑️ Partita eliminata");
+    });
   }
 
   // ---------- SHEET / MODAL HELPERS ----------
@@ -3203,13 +3246,14 @@
       try{ parsed = JSON.parse(reader.result); } catch(e){ showToast("⚠️ File non valido"); return; }
       var normalized = normalizeState(parsed);
       if(!normalized){ showToast("⚠️ Formato backup non riconosciuto"); return; }
-      if(!confirm("Importare questo backup sovrascriverà tutti i dati attuali dell'app. Continuare?")) return;
-      state = normalized;
-      openAccordions = {}; openTrofeiAccordions = {}; openLeagueAccordions = {};
-      save();
-      render(); renderPalmares(); renderOpponentsDatalist(); renderCatalogList(); renderLeaguesList();
-      setTab("stagioni");
-      showToast("✓ Backup importato");
+      confirmDangerousAction("Importare questo backup sovrascriverà definitivamente tutti i dati attuali dell'app. Continuare?", function(){
+        state = normalized;
+        openAccordions = {}; openTrofeiAccordions = {}; openLeagueAccordions = {};
+        save();
+        render(); renderPalmares(); renderOpponentsDatalist(); renderCatalogList(); renderLeaguesList();
+        setTab("stagioni");
+        showToast("✓ Backup importato");
+      });
     };
     reader.onerror = function(){ showToast("⚠️ Lettura del file non riuscita"); };
     reader.readAsText(file);
@@ -3491,7 +3535,6 @@
 
   function init(){
     load();
-    loadCustomLogoFromStorage();
     var savedUrl = getCloudWorkerUrl();
     var urlDisplay = document.getElementById("sync-worker-url-display");
     if(urlDisplay) urlDisplay.textContent = savedUrl ? savedUrl : "Nessun Worker configurato";
@@ -3536,6 +3579,13 @@
     document.getElementById("backdrop-trofeo-dettaglio").addEventListener("click", closeTrofeoDettagliModal);
     document.getElementById("btn-open-hof").addEventListener("click", openHofModal);
     document.getElementById("btn-close-hof").addEventListener("click", closeHofModal);
+    document.getElementById("btn-confirm-danger-cancel").addEventListener("click", closeConfirmDangerModal);
+    document.getElementById("backdrop-confirm-danger").addEventListener("click", closeConfirmDangerModal);
+    document.getElementById("btn-confirm-danger-ok").addEventListener("click", function(){
+      var cb = confirmDangerCallback;
+      closeConfirmDangerModal();
+      if(typeof cb === "function") cb();
+    });
     document.getElementById("backdrop-hof").addEventListener("click", closeHofModal);
     document.getElementById("btn-close-h2h-picker").addEventListener("click", closeH2HModal);
     document.getElementById("backdrop-h2h").addEventListener("click", closeH2HModal);
@@ -3548,26 +3598,16 @@
     });
 
     document.getElementById("btn-manual-sync").addEventListener("click", async function(){
-      var ok = await loadDataFromCloud();
-      if(ok){ render(); renderPalmares(); renderOpponentsDatalist(); renderCatalogList(); renderLeaguesList(); updateSeasonOrderButtonLabel(); showToast("☁️ Dati sincronizzati dal cloud"); }
-      else { await saveDataToCloud(); }
+      var res = await fetchCloudState();
+      if(!res.ok){ await saveDataToCloud(); return; }
+      confirmDangerousAction("Ripristinare i dati dal cloud sovrascriverà definitivamente i dati salvati su questo dispositivo. Continuare?", function(){
+        state = res.state;
+        try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+        setSyncStatus("synced");
+        render(); renderPalmares(); renderOpponentsDatalist(); renderCatalogList(); renderLeaguesList(); updateSeasonOrderButtonLabel();
+        showToast("☁️ Dati sincronizzati dal cloud");
+      });
     });
-    document.getElementById("btn-upload-logo").addEventListener("click", function(){
-      document.getElementById("input-logo-uploader").click();
-    });
-    document.getElementById("input-logo-uploader").addEventListener("change", function(e){
-      var file = e.target.files && e.target.files[0];
-      if(!file) return;
-      var reader = new FileReader();
-      reader.onload = function(ev){
-        var dataUrl = ev.target.result;
-        try{ localStorage.setItem(CUSTOM_LOGO_STORAGE_KEY, dataUrl); }catch(err){ showToast("⚠️ Logo troppo grande per essere salvato"); return; }
-        applyCustomLogo(dataUrl);
-        showToast("Logo aggiornato");
-      };
-      reader.readAsDataURL(file);
-    });
-    document.getElementById("btn-remove-logo").addEventListener("click", removeCustomLogo);
 
     document.getElementById("btn-export-backup").addEventListener("click", exportBackup);
     document.getElementById("btn-import-backup").addEventListener("click", function(){ document.getElementById("input-import-file").click(); });
@@ -3690,7 +3730,7 @@
     document.getElementById("input-golnap").addEventListener("input", updateLiveResultBadge);
     document.getElementById("input-golopp").addEventListener("input", updateLiveResultBadge);
     document.getElementById("input-voto").addEventListener("input", function(){
-      var v = parseFloat(this.value);
+      var v = parseVotoInput(this.value);
       document.querySelectorAll("#voto-chip-row .voto-chip").forEach(function(c){
         c.classList.toggle("active", parseFloat(c.textContent.replace(",", ".")) === v);
       });
