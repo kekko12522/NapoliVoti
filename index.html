@@ -76,7 +76,7 @@
   .glass-elevated{ background: linear-gradient(160deg, var(--bg-800) 0%, var(--bg-850) 100%); border:1px solid var(--line); box-shadow: 0 8px 30px -12px rgba(0,0,0,0.55); }
 
   .app-nav{
-    background: linear-gradient(0deg, var(--bg-950) 60%, rgba(8,13,24,0.85) 100%);
+    background: var(--bg-950);
     backdrop-filter: blur(14px); border-top:1px solid var(--line);
     padding-bottom: max(env(safe-area-inset-bottom), 10px);
     padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
@@ -454,7 +454,7 @@
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
   <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
-    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v3.2.0</span></p>
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v3.3.0</span></p>
     <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
   </div>
 </div>
@@ -624,7 +624,7 @@
   </div>
   <p class="text-[12.5px] text-[var(--text-dim)] mb-4">Il voto per l'obiettivo raggiunto in questa competizione. Contribuisce al Voto Stagione complessivo.</p>
   <div id="obiettivo-chip-row" class="grid grid-cols-4 gap-1.5 mb-2.5"></div>
-  <input id="input-obiettivo-voto" type="number" step="0.5" min="1" max="10" placeholder="Voto personalizzato" class="field-input mb-5">
+  <input id="input-obiettivo-voto" type="text" inputmode="decimal" placeholder="Voto (es. 6.5, 7-, 6+)" class="field-input mb-5">
   <button id="btn-save-obiettivo" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
   <button id="btn-clear-obiettivo" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Rimuovi voto</button>
   <button id="btn-cancel-obiettivo" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
@@ -1303,7 +1303,14 @@
     if(m.golNap < m.golOpp) return "S";
     return "P";
   }
-  function fmt1(n){ return (Math.round(n*10)/10).toFixed(1); }
+  // Mostra 1 decimale per i valori "puliti" (6, 6.5) e 2 decimali quando il voto ha una
+  // precisione reale da +/- (5.85, 6.15), senza mai arrotondare forzatamente a step da 0.5.
+  function fmt1(n){
+    var r2 = Math.round(n * 100) / 100;
+    var r1 = Math.round(r2 * 10) / 10;
+    if(Math.abs(r2 - r1) > 1e-9) return r2.toFixed(2);
+    return r1.toFixed(1);
+  }
   // Converte un voto inserito come testo: numeri decimali normali (6.5) oppure con simbolo
   // "+"/"-" finale (es. 5- -> 4.85, 6+ -> 6.15, 5.5+ -> 5.65). Ritorna null se non valido.
   function parseVotoInput(raw){
@@ -1455,6 +1462,7 @@
 
   var openAccordions = {};
   var openMistoStorico = {};
+  var serieAGironeTab = {};
 
   function renderCompetitionsList(season){
     var list = document.getElementById("competitions-list");
@@ -1517,6 +1525,9 @@
       if(fase === "girone"){
         var puntiItems = comp.matches.map(function(m){ return { golNap:m.golNap, golOpp:m.golOpp, tipo:"girone" }; });
         var punti = puntiTotali(puntiItems);
+        if(isSerieAPrimaria(disp)){
+          bodyHtml += '<p class="text-[11px] font-bold text-[var(--text-mute)] tracking-wide mb-2 px-0.5">STATISTICHE TOTALI CAMPIONATO</p>';
+        }
         bodyHtml += '<div class="grid grid-cols-4 gap-2 mb-3">' +
           statPill("Gol fatti", st.pg ? st.gf + " (" + fmt1(st.gfAvg) + ")" : "—") +
           statPill("Gol subiti", st.pg ? st.gs + " (" + fmt1(st.gsAvg) + ")" : "—") +
@@ -1539,7 +1550,38 @@
         }
 
         var matchesHtml = "";
-        if(comp.matches.length === 0){ matchesHtml = '<p class="text-xs text-[var(--text-mute)] text-center py-3">Nessuna partita registrata.</p>'; }
+        if(isSerieAPrimaria(disp)){
+          if(!serieAGironeTab.hasOwnProperty(comp.id)) serieAGironeTab[comp.id] = "andata";
+          var attivoTab = serieAGironeTab[comp.id];
+          var andataMatches = comp.matches.filter(function(m){ return !m.giornata || m.giornata <= 19; });
+          var ritornoMatches = comp.matches.filter(function(m){ return m.giornata && m.giornata >= 20; });
+          var stAndata = computeMatchesStats(andataMatches);
+          var stRitorno = computeMatchesStats(ritornoMatches);
+          var puntiAndata = puntiTotali(andataMatches.map(function(m){ return { golNap:m.golNap, golOpp:m.golOpp, tipo:"girone" }; }));
+          var puntiRitorno = puntiTotali(ritornoMatches.map(function(m){ return { golNap:m.golNap, golOpp:m.golOpp, tipo:"girone" }; }));
+
+          bodyHtml += '<div class="flex gap-2 mb-3">' +
+            '<button type="button" data-serie-a-girone-tab="' + comp.id + '|andata" class="flex-1 py-2.5 rounded-xl font-bold text-[12.5px]" style="' + (attivoTab === "andata" ? 'background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep));color:#04141f;' : 'background:var(--bg-750);color:var(--text-dim);') + '">Girone d\'Andata</button>' +
+            '<button type="button" data-serie-a-girone-tab="' + comp.id + '|ritorno" class="flex-1 py-2.5 rounded-xl font-bold text-[12.5px]" style="' + (attivoTab === "ritorno" ? 'background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep));color:#04141f;' : 'background:var(--bg-750);color:var(--text-dim);') + '">Girone di Ritorno</button>' +
+          '</div>';
+
+          var gironeAttivo = attivoTab === "ritorno" ? { st: stRitorno, punti: puntiRitorno, matches: ritornoMatches, label: "RITORNO" } : { st: stAndata, punti: puntiAndata, matches: andataMatches, label: "ANDATA" };
+          bodyHtml += '<p class="text-[11px] font-bold text-[var(--text-mute)] tracking-wide mb-2 px-0.5">STATISTICHE GIRONE ' + gironeAttivo.label + '</p>';
+          bodyHtml += '<div class="grid grid-cols-3 gap-2 mb-2">' +
+            statPill("PG", String(gironeAttivo.st.pg)) +
+            statPill("Punti", gironeAttivo.st.pg ? String(gironeAttivo.punti) : "—") +
+            statPill("Media voti", gironeAttivo.st.mediaVoti !== null ? fmt1(gironeAttivo.st.mediaVoti) : "—") +
+          '</div>';
+          bodyHtml += '<div class="grid grid-cols-4 gap-2 mb-3">' +
+            statPill("V", String(gironeAttivo.st.v)) +
+            statPill("P", String(gironeAttivo.st.p)) +
+            statPill("S", String(gironeAttivo.st.s)) +
+            statPill("Gol F/S", gironeAttivo.st.gf + "/" + gironeAttivo.st.gs) +
+          '</div>';
+
+          if(gironeAttivo.matches.length === 0){ matchesHtml = '<p class="text-xs text-[var(--text-mute)] text-center py-3">Nessuna partita registrata in questo girone.</p>'; }
+          else { gironeAttivo.matches.slice().reverse().forEach(function(m){ matchesHtml += matchTicketHtml(m, comp.id); }); }
+        } else if(comp.matches.length === 0){ matchesHtml = '<p class="text-xs text-[var(--text-mute)] text-center py-3">Nessuna partita registrata.</p>'; }
         else { comp.matches.slice().reverse().forEach(function(m){ matchesHtml += matchTicketHtml(m, comp.id); }); }
         bodyHtml += '<div class="space-y-2">' + matchesHtml + '</div>';
         bodyHtml += '<button data-add-match="' + comp.id + '" class="w-full mt-3 py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">' +
@@ -1630,6 +1672,13 @@
       el.addEventListener("click", function(){
         var id = el.getAttribute("data-toggle-misto-storico");
         openMistoStorico[id] = !openMistoStorico[id];
+        render();
+      });
+    });
+    list.querySelectorAll("[data-serie-a-girone-tab]").forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var parts = btn.getAttribute("data-serie-a-girone-tab").split("|");
+        serieAGironeTab[parts[0]] = parts[1];
         render();
       });
     });
@@ -2544,7 +2593,7 @@
   function buildObiettivoChips(selected){
     var row = document.getElementById("obiettivo-chip-row");
     row.innerHTML = "";
-    [4,5,6,7,8,9,10].forEach(function(v){
+    [0,1,2,3,4,5,6,7,8,9,10].forEach(function(v){
       var chip = document.createElement("button");
       chip.type = "button";
       chip.className = "voto-chip" + (selected === v ? " active" : "");
@@ -2562,8 +2611,11 @@
     var comp = findComp(obiettivoCtx.compId);
     if(!comp) return;
     var raw = document.getElementById("input-obiettivo-voto").value;
-    var v = raw === "" ? null : parseFloat(raw);
-    if(v !== null && (isNaN(v) || v < 1 || v > 10)){ showToast("⚠️ Voto non valido (1–10)"); return; }
+    var v = raw === "" ? null : parseVotoInput(raw);
+    if(v !== null){
+      if(isNaN(v)){ showToast("⚠️ Voto non valido"); return; }
+      v = Math.max(0, Math.min(10, v));
+    }
     comp.obiettivoVoto = v;
     save(); render(); closeObiettivoModal();
     showToast("✓ Obiettivo salvato");
