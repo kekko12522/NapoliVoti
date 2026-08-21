@@ -38,6 +38,11 @@
     --text:#eef3fa;
     --text-dim:#93a5c4;
     --text-mute:#5a6a8a;
+    --chip-active-text:#eef8ff;
+    --tag-red:#ff8b8b;
+    --tag-blue:#9db6f5;
+    --tag-orange:#ffab5c;
+    --tag-green:#5fd996;
   }
   html[data-theme="light"]{
     --bg-950:#f4f6fa;
@@ -60,6 +65,11 @@
     --text:#111a2c;
     --text-dim:#4a5876;
     --text-mute:#8592ab;
+    --chip-active-text:#0a4a7a;
+    --tag-red:#b3232f;
+    --tag-blue:#2454b0;
+    --tag-orange:#b35a00;
+    --tag-green:#157a45;
   }
   html[data-theme="light"] .glass, html[data-theme="light"] .glass-elevated{ box-shadow: 0 2px 14px -6px rgba(20,40,80,0.12); }
   html[data-theme="light"] .modal-backdrop{ background: rgba(20,30,50,0.35); }
@@ -136,7 +146,7 @@
   .settings-btn{ padding:10px 18px; border-radius:10px; font-weight:700; font-size:13.5px; white-space:nowrap; }
 
   .comp-chip{ display:flex; flex:0 0 auto; width:auto; align-items:center; gap:5px; font-size:13px; font-weight:600; padding:8px 14px; border-radius:999px; border:1px solid var(--line); color:var(--text-mute); background:var(--bg-900); white-space:nowrap; transition: all .15s ease; }
-  .comp-chip.active{ color:#eef8ff; background: rgba(38,160,224,0.16); border-color: rgba(38,160,224,0.55); }
+  .comp-chip.active{ color:var(--chip-active-text); background: rgba(38,160,224,0.16); border-color: rgba(38,160,224,0.55); }
 
   .badge{ display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px; border-radius:8px; font-family:'Bebas Neue', sans-serif; font-size:15px; letter-spacing:0.03em; flex-shrink:0; }
   .badge-V{ background:var(--win-bg); color:var(--win); }
@@ -165,8 +175,26 @@
   .field-input:focus{ border-color: var(--azzurro); }
   select.field-input{ appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2393a5c4' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
 
+  .voto-wheel-display{ text-align:center; margin-bottom:8px; }
+  .voto-wheel-symbol{ font-family:'Bebas Neue', sans-serif; font-size:42px; letter-spacing:0.02em; color:var(--gold); line-height:1; display:block; }
+  .voto-wheel-numeric{ font-size:12px; color:var(--text-mute); font-weight:600; }
+  .voto-wheel-track-wrap{ position:relative; }
+  .voto-wheel-center-marker{ position:absolute; left:50%; top:6px; bottom:6px; width:2px; background:var(--gold); transform:translateX(-50%); pointer-events:none; border-radius:2px; opacity:0.6; }
+  .voto-wheel-track{
+    display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+    padding:14px 0; scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .voto-wheel-track::-webkit-scrollbar{ display:none; }
+  .voto-wheel-tick{
+    flex:0 0 auto; width:44px; scroll-snap-align:center; display:flex; align-items:center; justify-content:center;
+    font-family:'Bebas Neue', sans-serif; font-size:15px; color:var(--text-mute);
+    transition: font-size .12s ease, color .12s ease; cursor:pointer; user-select:none;
+  }
+  .voto-wheel-tick.active{ font-size:24px; color:var(--gold); font-weight:700; }
+  .voto-wheel-wrap.disabled{ opacity:0.35; pointer-events:none; }
+
   .seg-btn{ flex:1; text-align:center; padding:10px 6px; border-radius:10px; font-weight:600; font-size:13px; color:var(--text-mute); background:var(--bg-900); border:1px solid var(--line); transition: all .15s ease; }
-  .seg-btn.active{ background:rgba(38,160,224,0.16); color:#eef8ff; border-color:rgba(38,160,224,0.55); }
+  .seg-btn.active{ background:rgba(38,160,224,0.16); color:var(--chip-active-text); border-color:rgba(38,160,224,0.55); }
 
   .stepper-btn{ width:42px; height:42px; border-radius:12px; background:var(--bg-900); border:1px solid var(--line); color:var(--text); font-size:20px; display:flex; align-items:center; justify-content:center; user-select:none; flex-shrink:0; }
   .stepper-btn:active{ background: var(--bg-750); }
@@ -219,10 +247,10 @@
 
   .theme-badge{ display:inline-flex; align-items:center; font-size:9.5px; font-weight:800; letter-spacing:0.04em; padding:2px 7px; border-radius:6px; flex-shrink:0; }
   .theme-badge.theme-default{ background:rgba(38,160,224,0.16); color:var(--azzurro); }
-  .theme-badge.theme-tricolore{ background:rgba(206,43,55,0.16); color:#ff8b8b; }
-  .theme-badge.theme-champions{ background:rgba(79,127,224,0.20); color:#9db6f5; }
-  .theme-badge.theme-europa{ background:rgba(255,106,0,0.18); color:#ffab5c; }
-  .theme-badge.theme-conference{ background:rgba(13,122,63,0.20); color:#5fd996; }
+  .theme-badge.theme-tricolore{ background:rgba(206,43,55,0.16); color:var(--tag-red); }
+  .theme-badge.theme-champions{ background:rgba(79,127,224,0.20); color:var(--tag-blue); }
+  .theme-badge.theme-europa{ background:rgba(255,106,0,0.18); color:var(--tag-orange); }
+  .theme-badge.theme-conference{ background:rgba(13,122,63,0.20); color:var(--tag-green); }
 
   #tab-content-palmares{ position:relative; }
   #tab-content-palmares::before{
@@ -494,7 +522,7 @@
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
   <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
-    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v3.4.0</span></p>
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v3.5.0</span></p>
     <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
   </div>
 </div>
@@ -583,9 +611,22 @@
     <span id="live-result-badge" class="badge badge-P">P</span>
   </div>
 
-  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">VOTO PRESTAZIONE (1–10)</label>
-  <div id="voto-chip-row" class="grid grid-cols-5 gap-1.5 mb-2.5"></div>
-  <select id="input-voto" class="field-input mb-5"></select>
+  <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">VOTO PRESTAZIONE (0–10)</label>
+  <div class="voto-wheel-wrap mb-5">
+    <div class="voto-wheel-display">
+      <span id="input-voto-wheel-symbol" class="voto-wheel-symbol">6</span>
+      <span id="input-voto-wheel-numeric" class="voto-wheel-numeric">valore: 6.00</span>
+    </div>
+    <div class="voto-wheel-track-wrap">
+      <div class="voto-wheel-center-marker"></div>
+      <div id="input-voto-wheel-track" class="voto-wheel-track"></div>
+    </div>
+    <input type="hidden" id="input-voto" value="">
+  </div>
+  <label class="flex items-center gap-2 mb-5 text-[12.5px] text-[var(--text-dim)] font-medium">
+    <input type="checkbox" id="input-voto-none" style="width:16px;height:16px;accent-color:var(--azzurro);">
+    Nessun voto per questa partita
+  </label>
 
   <button id="btn-save-match" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva partita</button>
   <button id="btn-delete-match" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Elimina partita</button>
@@ -663,8 +704,17 @@
     <span id="obiettivo-comp-label" class="text-[11px] font-bold text-[var(--azzurro)] uppercase"></span>
   </div>
   <p class="text-[12.5px] text-[var(--text-dim)] mb-4">Il voto per l'obiettivo raggiunto in questa competizione. Contribuisce al Voto Stagione complessivo.</p>
-  <div id="obiettivo-chip-row" class="grid grid-cols-4 gap-1.5 mb-2.5"></div>
-  <select id="input-obiettivo-voto" class="field-input mb-5"></select>
+  <div class="voto-wheel-wrap mb-5">
+    <div class="voto-wheel-display">
+      <span id="input-obiettivo-voto-wheel-symbol" class="voto-wheel-symbol">6</span>
+      <span id="input-obiettivo-voto-wheel-numeric" class="voto-wheel-numeric">valore: 6.00</span>
+    </div>
+    <div class="voto-wheel-track-wrap">
+      <div class="voto-wheel-center-marker"></div>
+      <div id="input-obiettivo-voto-wheel-track" class="voto-wheel-track"></div>
+    </div>
+    <input type="hidden" id="input-obiettivo-voto" value="">
+  </div>
   <button id="btn-save-obiettivo" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
   <button id="btn-clear-obiettivo" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Rimuovi voto</button>
   <button id="btn-cancel-obiettivo" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
@@ -1285,6 +1335,7 @@
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
     catch(e){ console.error("Salvataggio non riuscito", e); showToast("⚠️ Salvataggio non riuscito"); }
     saveDataToCloud();
+    updatePalmaresAndStats();
   }
 
   // ---------- SINCRONIZZAZIONE CLOUD (Cloudflare Workers / KV) ----------
@@ -1435,17 +1486,86 @@
 
   // ---------- PICKER A ROTELLINA PER I VOTI (0-10, passi con "+"/"-") ----------
   var VOTO_WHEEL_STEPS = ["0","0.5","1-","1","1+","1.5","2-","2","2+","2.5","3-","3","3+","3.5","4-","4","4+","4.5","5-","5","5+","5.5","6-","6","6+","6.5","7-","7","7+","7.5","8-","8","8+","8.5","9-","9","9+","9.5","10"];
-  function populateVotoWheelSelect(selectId){
-    var sel = document.getElementById(selectId);
-    if(!sel) return;
-    sel.innerHTML = '<option value="">Nessuno</option>' + VOTO_WHEEL_STEPS.map(function(label){
-      var val = parseVotoInput(label);
-      return '<option value="' + val + '">' + label + '</option>';
-    }).join("");
+  var VOTO_WHEEL_DEFAULT_INDEX = VOTO_WHEEL_STEPS.indexOf("6");
+  var votoWheelScrollTimers = {};
+
+  function buildVotoWheel(inputId){
+    var track = document.getElementById(inputId + "-wheel-track");
+    if(!track) return;
+    track.innerHTML = "";
+    VOTO_WHEEL_STEPS.forEach(function(label, idx){
+      var tick = document.createElement("div");
+      tick.className = "voto-wheel-tick";
+      tick.textContent = label;
+      tick.setAttribute("data-idx", idx);
+      tick.addEventListener("click", function(){ scrollVotoWheelToIndex(inputId, idx, true); });
+      track.appendChild(tick);
+    });
+    track.addEventListener("scroll", function(){
+      clearTimeout(votoWheelScrollTimers[inputId]);
+      votoWheelScrollTimers[inputId] = setTimeout(function(){ syncVotoWheelFromScroll(inputId); }, 80);
+    });
   }
-  function populateVotoWheelSelects(){
-    populateVotoWheelSelect("input-voto");
-    populateVotoWheelSelect("input-obiettivo-voto");
+  function votoWheelIndexForValue(inputId, val){
+    if(val === null || val === undefined || val === "") return VOTO_WHEEL_DEFAULT_INDEX;
+    var target = typeof val === "number" ? val : parseFloat(val);
+    if(isNaN(target)) return VOTO_WHEEL_DEFAULT_INDEX;
+    var bestIdx = VOTO_WHEEL_DEFAULT_INDEX, bestDist = Infinity;
+    VOTO_WHEEL_STEPS.forEach(function(label, idx){
+      var v = parseVotoInput(label);
+      var dist = Math.abs(v - target);
+      if(dist < bestDist){ bestDist = dist; bestIdx = idx; }
+    });
+    return bestIdx;
+  }
+  function scrollVotoWheelToIndex(inputId, idx, animate){
+    var track = document.getElementById(inputId + "-wheel-track");
+    if(!track) return;
+    var tick = track.children[idx];
+    if(!tick) return;
+    var targetScroll = tick.offsetLeft + tick.offsetWidth / 2 - track.clientWidth / 2;
+    track.scrollTo({ left: targetScroll, behavior: animate ? "smooth" : "auto" });
+    setVotoWheelActiveIndex(inputId, idx);
+  }
+  function syncVotoWheelFromScroll(inputId){
+    var track = document.getElementById(inputId + "-wheel-track");
+    if(!track) return;
+    var center = track.scrollLeft + track.clientWidth / 2;
+    var closestIdx = 0, closestDist = Infinity;
+    Array.prototype.forEach.call(track.children, function(tick, idx){
+      var tickCenter = tick.offsetLeft + tick.offsetWidth / 2;
+      var dist = Math.abs(tickCenter - center);
+      if(dist < closestDist){ closestDist = dist; closestIdx = idx; }
+    });
+    setVotoWheelActiveIndex(inputId, closestIdx);
+  }
+  function setVotoWheelActiveIndex(inputId, idx){
+    var track = document.getElementById(inputId + "-wheel-track");
+    if(!track) return;
+    Array.prototype.forEach.call(track.children, function(tick, i){ tick.classList.toggle("active", i === idx); });
+    var label = VOTO_WHEEL_STEPS[idx];
+    var val = parseVotoInput(label);
+    var symbolEl = document.getElementById(inputId + "-wheel-symbol");
+    var numericEl = document.getElementById(inputId + "-wheel-numeric");
+    if(symbolEl) symbolEl.textContent = label;
+    if(numericEl) numericEl.textContent = "valore: " + val.toFixed(2);
+    var hidden = document.getElementById(inputId);
+    if(hidden) hidden.value = val;
+  }
+  // Imposta la manopola su un valore (o su "6" di default se null) e la fa scattare in
+  // posizione senza animazione — da usare quando si apre una modal con un voto già salvato.
+  function setVotoWheelValue(inputId, val){
+    scrollVotoWheelToIndex(inputId, votoWheelIndexForValue(inputId, val), false);
+  }
+  function initVotoWheels(){
+    buildVotoWheel("input-voto");
+    buildVotoWheel("input-obiettivo-voto");
+  }
+  function updateVotoWheelDisabledState(inputId){
+    var checkbox = document.getElementById(inputId + "-none");
+    var wrap = document.getElementById(inputId) ? document.getElementById(inputId).closest(".voto-wheel-wrap") : null;
+    if(!checkbox || !wrap) return;
+    wrap.classList.toggle("disabled", checkbox.checked);
   }
 
   function buildSeasonTimeline(season){
@@ -2137,13 +2257,13 @@
   var openTrofeiAccordions = {};
   var trophyChartInstance = null;
 
-  function countAllTrofei(){ return state.palmares.trofei.reduce(function(sum,t){ return sum + t.edizioni.length; }, 0); }
+  function countAllTrofei(){ return computeMergedTrofei().reduce(function(sum,t){ return sum + t.edizioni.length; }, 0); }
   function updateHeaderTrophyCount(){ document.getElementById("header-trophy-count").textContent = countAllTrofei(); }
 
   // Ultimi trofei vinti, ordinati per anno più recente.
   function getRecentTrofei(limit){
     var all = [];
-    state.palmares.trofei.forEach(function(t){
+    computeMergedTrofei().forEach(function(t){
       var disp = compDisplay(t);
       t.edizioni.forEach(function(ed){
         all.push({ nome: disp.name, img: disp.trofeoImg, anno: ed.anno, year: parseAnnoToYear(ed.anno) || 0 });
@@ -2175,10 +2295,10 @@
     var list = document.getElementById("trofei-list");
     var emptyEl = document.getElementById("trofei-empty");
     list.innerHTML = "";
-    if(state.palmares.trofei.length === 0){ emptyEl.classList.remove("hidden"); renderTrophyHistoryChart(); return; }
+    if(computeMergedTrofei().length === 0){ emptyEl.classList.remove("hidden"); renderTrophyHistoryChart(); return; }
     emptyEl.classList.add("hidden");
 
-    state.palmares.trofei.forEach(function(trofeo, idx){
+    computeMergedTrofei().forEach(function(trofeo, idx){
       if(!openTrofeiAccordions.hasOwnProperty(trofeo.id)) openTrofeiAccordions[trofeo.id] = (idx === 0);
       var isOpen = openTrofeiAccordions[trofeo.id];
       var disp = compDisplay(trofeo);
@@ -2199,9 +2319,9 @@
           '<p class="text-[11px] text-[var(--text-mute)] font-medium">' + trofeo.edizioni.length + (trofeo.edizioni.length === 1 ? ' edizione vinta' : ' edizioni vinte') + (lastYear ? ' · ultima: ' + escapeHtml(lastYear) : '') + '</p></div>' +
         '</button>' +
         '<div class="flex items-center gap-1.5 flex-shrink-0">' +
-          '<button type="button" data-remove-trofeo="' + trofeo.id + '" class="trophy-step" style="color:var(--loss);" aria-label="Rimuovi dalla Sala Trofei">' +
+          (trofeo.isManual ? '<button type="button" data-remove-trofeo="' + trofeo.id + '" class="trophy-step" style="color:var(--loss);" aria-label="Rimuovi dalla Sala Trofei">' +
             '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6"></path></svg>' +
-          '</button>' +
+          '</button>' : '') +
           '<svg data-toggle-trofeo="' + trofeo.id + '" class="chevron' + (isOpen?' open':'') + '" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>' +
         '</div>';
 
@@ -2214,13 +2334,19 @@
       if(edizioniOrdinate.length === 0){ edizioniHtml = '<p class="text-xs text-[var(--text-mute)] text-center py-3">Nessuna edizione registrata.</p>'; }
       else {
         edizioniOrdinate.forEach(function(ed){
-          edizioniHtml += '<button type="button" data-edit-edizione="' + trofeo.id + '|' + ed.id + '" class="ticket w-full flex items-center gap-3 pl-8 pr-3 py-3 text-left">' +
-            '<div class="flex-1 min-w-0"><div class="flex items-center gap-1.5 flex-wrap"><p class="font-display text-lg tracking-wide">' + escapeHtml(ed.anno || "Anno non specificato") + '</p>' +
-            (isPosizioneVincitore(ed.posizione) ? vincitoreBadgeHtml() : (ed.posizione ? '<span class="theme-badge" style="background:var(--bg-750);color:var(--text-dim);">' + escapeHtml(ed.posizione) + '</span>' : '')) + '</div>' +
-            (ed.dettagli ? '<p class="text-[11.5px] text-[var(--text-mute)] mt-0.5">' + escapeHtml(ed.dettagli) + '</p>' : '') + '</div></button>';
+          var rowInner = '<div class="flex-1 min-w-0"><div class="flex items-center gap-1.5 flex-wrap"><p class="font-display text-lg tracking-wide">' + escapeHtml(ed.anno || "Anno non specificato") + '</p>' +
+            (isPosizioneVincitore(ed.posizione) ? vincitoreBadgeHtml() : (ed.posizione ? '<span class="theme-badge" style="background:var(--bg-750);color:var(--text-dim);">' + escapeHtml(ed.posizione) + '</span>' : '')) +
+            (ed.auto ? '<span class="theme-badge" style="background:var(--bg-750);color:var(--text-mute);">🔗 Automatico</span>' : '') + '</div>' +
+            (ed.dettagli ? '<p class="text-[11.5px] text-[var(--text-mute)] mt-0.5">' + escapeHtml(ed.dettagli) + '</p>' : '') +
+            (ed.auto ? '<p class="text-[10.5px] text-[var(--text-mute)] mt-0.5">Rilevato dalla posizione finale impostata in Stagioni.</p>' : '') + '</div>';
+          if(ed.auto){
+            edizioniHtml += '<div class="ticket w-full flex items-center gap-3 pl-8 pr-3 py-3 text-left">' + rowInner + '</div>';
+          } else {
+            edizioniHtml += '<button type="button" data-edit-edizione="' + trofeo.id + '|' + ed.id + '" class="ticket w-full flex items-center gap-3 pl-8 pr-3 py-3 text-left">' + rowInner + '</button>';
+          }
         });
       }
-      var addBtnHtml = '<button type="button" data-add-edizione="' + trofeo.id + '" class="w-full mt-3 py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">' +
+      var addBtnHtml = '<button type="button" data-add-edizione="' + trofeo.catalogId + '" class="w-full mt-3 py-3 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-1.5" style="background:rgba(38,160,224,0.14); color:var(--azzurro);">' +
         '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg> Aggiungi edizione</button>';
       contentBody.innerHTML = '<div class="space-y-2">' + edizioniHtml + '</div>' + addBtnHtml;
       contentInner.appendChild(contentBody);
@@ -2238,10 +2364,10 @@
     list.querySelectorAll("[data-remove-trofeo]").forEach(function(btn){
       btn.addEventListener("click", function(){
         var id = btn.getAttribute("data-remove-trofeo");
-        confirmDangerousAction("Rimuovere questo trofeo dalla Sala Trofei? Le edizioni registrate andranno perse.", function(){
+        confirmDangerousAction("Rimuovere questo trofeo dalla Sala Trofei? Le edizioni aggiunte manualmente andranno perse (le vittorie rilevate automaticamente dalle competizioni in Stagioni restano).", function(){
           state.palmares.trofei = state.palmares.trofei.filter(function(t){ return t.id !== id; });
           delete openTrofeiAccordions[id];
-          save(); renderPalmares();
+          save();
           showToast("🗑️ Trofeo rimosso");
         });
       });
@@ -2260,7 +2386,7 @@
     return state.seasons.find(function(s){ return (anno || "").indexOf(s.name) !== -1; }) || null;
   }
   function openTrofeoDettagliModal(trofeoId){
-    var trofeo = state.palmares.trofei.find(function(t){ return t.id === trofeoId; });
+    var trofeo = computeMergedTrofei().find(function(t){ return t.id === trofeoId; });
     if(!trofeo) return;
     var disp = compDisplay(trofeo);
     document.getElementById("trofeo-dettaglio-plinth").innerHTML = disp.trofeoImg ? '<img src="' + disp.trofeoImg + '" style="width:100%;height:100%;object-fit:contain;background:transparent;">' : '<span style="font-size:26px;">🏆</span>';
@@ -2401,11 +2527,7 @@
     return state.seasons.slice().sort(function(a,b){ return seasonSortKey(a.name) - seasonSortKey(b.name); });
   }
   function countTrofeiPerSeason(season){
-    var count = 0;
-    state.palmares.trofei.forEach(function(t){
-      t.edizioni.forEach(function(ed){ if((ed.anno || "").indexOf(season.name) !== -1) count++; });
-    });
-    return count;
+    return getTrofeiDellaStagione(season).length;
   }
   function openAnalyticsModal(){
     setAnalyticsSubtab("stagioni");
@@ -2511,7 +2633,7 @@
     if(!canvas || typeof Chart === "undefined") return;
     if(trophyChartInstance){ trophyChartInstance.destroy(); trophyChartInstance = null; }
     var years = [];
-    state.palmares.trofei.forEach(function(t){ t.edizioni.forEach(function(ed){ var y = parseAnnoToYear(ed.anno); if(y) years.push(y); }); });
+    computeMergedTrofei().forEach(function(t){ t.edizioni.forEach(function(ed){ var y = parseAnnoToYear(ed.anno); if(y) years.push(y); }); });
     years.sort(function(a,b){ return a-b; });
     var FOUNDATION_YEAR = 1926;
     var currentYear = new Date().getFullYear();
@@ -2528,26 +2650,33 @@
   }
 
   // ---- Modal: EDIZIONE ----
-  var edizioneCtx = { trofeoId: null, edizioneId: null };
-  function openEdizioneModal(trofeoId, edizioneId){
-    var trofeo = state.palmares.trofei.find(function(t){ return t.id === trofeoId; });
-    if(!trofeo) return;
-    edizioneCtx.trofeoId = trofeoId; edizioneCtx.edizioneId = edizioneId;
-    document.getElementById("edizione-trofeo-label").textContent = compDisplay(trofeo).name;
-    var delBtn = document.getElementById("btn-delete-edizione");
+  var edizioneCtx = { trofeoId: null, edizioneId: null, pendingCatalogId: null };
+  function openEdizioneModal(refId, edizioneId){
+    edizioneCtx.edizioneId = edizioneId;
     if(edizioneId){
+      // Modifica: refId è l'id di un trofeo manuale già esistente in Sala Trofei.
+      var trofeo = state.palmares.trofei.find(function(t){ return t.id === refId; });
+      if(!trofeo) return;
+      edizioneCtx.trofeoId = refId; edizioneCtx.pendingCatalogId = null;
       var ed = trofeo.edizioni.find(function(e){ return e.id === edizioneId; });
+      document.getElementById("edizione-trofeo-label").textContent = compDisplay(trofeo).name;
       document.getElementById("edizione-modal-title").textContent = "MODIFICA EDIZIONE";
       document.getElementById("input-edizione-anno").value = ed.anno || "";
       document.getElementById("input-edizione-posizione").value = ed.posizione || "";
       document.getElementById("input-edizione-dettagli").value = ed.dettagli || "";
-      delBtn.classList.remove("hidden");
+      document.getElementById("btn-delete-edizione").classList.remove("hidden");
     } else {
+      // Nuova edizione: refId è il catalogId del trofeo (può non avere ancora un record
+      // manuale in Sala Trofei, ad es. se rilevato finora solo automaticamente).
+      var existing = state.palmares.trofei.find(function(t){ return t.catalogId === refId; });
+      edizioneCtx.trofeoId = existing ? existing.id : null;
+      edizioneCtx.pendingCatalogId = existing ? null : refId;
+      document.getElementById("edizione-trofeo-label").textContent = compDisplay({ catalogId: refId }).name;
       document.getElementById("edizione-modal-title").textContent = "NUOVA EDIZIONE";
       document.getElementById("input-edizione-anno").value = "";
       document.getElementById("input-edizione-posizione").value = "1° Posto";
       document.getElementById("input-edizione-dettagli").value = "";
-      delBtn.classList.add("hidden");
+      document.getElementById("btn-delete-edizione").classList.add("hidden");
     }
     toggleSheet("edizione", true);
     setTimeout(function(){ document.getElementById("input-edizione-anno").focus(); }, 300);
@@ -2558,7 +2687,14 @@
     var posizione = document.getElementById("input-edizione-posizione").value;
     var dettagli = document.getElementById("input-edizione-dettagli").value.trim();
     if(!anno){ showToast("⚠️ Inserisci l'anno o la stagione"); return; }
-    var trofeo = state.palmares.trofei.find(function(t){ return t.id === edizioneCtx.trofeoId; });
+    var trofeo;
+    if(edizioneCtx.trofeoId){
+      trofeo = state.palmares.trofei.find(function(t){ return t.id === edizioneCtx.trofeoId; });
+    } else if(edizioneCtx.pendingCatalogId){
+      trofeo = { id: uid(), catalogId: edizioneCtx.pendingCatalogId, edizioni: [] };
+      state.palmares.trofei.push(trofeo);
+      edizioneCtx.trofeoId = trofeo.id;
+    }
     if(!trofeo) return;
     if(edizioneCtx.edizioneId){
       var ed = trofeo.edizioni.find(function(e){ return e.id === edizioneCtx.edizioneId; });
@@ -2568,14 +2704,14 @@
       trofeo.edizioni.push({ id: uid(), anno: anno, posizione: posizione || null, dettagli: dettagli });
       showToast("✓ Edizione aggiunta");
     }
-    save(); renderPalmares(); closeEdizioneModal();
+    save(); closeEdizioneModal();
   }
   function deleteEdizioneModal(){
     var trofeo = state.palmares.trofei.find(function(t){ return t.id === edizioneCtx.trofeoId; });
     if(!trofeo) return;
     confirmDangerousAction("Eliminare questa edizione?", function(){
       trofeo.edizioni = trofeo.edizioni.filter(function(e){ return e.id !== edizioneCtx.edizioneId; });
-      save(); renderPalmares(); closeEdizioneModal();
+      save(); closeEdizioneModal();
       showToast("🗑️ Edizione eliminata");
     });
   }
@@ -2814,26 +2950,9 @@
     if(!comp) return;
     obiettivoCtx.compId = compId;
     document.getElementById("obiettivo-comp-label").textContent = compDisplay(comp).name;
-    document.getElementById("input-obiettivo-voto").value = comp.obiettivoVoto != null ? comp.obiettivoVoto : "";
-    buildObiettivoChips(comp.obiettivoVoto);
+    setVotoWheelValue("input-obiettivo-voto", comp.obiettivoVoto);
     document.getElementById("btn-clear-obiettivo").classList.toggle("hidden", comp.obiettivoVoto == null);
     toggleSheet("obiettivo", true);
-  }
-  function buildObiettivoChips(selected){
-    var row = document.getElementById("obiettivo-chip-row");
-    row.innerHTML = "";
-    [0,1,2,3,4,5,6,7,8,9,10].forEach(function(v){
-      var chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "voto-chip" + (selected === v ? " active" : "");
-      chip.textContent = v;
-      chip.addEventListener("click", function(){
-        document.getElementById("input-obiettivo-voto").value = v;
-        Array.from(row.children).forEach(function(c){ c.classList.remove("active"); });
-        chip.classList.add("active");
-      });
-      row.appendChild(chip);
-    });
   }
   function closeObiettivoModal(){ toggleSheet("obiettivo", false); }
   function saveObiettivoModal(){
@@ -3012,7 +3131,7 @@
       header.innerHTML =
         '<button type="button" data-toggle-league="'+lg.id+'" class="flex items-center gap-3 text-left flex-1 min-w-0">' +
           (lg.icon ? '<img src="'+lg.icon+'" style="width:24px;height:24px;border-radius:6px;flex-shrink:0;object-fit:contain;background:transparent;">' : '') +
-          '<span class="text-[10px] font-bold px-2 py-1 rounded-md flex-shrink-0" style="background:'+(lg.nazionale?'rgba(0,146,70,0.16);color:#5fd996':'rgba(38,160,224,0.16);color:var(--azzurro)')+';">'+(lg.nazionale?'ITA':'ESTERO')+'</span>' +
+          '<span class="text-[10px] font-bold px-2 py-1 rounded-md flex-shrink-0" style="background:'+(lg.nazionale?'rgba(0,146,70,0.16);color:var(--tag-green)':'rgba(38,160,224,0.16);color:var(--azzurro)')+';">'+(lg.nazionale?'ITA':'ESTERO')+'</span>' +
           '<div class="min-w-0"><p class="font-bold text-[14.5px] truncate">'+escapeHtml(lg.name)+'</p><p class="text-[11px] text-[var(--text-mute)]">'+lg.teams.length+' squadre</p></div>' +
         '</button>' +
         '<div class="flex items-center gap-1.5 flex-shrink-0">' +
@@ -3232,24 +3351,7 @@
   // ---------- MODAL: MATCH (girone e gare/andata/ritorno coppe) ----------
   var matchCtx = { mode:"girone", compId: null, matchId: null, sede: "casa" };
   var legCtx = { compId: null, turnoId: null, legTipo: null, legId: null };
-  var VOTO_PRESETS = [5,5.5,6,6.5,7,7.5,8,8.5,9];
 
-  function buildVotoChips(selected){
-    var row = document.getElementById("voto-chip-row");
-    row.innerHTML = "";
-    VOTO_PRESETS.forEach(function(v){
-      var chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "voto-chip" + (selected === v ? " active" : "");
-      chip.textContent = fmt1(v);
-      chip.addEventListener("click", function(){
-        document.getElementById("input-voto").value = v;
-        Array.from(row.children).forEach(function(c){ c.classList.remove("active"); });
-        chip.classList.add("active");
-      });
-      row.appendChild(chip);
-    });
-  }
   function updateLiveResultBadge(){
     var golNap = parseInt(document.getElementById("input-golnap").value, 10) || 0;
     var golOpp = parseInt(document.getElementById("input-golopp").value, 10) || 0;
@@ -3282,24 +3384,25 @@
       document.getElementById("input-opponent").value = m.opponent;
       document.getElementById("input-golnap").value = m.golNap;
       document.getElementById("input-golopp").value = m.golOpp;
-      document.getElementById("input-voto").value = (typeof m.voto === "number") ? m.voto : "";
+      setVotoWheelValue("input-voto", m.voto);
+      document.getElementById("input-voto-none").checked = (typeof m.voto !== "number");
       document.getElementById("input-match-data").value = m.data || "";
       document.getElementById("input-match-giornata").value = m.giornata != null ? m.giornata : "";
       setSedeToggle(m.sede || "casa");
-      buildVotoChips(m.voto);
       delBtn.classList.remove("hidden");
     } else {
       document.getElementById("match-modal-title").textContent = "NUOVA PARTITA";
       document.getElementById("input-opponent").value = "";
       document.getElementById("input-golnap").value = 0;
       document.getElementById("input-golopp").value = 0;
-      document.getElementById("input-voto").value = "";
+      setVotoWheelValue("input-voto", null);
+      document.getElementById("input-voto-none").checked = false;
       document.getElementById("input-match-data").value = "";
       document.getElementById("input-match-giornata").value = "";
       setSedeToggle("casa");
-      buildVotoChips(null);
       delBtn.classList.add("hidden");
     }
+    updateVotoWheelDisabledState("input-voto");
     updateLiveResultBadge();
     toggleSheet("match", true);
     setTimeout(function(){ document.getElementById("input-opponent").focus(); }, 300);
@@ -3324,23 +3427,24 @@
       document.getElementById("input-opponent").value = turno.opponent || "";
       document.getElementById("input-golnap").value = existingLeg.golNap;
       document.getElementById("input-golopp").value = existingLeg.golOpp;
-      document.getElementById("input-voto").value = (typeof existingLeg.voto === "number") ? existingLeg.voto : "";
+      setVotoWheelValue("input-voto", existingLeg.voto);
+      document.getElementById("input-voto-none").checked = (typeof existingLeg.voto !== "number");
       document.getElementById("input-match-data").value = existingLeg.data || "";
       setSedeToggle(existingLeg.sede || "casa");
-      buildVotoChips(existingLeg.voto);
       delBtn.classList.remove("hidden");
     } else {
       document.getElementById("match-modal-title").textContent = "NUOVA PARTITA";
       document.getElementById("input-opponent").value = turno.opponent || "";
       document.getElementById("input-golnap").value = 0;
       document.getElementById("input-golopp").value = 0;
-      document.getElementById("input-voto").value = "";
+      setVotoWheelValue("input-voto", null);
+      document.getElementById("input-voto-none").checked = false;
       document.getElementById("input-match-data").value = "";
       // Le finali si giocano tipicamente in campo neutro: comodo default, comunque modificabile.
       setSedeToggle(turno.nome === "Finale" ? "neutro" : "casa");
-      buildVotoChips(null);
       delBtn.classList.add("hidden");
     }
+    updateVotoWheelDisabledState("input-voto");
     updateLiveResultBadge();
     toggleSheet("match", true);
     setTimeout(function(){ document.getElementById("input-opponent").focus(); }, 300);
@@ -3394,8 +3498,9 @@
     var golOpp = parseInt(document.getElementById("input-golopp").value, 10);
     if(isNaN(golNap) || golNap < 0) golNap = 0;
     if(isNaN(golOpp) || golOpp < 0) golOpp = 0;
+    var votoNessuno = document.getElementById("input-voto-none").checked;
     var votoRaw = document.getElementById("input-voto").value;
-    var voto = votoRaw === "" ? null : parseVotoInput(votoRaw);
+    var voto = votoNessuno || votoRaw === "" ? null : parseVotoInput(votoRaw);
     if(voto !== null){
       if(isNaN(voto)) voto = null;
       else voto = Math.max(0, Math.min(10, voto));
@@ -3564,29 +3669,56 @@
 
   // ---------- RESOCONTO STAGIONALE (apertura in nuova scheda) ----------
 
-  // Conta i trofei della stagione incrociando due fonti, per evitare che il contatore
-  // resti a 0 quando una competizione è segnata come vinta in Stagioni ma non è ancora
-  // stata aggiunta manualmente alla Sala Trofei (o viceversa) — senza contarla due volte.
-  function getTrofeiDellaStagione(season){
-    var trofei = [];
-    var catalogIdsGiaInclusi = {};
+  // ---------- FONTE UNICA DEI TROFEI VINTI ----------
+  // Unisce i trofei aggiunti manualmente in Sala Trofei con quelli rilevati automaticamente
+  // dalle competizioni segnate come "vinte" (posizioneFinale) in ogni stagione, senza mai
+  // contare due volte la stessa vittoria. Questa è l'unica fonte usata da Palmarès, dal
+  // conteggio in header, dal grafico storico dei trofei e dagli Andamenti Storici.
+  function computeMergedTrofei(){
+    var byCatalogId = {};
     state.palmares.trofei.forEach(function(t){
-      var disp = compDisplay(t);
-      t.edizioni.forEach(function(ed){
-        if((ed.anno || "").indexOf(season.name) !== -1){
-          trofei.push({ nome: disp.name, img: disp.trofeoImg, anno: ed.anno });
-          catalogIdsGiaInclusi[t.catalogId] = true;
-        }
+      byCatalogId[t.catalogId] = {
+        id: t.id, catalogId: t.catalogId, isManual: true,
+        edizioni: t.edizioni.map(function(ed){
+          return { id: ed.id, anno: ed.anno, posizione: ed.posizione, dettagli: ed.dettagli, auto: false };
+        })
+      };
+    });
+    state.seasons.forEach(function(season){
+      season.competitions.forEach(function(comp){
+        if(!isPosizioneVincitore(comp.posizioneFinale)) return;
+        var catId = comp.catalogId;
+        var entry = byCatalogId[catId];
+        var alreadyCovered = entry && entry.edizioni.some(function(ed){ return (ed.anno || "").indexOf(season.name) !== -1; });
+        if(alreadyCovered) return;
+        if(!entry){ entry = byCatalogId[catId] = { id: "auto-" + catId, catalogId: catId, isManual: false, edizioni: [] }; }
+        entry.edizioni.push({ id: "auto-" + season.id + "-" + comp.id, anno: season.name, posizione: comp.posizioneFinale, dettagli: null, auto: true, seasonId: season.id, compId: comp.id });
       });
     });
-    season.competitions.forEach(function(comp){
-      if(isPosizioneVincitore(comp.posizioneFinale) && !catalogIdsGiaInclusi[comp.catalogId]){
-        var dispComp = compDisplay(comp);
-        trofei.push({ nome: dispComp.name, img: dispComp.trofeoImg, anno: season.name });
-        catalogIdsGiaInclusi[comp.catalogId] = true;
-      }
-    });
-    return trofei;
+    return Object.keys(byCatalogId).map(function(k){ return byCatalogId[k]; });
+  }
+  // Ricalcola e ridisegna istantaneamente ogni schermata che dipende dai trofei vinti
+  // (Palmarès, pillole stagioni, header, grafici storici), da chiamare dopo ogni salvataggio.
+  function updatePalmaresAndStats(){
+    renderPalmares();
+    renderSeasonNav();
+    var analyticsSheet = document.getElementById("sheet-analytics");
+    if(analyticsSheet && analyticsSheet.classList.contains("show")){
+      var activeSubtab = document.querySelector(".analytics-subtab-btn.active");
+      setAnalyticsSubtab(activeSubtab ? activeSubtab.getAttribute("data-analytics-subtab") : "stagioni");
+    }
+    var hofSheet = document.getElementById("sheet-hof");
+    if(hofSheet && hofSheet.classList.contains("show")) renderHallOfFame();
+  }
+
+  function getTrofeiDellaStagione(season){
+    return computeMergedTrofei().reduce(function(acc, t){
+      var disp = compDisplay(t);
+      t.edizioni.forEach(function(ed){
+        if((ed.anno || "").indexOf(season.name) !== -1) acc.push({ nome: disp.name, img: disp.trofeoImg, anno: ed.anno });
+      });
+      return acc;
+    }, []);
   }
   function countTrofeiStagione(season){
     return getTrofeiDellaStagione(season).length;
@@ -3845,7 +3977,7 @@
     setSyncStatus(savedUrl ? "offline" : "nourl");
     populateTurnoSelects();
     populatePosizioneSelects();
-    populateVotoWheelSelects();
+    initVotoWheels();
     render();
     renderPalmares();
     renderOpponentsDatalist();
@@ -4043,12 +4175,7 @@
     });
     document.getElementById("input-golnap").addEventListener("input", updateLiveResultBadge);
     document.getElementById("input-golopp").addEventListener("input", updateLiveResultBadge);
-    document.getElementById("input-voto").addEventListener("change", function(){
-      var v = parseVotoInput(this.value);
-      document.querySelectorAll("#voto-chip-row .voto-chip").forEach(function(c){
-        c.classList.toggle("active", parseFloat(c.textContent.replace(",", ".")) === v);
-      });
-    });
+    document.getElementById("input-voto-none").addEventListener("change", function(){ updateVotoWheelDisabledState("input-voto"); });
   }
 
   document.addEventListener("DOMContentLoaded", init);
