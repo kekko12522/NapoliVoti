@@ -39,6 +39,30 @@
     --text-dim:#93a5c4;
     --text-mute:#5a6a8a;
   }
+  html[data-theme="light"]{
+    --bg-950:#f4f6fa;
+    --bg-900:#ffffff;
+    --bg-850:#ffffff;
+    --bg-800:#eef1f7;
+    --bg-750:#e6eaf2;
+    --line: rgba(20,40,80,0.10);
+    --line-soft: rgba(20,40,80,0.06);
+    --azzurro:#0c7fd4;
+    --azzurro-deep:#0a5f9e;
+    --azzurro-glow: rgba(12,127,212,0.25);
+    --gold:#b8842c;
+    --win:#1f9d5c;
+    --win-bg: rgba(31,157,92,0.12);
+    --draw:#b57e1e;
+    --draw-bg: rgba(181,126,30,0.12);
+    --loss:#d13c46;
+    --loss-bg: rgba(209,60,70,0.12);
+    --text:#111a2c;
+    --text-dim:#4a5876;
+    --text-mute:#8592ab;
+  }
+  html[data-theme="light"] .glass, html[data-theme="light"] .glass-elevated{ box-shadow: 0 2px 14px -6px rgba(20,40,80,0.12); }
+  html[data-theme="light"] .modal-backdrop{ background: rgba(20,30,50,0.35); }
   *{ -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   html,body{ height:100%; }
   body{
@@ -152,11 +176,12 @@
 
   .modal-backdrop{ position:fixed; inset:0; background:rgba(4,8,16,0.65); backdrop-filter: blur(3px); opacity:0; pointer-events:none; transition: opacity .22s ease; z-index:40; }
   .modal-backdrop.show{ opacity:1; pointer-events:auto; }
+  body.scroll-locked{ overflow:hidden !important; touch-action:none; overscroll-behavior:none; }
+  body.scroll-locked .sheet{ overflow-y:auto; touch-action:pan-y; -webkit-overflow-scrolling:touch; }
   .sheet{
     position:fixed; left:0; right:0; bottom:0; z-index:41;
     background: linear-gradient(180deg, var(--bg-850), var(--bg-900));
     border-top:1px solid var(--line); border-radius:22px 22px 0 0;
-    box-shadow: 0 -10px 40px -8px rgba(0,0,0,0.6);
     transform: translateY(100%); transition: transform .32s cubic-bezier(.32,.72,0,1);
     max-height:88vh; overflow-y:auto;
     padding-bottom: max(env(safe-area-inset-bottom), 20px);
@@ -290,7 +315,7 @@
         </div>
         <div class="glass rounded-xl p-2.5 text-center">
           <p id="stat-media" class="font-display text-2xl" style="color:var(--gold)">—</p>
-          <p class="text-[10px] text-[var(--text-mute)] font-semibold tracking-wide">MEDIA GOL</p>
+          <p class="text-[10px] text-[var(--text-mute)] font-semibold tracking-wide">MEDIA VOTI</p>
         </div>
       </div>
 
@@ -365,7 +390,11 @@
   <div id="stats-opponents-list" class="space-y-2"></div>
   <div id="stats-opponents-empty" class="hidden text-center text-sm text-[var(--text-mute)] py-4">Nessun dato ancora per questa stagione.</div>
 
-  <button id="btn-open-h2h" type="button" class="w-full py-3.5 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-2 mt-6" style="background:rgba(224,176,79,0.14); color:var(--gold); border:1px solid rgba(224,176,79,0.3);">
+  <button id="btn-open-analytics" type="button" class="w-full py-3.5 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-2 mt-6" style="background:rgba(38,160,224,0.14); color:var(--azzurro); border:1px solid rgba(38,160,224,0.3);">
+    📈 Andamento Storico
+  </button>
+
+  <button id="btn-open-h2h" type="button" class="w-full py-3.5 rounded-xl font-bold text-[13.5px] flex items-center justify-center gap-2 mt-3" style="background:rgba(224,176,79,0.14); color:var(--gold); border:1px solid rgba(224,176,79,0.3);">
     ⚔️ Scontri Diretti (H2H) — tutte le stagioni
   </button>
 </div>
@@ -408,6 +437,17 @@
       <p class="text-[11.5px] text-[var(--text-mute)]">Ordine delle pillole nella barra in basso.</p>
     </div>
     <button id="btn-toggle-season-order" type="button" class="settings-btn" style="background:var(--bg-750); color:var(--text);">↓ Recenti prima</button>
+  </div>
+
+  <div class="settings-row mb-6">
+    <div>
+      <p class="font-semibold text-[14px]">Tema</p>
+      <p class="text-[11.5px] text-[var(--text-mute)]">Scuro o Chiaro, salvato su questo dispositivo.</p>
+    </div>
+    <div class="flex gap-1.5" style="background:var(--bg-750); border-radius:12px; padding:3px;">
+      <button id="btn-theme-dark" type="button" class="settings-btn" style="padding:8px 12px;">🌙 Scuro</button>
+      <button id="btn-theme-light" type="button" class="settings-btn" style="padding:8px 12px; background:transparent; color:var(--text-dim);">☀️ Chiaro</button>
+    </div>
   </div>
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">SINCRONIZZAZIONE CLOUD</p>
@@ -454,7 +494,7 @@
 
   <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1 mt-6">INFO</p>
   <div class="glass rounded-2xl p-4 text-[13px] text-[var(--text-dim)] leading-relaxed">
-    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v3.3.0</span></p>
+    <p>Diario Azzurro <span class="text-[var(--text-mute)]">v3.4.0</span></p>
     <p class="mt-1">I dati sono salvati in locale sul dispositivo (localStorage). Esporta un backup prima di cambiare telefono o svuotare la cache di Safari, così non perdi nulla.</p>
   </div>
 </div>
@@ -545,7 +585,7 @@
 
   <label class="text-xs font-bold text-[var(--text-mute)] tracking-wide block mb-1.5">VOTO PRESTAZIONE (1–10)</label>
   <div id="voto-chip-row" class="grid grid-cols-5 gap-1.5 mb-2.5"></div>
-  <input id="input-voto" type="text" inputmode="decimal" placeholder="Voto (es. 6.5, 7-, 6+)" class="field-input mb-5">
+  <select id="input-voto" class="field-input mb-5"></select>
 
   <button id="btn-save-match" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva partita</button>
   <button id="btn-delete-match" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Elimina partita</button>
@@ -624,7 +664,7 @@
   </div>
   <p class="text-[12.5px] text-[var(--text-dim)] mb-4">Il voto per l'obiettivo raggiunto in questa competizione. Contribuisce al Voto Stagione complessivo.</p>
   <div id="obiettivo-chip-row" class="grid grid-cols-4 gap-1.5 mb-2.5"></div>
-  <input id="input-obiettivo-voto" type="text" inputmode="decimal" placeholder="Voto (es. 6.5, 7-, 6+)" class="field-input mb-5">
+  <select id="input-obiettivo-voto" class="field-input mb-5"></select>
   <button id="btn-save-obiettivo" class="w-full py-3.5 rounded-xl font-bold text-[15px]" style="background:linear-gradient(135deg,#4bc4f2,var(--azzurro-deep)); color:#04141f;">Salva</button>
   <button id="btn-clear-obiettivo" class="hidden w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5" style="background:var(--loss-bg); color:var(--loss);">Rimuovi voto</button>
   <button id="btn-cancel-obiettivo" class="w-full py-3.5 rounded-xl font-bold text-[15px] mt-2.5 text-[var(--text-mute)]">Annulla</button>
@@ -713,6 +753,44 @@
   </div>
   <div id="hof-empty" class="hidden text-center text-sm text-[var(--text-mute)] py-6">Registra almeno una stagione con delle partite per vedere i record storici.</div>
   <div id="hof-content" class="space-y-3 pb-4"></div>
+</div>
+
+<!-- MODAL: ANDAMENTO STORICO (ANALYTICS PLURIENNALI) -->
+<div id="backdrop-analytics" class="modal-backdrop"></div>
+<div id="sheet-analytics" class="sheet px-5 pt-3" style="max-height:92vh;">
+  <div class="w-10 h-1.5 rounded-full bg-[var(--line)] mx-auto mb-4 mt-1"></div>
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="font-display text-2xl">ANDAMENTO STORICO</h3>
+    <button id="btn-close-analytics" type="button" class="text-[var(--text-mute)] text-sm font-semibold">Chiudi</button>
+  </div>
+
+  <div class="tab-switcher mb-4">
+    <button type="button" class="tab-btn analytics-subtab-btn active" data-analytics-subtab="stagioni">Stagioni</button>
+    <button type="button" class="tab-btn analytics-subtab-btn" data-analytics-subtab="competizioni">Competizioni</button>
+  </div>
+
+  <div id="analytics-view-stagioni" class="pb-4">
+    <div id="analytics-stagioni-empty" class="hidden text-center text-sm text-[var(--text-mute)] py-6">Registra almeno due stagioni per vedere gli andamenti nel tempo.</div>
+    <div id="analytics-stagioni-content">
+      <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">VOTO MEDIO DI SQUADRA PER STAGIONE</p>
+      <div class="glass-elevated rounded-2xl p-4 mb-5">
+        <div style="position:relative;height:200px;"><canvas id="analytics-chart-voti"></canvas></div>
+      </div>
+      <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">GOL FATTI vs GOL SUBITI PER STAGIONE</p>
+      <div class="glass-elevated rounded-2xl p-4 mb-5">
+        <div style="position:relative;height:200px;"><canvas id="analytics-chart-gol"></canvas></div>
+      </div>
+      <p class="text-xs font-bold text-[var(--text-mute)] tracking-wide mb-2 px-1">TROFEI VINTI (CUMULATIVO)</p>
+      <div class="glass-elevated rounded-2xl p-4">
+        <div style="position:relative;height:200px;"><canvas id="analytics-chart-trofei"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="analytics-view-competizioni" class="hidden pb-4">
+    <div id="analytics-competizioni-empty" class="hidden text-center text-sm text-[var(--text-mute)] py-6">Nessuna partita registrata ancora.</div>
+    <div id="analytics-competizioni-content" class="space-y-3"></div>
+  </div>
 </div>
 
 <!-- MODAL: CONFERMA SICUREZZA DATI (generica, per operazioni distruttive) -->
@@ -883,6 +961,7 @@
   "use strict";
 
   var STORAGE_KEY = "diarioAzzurroData_v1";
+  var THEME_STORAGE_KEY = "diarioAzzurroTheme";
   const CLOUDFLARE_CONFIG = { workerUrl: 'https://fantanapoli-api.w8hmc5b6rw.workers.dev' };
   var ROUND_NAMES = ["Trentaduesimi di finale","Sedicesimi di finale","Ottavi di finale","Quarti di finale","Semifinale","Finale"];
   var POSIZIONE_OPTIONS = ["1° Posto","2° Posto","3° Posto","4° Posto","Semifinalista","Quarti di finale","Ottavi di finale","Fase a gironi","Altro"];
@@ -1209,6 +1288,34 @@
   }
 
   // ---------- SINCRONIZZAZIONE CLOUD (Cloudflare Workers / KV) ----------
+  // ---------- TEMA (Scuro / Chiaro) ----------
+  function applyTheme(theme){
+    var t = theme === "light" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", t);
+    var metaTheme = document.querySelector('meta[name="theme-color"]');
+    if(metaTheme) metaTheme.setAttribute("content", t === "light" ? "#f4f6fa" : "#0A0F1C");
+    try{ localStorage.setItem(THEME_STORAGE_KEY, t); }catch(e){}
+    var darkBtn = document.getElementById("btn-theme-dark"), lightBtn = document.getElementById("btn-theme-light");
+    if(darkBtn && lightBtn){
+      darkBtn.style.background = t === "dark" ? "linear-gradient(135deg,#4bc4f2,var(--azzurro-deep))" : "transparent";
+      darkBtn.style.color = t === "dark" ? "#04141f" : "var(--text-dim)";
+      lightBtn.style.background = t === "light" ? "linear-gradient(135deg,#4bc4f2,var(--azzurro-deep))" : "transparent";
+      lightBtn.style.color = t === "light" ? "#04141f" : "var(--text-dim)";
+    }
+  }
+  function getSavedTheme(){
+    try{ return localStorage.getItem(THEME_STORAGE_KEY) || "dark"; }catch(e){ return "dark"; }
+  }
+  function refreshChartsForThemeChange(){
+    if(currentTab === "statistiche") renderStatsTab();
+    if(currentTab === "palmares") renderPalmares();
+    var analyticsSheet = document.getElementById("sheet-analytics");
+    if(analyticsSheet && analyticsSheet.classList.contains("show")){
+      var activeSubtab = document.querySelector(".analytics-subtab-btn.active");
+      setAnalyticsSubtab(activeSubtab ? activeSubtab.getAttribute("data-analytics-subtab") : "stagioni");
+    }
+  }
+
   function getCloudWorkerUrl(){
     return CLOUDFLARE_CONFIG.workerUrl && CLOUDFLARE_CONFIG.workerUrl.indexOf("TUO-WORKER") === -1 ? CLOUDFLARE_CONFIG.workerUrl : null;
   }
@@ -1324,6 +1431,21 @@
     if(m[2] === "-") base -= 0.15;
     else if(m[2] === "+") base += 0.15;
     return Math.round(base * 100) / 100;
+  }
+
+  // ---------- PICKER A ROTELLINA PER I VOTI (0-10, passi con "+"/"-") ----------
+  var VOTO_WHEEL_STEPS = ["0","0.5","1-","1","1+","1.5","2-","2","2+","2.5","3-","3","3+","3.5","4-","4","4+","4.5","5-","5","5+","5.5","6-","6","6+","6.5","7-","7","7+","7.5","8-","8","8+","8.5","9-","9","9+","9.5","10"];
+  function populateVotoWheelSelect(selectId){
+    var sel = document.getElementById(selectId);
+    if(!sel) return;
+    sel.innerHTML = '<option value="">Nessuno</option>' + VOTO_WHEEL_STEPS.map(function(label){
+      var val = parseVotoInput(label);
+      return '<option value="' + val + '">' + label + '</option>';
+    }).join("");
+  }
+  function populateVotoWheelSelects(){
+    populateVotoWheelSelect("input-voto");
+    populateVotoWheelSelect("input-obiettivo-voto");
   }
 
   function buildSeasonTimeline(season){
@@ -1861,12 +1983,10 @@
     document.getElementById("h2h-view-detail").classList.add("hidden");
     document.getElementById("input-h2h-search").value = "";
     renderH2HTeamList("");
-    document.getElementById("backdrop-h2h").classList.add("show");
-    document.getElementById("sheet-h2h").classList.add("show");
+    openGenericModal("h2h");
   }
   function closeH2HModal(){
-    document.getElementById("backdrop-h2h").classList.remove("show");
-    document.getElementById("sheet-h2h").classList.remove("show");
+    closeGenericModal("h2h");
   }
   function renderH2HTeamList(filterText){
     var names = getH2HOpponentNames();
@@ -1961,10 +2081,14 @@
   }
 
   function chartBaseOptions(showLegend, isVotoScale){
-    var gridColor = "rgba(150,180,220,0.10)", textColor = "#93a5c4";
+    var isLight = document.documentElement.getAttribute("data-theme") === "light";
+    var gridColor = isLight ? "rgba(20,40,80,0.10)" : "rgba(150,180,220,0.10)";
+    var textColor = isLight ? "#4a5876" : "#93a5c4";
+    var tooltipBg = isLight ? "#ffffff" : "#111c33";
+    var tooltipText = isLight ? "#111a2c" : "#eef3fa";
     return {
       responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ display: !!showLegend, labels:{ color:textColor, font:{size:11} } }, tooltip:{ backgroundColor:"#111c33", borderColor:"rgba(150,180,220,0.2)", borderWidth:1, titleColor:"#eef3fa", bodyColor:"#eef3fa" } },
+      plugins:{ legend:{ display: !!showLegend, labels:{ color:textColor, font:{size:11} } }, tooltip:{ backgroundColor:tooltipBg, borderColor: isLight ? "rgba(20,40,80,0.15)" : "rgba(150,180,220,0.2)", borderWidth:1, titleColor:tooltipText, bodyColor:tooltipText } },
       scales:{ x:{ grid:{ color:gridColor }, ticks:{ color:textColor, font:{size:10} } }, y:{ grid:{ color:gridColor }, ticks:{ color:textColor, font:{size:10} }, beginAtZero:true, min: isVotoScale?0:undefined, max: isVotoScale?10:undefined } }
     };
   }
@@ -2173,12 +2297,10 @@
       }).join("");
     }
 
-    document.getElementById("backdrop-trofeo-dettaglio").classList.add("show");
-    document.getElementById("sheet-trofeo-dettaglio").classList.add("show");
+    openGenericModal("trofeo-dettaglio");
   }
   function closeTrofeoDettagliModal(){
-    document.getElementById("backdrop-trofeo-dettaglio").classList.remove("show");
-    document.getElementById("sheet-trofeo-dettaglio").classList.remove("show");
+    closeGenericModal("trofeo-dettaglio");
   }
 
   // ---------- LOGO APP (statico, da repository: icon.png) ----------
@@ -2253,12 +2375,10 @@
   }
   function openHofModal(){
     renderHallOfFame();
-    document.getElementById("backdrop-hof").classList.add("show");
-    document.getElementById("sheet-hof").classList.add("show");
+    openGenericModal("hof");
   }
   function closeHofModal(){
-    document.getElementById("backdrop-hof").classList.remove("show");
-    document.getElementById("sheet-hof").classList.remove("show");
+    closeGenericModal("hof");
   }
 
   // ---------- CONFERMA SICUREZZA DATI (dialog generico per operazioni distruttive) ----------
@@ -2267,16 +2387,125 @@
     document.getElementById("confirm-danger-title").textContent = title || "ATTENZIONE";
     document.getElementById("confirm-danger-message").textContent = message || "Attenzione: questa operazione sovrascriverà o cancellerà definitivamente i dati attuali. Vuoi procedere?";
     confirmDangerCallback = onConfirm;
-    document.getElementById("backdrop-confirm-danger").classList.add("show");
-    document.getElementById("sheet-confirm-danger").classList.add("show");
+    openGenericModal("confirm-danger");
   }
   function closeConfirmDangerModal(){
-    document.getElementById("backdrop-confirm-danger").classList.remove("show");
-    document.getElementById("sheet-confirm-danger").classList.remove("show");
+    closeGenericModal("confirm-danger");
     confirmDangerCallback = null;
   }
 
   function parseAnnoToYear(anno){ var m = /(\d{4})/.exec(anno || ""); return m ? parseInt(m[1], 10) : null; }
+  // ---------- ANDAMENTO STORICO (analytics pluriennali) ----------
+  var analyticsChartVoti = null, analyticsChartGol = null, analyticsChartTrofei = null;
+  function getSeasonsChrono(){
+    return state.seasons.slice().sort(function(a,b){ return seasonSortKey(a.name) - seasonSortKey(b.name); });
+  }
+  function countTrofeiPerSeason(season){
+    var count = 0;
+    state.palmares.trofei.forEach(function(t){
+      t.edizioni.forEach(function(ed){ if((ed.anno || "").indexOf(season.name) !== -1) count++; });
+    });
+    return count;
+  }
+  function openAnalyticsModal(){
+    setAnalyticsSubtab("stagioni");
+    openGenericModal("analytics");
+  }
+  function closeAnalyticsModal(){ closeGenericModal("analytics"); }
+  function setAnalyticsSubtab(name){
+    document.querySelectorAll(".analytics-subtab-btn").forEach(function(b){
+      b.classList.toggle("active", b.getAttribute("data-analytics-subtab") === name);
+    });
+    document.getElementById("analytics-view-stagioni").classList.toggle("hidden", name !== "stagioni");
+    document.getElementById("analytics-view-competizioni").classList.toggle("hidden", name !== "competizioni");
+    if(name === "stagioni") renderAnalyticsStagioni();
+    else renderAnalyticsCompetizioni();
+  }
+  function renderAnalyticsStagioni(){
+    var seasons = getSeasonsChrono();
+    var contentEl = document.getElementById("analytics-stagioni-content");
+    var emptyEl = document.getElementById("analytics-stagioni-empty");
+    if(seasons.length === 0){ contentEl.classList.add("hidden"); emptyEl.classList.remove("hidden"); return; }
+    contentEl.classList.remove("hidden"); emptyEl.classList.add("hidden");
+    if(typeof Chart === "undefined") return;
+
+    var labels = seasons.map(function(s){ return s.name; });
+    var votiData = seasons.map(function(s){ var v = computeSeasonVotoStagione(s).finale; return v === null ? null : Math.round(v*100)/100; });
+    var gfData = [], gsData = [], trofeiCum = [], cum = 0;
+    seasons.forEach(function(s){
+      var st = computeMatchesStats(buildSeasonTimeline(s));
+      gfData.push(st.gf); gsData.push(st.gs);
+      cum += countTrofeiPerSeason(s);
+      trofeiCum.push(cum);
+    });
+
+    if(analyticsChartVoti){ analyticsChartVoti.destroy(); analyticsChartVoti = null; }
+    var cVoti = document.getElementById("analytics-chart-voti");
+    if(cVoti) analyticsChartVoti = new Chart(cVoti.getContext("2d"), {
+      type:"line",
+      data:{ labels:labels, datasets:[{ label:"Voto medio", data:votiData, borderColor:"#26a0e0", backgroundColor:"rgba(38,160,224,0.15)", tension:0.3, fill:true, pointRadius:3, spanGaps:true }] },
+      options: chartBaseOptions(false, true)
+    });
+
+    if(analyticsChartGol){ analyticsChartGol.destroy(); analyticsChartGol = null; }
+    var cGol = document.getElementById("analytics-chart-gol");
+    if(cGol) analyticsChartGol = new Chart(cGol.getContext("2d"), {
+      type:"line",
+      data:{ labels:labels, datasets:[
+        { label:"Gol fatti", data:gfData, borderColor:"#22c55e", backgroundColor:"rgba(34,197,94,0.12)", tension:0.3, pointRadius:3 },
+        { label:"Gol subiti", data:gsData, borderColor:"#ef4444", backgroundColor:"rgba(239,68,68,0.12)", tension:0.3, pointRadius:3 }
+      ] },
+      options: chartBaseOptions(true, false)
+    });
+
+    if(analyticsChartTrofei){ analyticsChartTrofei.destroy(); analyticsChartTrofei = null; }
+    var cTrofei = document.getElementById("analytics-chart-trofei");
+    if(cTrofei) analyticsChartTrofei = new Chart(cTrofei.getContext("2d"), {
+      type:"line",
+      data:{ labels:labels, datasets:[{ label:"Trofei totali", data:trofeiCum, borderColor:"#e0b04f", backgroundColor:"rgba(224,176,79,0.15)", stepped:true, fill:true, pointRadius:0 }] },
+      options: chartBaseOptions(false, false)
+    });
+  }
+  function classifyCompetizioneCategoria(item){
+    if(item.categoria === "nazionale" && isSerieAPrimaria({ name: item.compName })) return "campionato";
+    if(item.categoria === "nazionale") return "coppe-nazionali";
+    return "coppe-internazionali";
+  }
+  function renderAnalyticsCompetizioni(){
+    var contentEl = document.getElementById("analytics-competizioni-content");
+    var emptyEl = document.getElementById("analytics-competizioni-empty");
+    var all = buildAllTimeTimeline();
+    if(all.length === 0){ contentEl.innerHTML = ""; emptyEl.classList.remove("hidden"); return; }
+    emptyEl.classList.add("hidden");
+
+    var buckets = { campionato: [], "coppe-nazionali": [], "coppe-internazionali": [] };
+    all.forEach(function(item){ buckets[classifyCompetizioneCategoria(item)].push(item); });
+
+    var defs = [
+      { key:"campionato", label:"🏆 Campionato (Serie A)" },
+      { key:"coppe-nazionali", label:"🇮🇹 Coppe Nazionali" },
+      { key:"coppe-internazionali", label:"🌍 Coppe Internazionali" }
+    ];
+    contentEl.innerHTML = defs.map(function(d){
+      var items = buckets[d.key];
+      if(items.length === 0){
+        return '<div class="glass rounded-2xl p-4"><p class="font-bold text-[14px] mb-1">' + d.label + '</p><p class="text-[12px] text-[var(--text-mute)]">Nessuna partita registrata.</p></div>';
+      }
+      var st = computeMatchesStats(items);
+      var winPct = st.pg ? Math.round((st.v / st.pg) * 100) : 0;
+      var mediaGol = st.pg ? Math.round((st.gf / st.pg) * 100) / 100 : 0;
+      return '<div class="glass rounded-2xl p-4">' +
+        '<p class="font-bold text-[14px] mb-2.5">' + d.label + '</p>' +
+        '<div class="grid grid-cols-3 gap-2">' +
+          statPill("% Vittorie", winPct + "%") +
+          statPill("Media gol", fmt1(mediaGol)) +
+          statPill("Media voto", st.mediaVoti !== null ? fmt1(st.mediaVoti) : "—") +
+        '</div>' +
+        '<p class="text-[10.5px] text-[var(--text-mute)] mt-2">' + st.pg + ' partite · ' + st.v + 'V ' + st.p + 'P ' + st.s + 'S</p>' +
+      '</div>';
+    }).join("");
+  }
+
   function renderTrophyHistoryChart(){
     var canvas = document.getElementById("trophy-history-chart");
     if(!canvas || typeof Chart === "undefined") return;
@@ -3250,12 +3479,34 @@
     if(show){
       backdrop.classList.add("show");
       requestAnimationFrame(function(){ sheet.classList.add("show"); });
-      document.body.style.overflow = "hidden";
+      lockBodyScroll();
     } else {
       backdrop.classList.remove("show");
       sheet.classList.remove("show");
-      document.body.style.overflow = "";
+      unlockBodyScroll();
     }
+  }
+
+  // ---------- BLOCCO SCROLL DI SFONDO (conta i modal aperti, sblocca solo quando tutti sono chiusi) ----------
+  var scrollLockCount = 0;
+  function lockBodyScroll(){
+    scrollLockCount++;
+    document.body.classList.add("scroll-locked");
+  }
+  function unlockBodyScroll(){
+    scrollLockCount = Math.max(0, scrollLockCount - 1);
+    if(scrollLockCount === 0) document.body.classList.remove("scroll-locked");
+  }
+  // Apre/chiude una coppia backdrop+sheet generica (per i modal che non passano da toggleSheet)
+  function openGenericModal(name){
+    document.getElementById("backdrop-" + name).classList.add("show");
+    document.getElementById("sheet-" + name).classList.add("show");
+    lockBodyScroll();
+  }
+  function closeGenericModal(name){
+    document.getElementById("backdrop-" + name).classList.remove("show");
+    document.getElementById("sheet-" + name).classList.remove("show");
+    unlockBodyScroll();
   }
 
   // ---------- TAB SWITCHING ----------
@@ -3586,6 +3837,7 @@
   }
 
   function init(){
+    applyTheme(getSavedTheme());
     load();
     var savedUrl = getCloudWorkerUrl();
     var urlDisplay = document.getElementById("sync-worker-url-display");
@@ -3593,6 +3845,7 @@
     setSyncStatus(savedUrl ? "offline" : "nourl");
     populateTurnoSelects();
     populatePosizioneSelects();
+    populateVotoWheelSelects();
     render();
     renderPalmares();
     renderOpponentsDatalist();
@@ -3611,6 +3864,9 @@
       renderSeasonNav();
     });
 
+    document.getElementById("btn-theme-dark").addEventListener("click", function(){ applyTheme("dark"); refreshChartsForThemeChange(); });
+    document.getElementById("btn-theme-light").addEventListener("click", function(){ applyTheme("light"); refreshChartsForThemeChange(); });
+
     document.querySelectorAll(".tab-switcher .tab-btn[data-tab]").forEach(function(btn){
       btn.addEventListener("click", function(){ setTab(btn.getAttribute("data-tab")); });
     });
@@ -3627,6 +3883,12 @@
     wireImagePicker("input-league-icon-file", "league-icon-preview", "btn-league-icon-remove");
 
     document.getElementById("btn-open-h2h").addEventListener("click", openH2HModal);
+    document.getElementById("btn-open-analytics").addEventListener("click", openAnalyticsModal);
+    document.getElementById("btn-close-analytics").addEventListener("click", closeAnalyticsModal);
+    document.getElementById("backdrop-analytics").addEventListener("click", closeAnalyticsModal);
+    document.querySelectorAll(".analytics-subtab-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){ setAnalyticsSubtab(btn.getAttribute("data-analytics-subtab")); });
+    });
     document.getElementById("btn-close-trofeo-dettaglio").addEventListener("click", closeTrofeoDettagliModal);
     document.getElementById("backdrop-trofeo-dettaglio").addEventListener("click", closeTrofeoDettagliModal);
     document.getElementById("btn-open-hof").addEventListener("click", openHofModal);
@@ -3781,7 +4043,7 @@
     });
     document.getElementById("input-golnap").addEventListener("input", updateLiveResultBadge);
     document.getElementById("input-golopp").addEventListener("input", updateLiveResultBadge);
-    document.getElementById("input-voto").addEventListener("input", function(){
+    document.getElementById("input-voto").addEventListener("change", function(){
       var v = parseVotoInput(this.value);
       document.querySelectorAll("#voto-chip-row .voto-chip").forEach(function(c){
         c.classList.toggle("active", parseFloat(c.textContent.replace(",", ".")) === v);
